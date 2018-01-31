@@ -1,0 +1,10 @@
+version: '3'
+services:
+  hancock_dlt_broker:
+    build:
+      context: ../..
+      dockerfile: ./Dockerfile
+    image: prod/hancock_dlt_broker
+    container_name: prod/hancock_dlt_broker
+    ports:
+      - "5056:80"

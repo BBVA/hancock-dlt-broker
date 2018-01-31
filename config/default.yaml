@@ -1,0 +1,20 @@
+env:
+app:
+  server:
+    port:
+  db:
+    protocol: mongodb
+    host: ''
+    port: 27017
+    database: ''
+    params: ''
+    user: ''
+    pass: ''
+
+    label:
+      database: qa_labels
+      collection: labels_def
+
+    project:
+      database: qa_labels
+      collection: labels_info

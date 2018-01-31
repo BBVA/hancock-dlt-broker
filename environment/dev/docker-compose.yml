@@ -1,0 +1,43 @@
+version: '2.1'
+services:
+  hancock_dlt_broker:
+    build:
+      context: ../..
+      dockerfile: ./environment/dev/Dockerfile
+    image: dev/hancock_dlt_broker
+    container_name: dev/hancock_dlt_broker
+    volumes:
+      - ../..:/code
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    links: 
+      - mongo
+  mongo:
+    image: 'bitnami/mongodb:latest'
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'db.stats().ok' | mongo localhost:27017/test --quiet"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGODB_ROOT_PASSWORD=password
+    volumes:
+      - 'hancock_dlt_mongodb_data:/bitnami'
+  mongo-shell:
+    image: 'bitnami/mongodb:latest'
+    entrypoint: 'mongo --host mongo -u root -p password admin'
+    depends_on:
+      mongo:
+        condition: service_healthy
+    links: 
+      - mongo
+    volumes:
+      - './scripts/:/scripts/'
+volumes:
+  hancock_dlt_mongodb_data:

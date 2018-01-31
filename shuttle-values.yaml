@@ -1,0 +1,22 @@
+port: 80
+healthcheck:
+  type: http
+  http_path: /api/v1/health
+
+resources:
+  request:
+    cpu: 100m
+    memory: 100Mi
+  limit:
+    cpu: 200m
+    memory: 200Mi
+
+forward_logs: true
+monitoring: true
+
+slack_receiver: shuttle
+slack_channel: alerts
+
+## only external services
+externalDns: hancock-dlt-broker
+SSL: true

@@ -1,0 +1,7 @@
+env: production
+app:
+  server:
+    port: 80
+  db:
+    host: mongo-qa-0.mongo-qa.qa,mongo-qa-1.mongo-qa.qa,mongo-qa-2.mongo-qa.qa
+    params: replicaSet=rs0
