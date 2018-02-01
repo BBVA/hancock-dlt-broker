@@ -1,0 +1,35 @@
+#%RAML 1.0
+---
+version: v1
+
+title: Hancock DLT Broker
+baseUri: https://hancock-dlt-broker-archer-demo.es/api/{version}
+mediaType: application/json
+
+/health:
+  description: |
+    Healthcheck.
+  get:
+    description: !include docs/get-healthcheck.md
+    responses: !include responses/get-healthcheck.yml
+
+/eth
+  /subscribe:
+    description: |
+      Subscribes to a blockchain smart contract events.
+    get:
+      queryParameters:
+        address:
+          displayName: Address
+          type: string
+          description: The adress of the smart contract which we want to subscribe
+          example: 0x198273912739182739182639126839812639812
+          required: true
+        sender:
+          displayName: Address
+          type: string
+          description: The adress of the smart contract which we want to subscribe
+          example: 0x198273912739182739182639126839812639812
+          required: true
+      description: !include docs/get-subscription.md
+      responses: !include responses/get-subscription.yml

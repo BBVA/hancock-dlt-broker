@@ -1,0 +1,6 @@
+200:
+  description: Subscribed successfully
+  body:
+    application/json:
+      example: |
+        {}
