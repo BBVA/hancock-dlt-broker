@@ -1,1 +1,3 @@
-console.log('Hello world!');
+import { run } from './src/app';
+
+run();

@@ -2,6 +2,7 @@ env:
 app:
   server:
     port:
+    base: '/api/v1/'
   db:
     protocol: mongodb
     host: ''
@@ -11,10 +12,6 @@ app:
     user: ''
     pass: ''
 
-    label:
-      database: qa_labels
-      collection: labels_def
-
-    project:
-      database: qa_labels
-      collection: labels_info
+    eth:
+      database: ETH
+      collection: contracts
