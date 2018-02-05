@@ -1,5 +1,5 @@
 FROM node:8.9.3
-LABEL maintainer "Angel Manzano Alcaraz <amalcaraz89@gmail.com>"
+LABEL maintainer "Angel Manzano Alcaraz <angel.manzano.contractor@bbva.com>"
 
 # Update system dependencies
 RUN apt-get update && \
