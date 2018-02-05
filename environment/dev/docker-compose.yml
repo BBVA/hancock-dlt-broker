@@ -8,14 +8,15 @@ services:
     container_name: dev/hancock_dlt_broker
     volumes:
       - ../..:/code
+      - './scripts/:/code/scripts/'
     ports:
       - "3009:3000"
-      - "9229:9229"
+      - "8080:8080"
+      - "8545"
     depends_on:
       mongo:
         condition: service_healthy
-    links: 
-      - mongo
+
   mongo:
     image: 'bitnami/mongodb:latest'
     healthcheck:
@@ -29,15 +30,20 @@ services:
       - MONGODB_ROOT_PASSWORD=password
     volumes:
       - 'hancock_dlt_mongodb_data:/bitnami'
+
   mongo-shell:
     image: 'bitnami/mongodb:latest'
     entrypoint: 'mongo --host mongo -u root -p password admin'
     depends_on:
       mongo:
         condition: service_healthy
-    links: 
-      - mongo
     volumes:
       - './scripts/:/scripts/'
+
 volumes:
   hancock_dlt_mongodb_data:
+
+networks:
+  default:
+    external:
+      name: dev_eth_local_net

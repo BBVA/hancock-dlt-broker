@@ -3,12 +3,12 @@ nodePipeline{
   // TODO: Activate when it works
   // sonar_shuttle_stage(source: ".", exclusions: "tests/**,raml/**,node_modules/**")
 
-  stage('unit-test'){
-    container('node'){
-      // sh "make test"
-      sh "yarn run test"
-    }
-  }
+  // stage('unit-test'){
+  //   container('node'){
+  //     // sh "make test"
+  //     sh "yarn run test"
+  //   }
+  // }
 
   docker_shuttle_stage()
   
