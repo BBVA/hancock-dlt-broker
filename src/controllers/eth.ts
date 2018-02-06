@@ -40,7 +40,7 @@ export function SocketSubscribeController(socket: WebSocket, req: http.IncomingM
   let web3: any;
   let logsSubscription: any;
   let eventsSubscription: any;
-  let trxSubscription: any;
+  let txSubscription: any;
 
   socket.on('close', () => {
 
@@ -51,7 +51,7 @@ export function SocketSubscribeController(socket: WebSocket, req: http.IncomingM
       console.log('unsubscribing...');
       logsSubscription.unsubscribe();
       eventsSubscription.unsubscribe();
-      trxSubscription.unsubscribe();
+      txSubscription.unsubscribe();
       web3 = undefined;
 
     }
@@ -76,7 +76,7 @@ export function SocketSubscribeController(socket: WebSocket, req: http.IncomingM
 
         console.log('connection accepted');
 
-        const cfg: any = config.blockchain;
+        const cfg: any = config.blockchain.eth;
         web3 = new Web3(new Web3.providers.WebsocketProvider(`ws://${cfg.host}:${cfg.port}`));
         const contract = new web3.eth.Contract(ethContractModel.abi, ethContractModel.address);
 
@@ -120,19 +120,19 @@ export function SocketSubscribeController(socket: WebSocket, req: http.IncomingM
           });
 
         // Subscribe to pending transactions
-        trxSubscription = web3.eth
+        txSubscription = web3.eth
           .subscribe('pendingTransactions')
           .on('error', console.error)
-          .on('data', (trxHash: any) => {
+          .on('data', (txHash: any) => {
 
             web3.eth
-              .getTransaction(trxHash)
-              .then((trxBody: IEthTransactionBody) => {
+              .getTransaction(txHash)
+              .then((txBody: IEthTransactionBody) => {
 
-                if (!sender || trxBody.from.toUpperCase() === sender.toUpperCase()) {
+                if (!sender || txBody.from.toUpperCase() === sender.toUpperCase()) {
 
-                  console.log(`new trx =>> ${trxHash}, from: ${trxBody.from}`);
-                  socket.send(JSON.stringify({ kind: 'trx', body: trxBody }));
+                  console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
+                  socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
 
                 }
 

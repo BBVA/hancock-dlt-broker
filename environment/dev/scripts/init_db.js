@@ -13,8 +13,7 @@ try {
       collection.createIndex({ 'alias': 1 }),
       collection.createIndex({ 'address': 1 }),
       collection.createIndex({ 'abi': 1 }),
-      collection.insert({ "alias": "token-contract-1", "address": "0x3392be3C68A52049cCa0e85108874160436c2FB7", "abi": abi }), 
-      collection.insert({ "alias": "token-contract-2", "address": "0xd2Bb4b9C30DE543C2a247E818391F37A98E62D3F", "abi": abi }),
+      collection.insert({ "alias": "token-contract-1", "address": "0x8b72a93AC71f111BF00F0ba2F50A2555b03183aD", "abi": abi }),
     ];
 
     printjson(res);

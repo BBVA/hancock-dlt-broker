@@ -4,8 +4,9 @@ app:
     port:
     base: '/api/v1/'
   blockchain:
-    host: ganache
-    port: 8545
+    eth:
+      host: ganache
+      port: 8545
   db:
     protocol: mongodb
     host: ''

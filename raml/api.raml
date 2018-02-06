@@ -1,10 +1,16 @@
 #%RAML 1.0
 ---
-version: v1
-
 title: Hancock DLT Broker
-baseUri: https://hancock-dlt-broker-archer-demo.es/api/{version}
+version: v1
+baseUri: https://hancock-dlt-broker-blockchain-demo.es/api/{version}
 mediaType: application/json
+
+documentation:
+ - title: Summary
+   content: !include README.md
+
+securitySchemes:
+  oauth_2_0: !include securitySchemes/oauth_2_0.yml
 
 /health:
   description: |
@@ -13,10 +19,14 @@ mediaType: application/json
     description: !include docs/get-healthcheck.md
     responses: !include responses/get-healthcheck.yml
 
-/eth
+/{dlt_type}:
+  uriParameters:
+    dlt_type:
+      type: string
+
   /subscribe:
     description: |
-      Subscribes to a blockchain smart contract events.
+      Websocket that recieve smart contract events from the DLT.
     get:
       queryParameters:
         address:
@@ -31,5 +41,5 @@ mediaType: application/json
           description: The adress of the sender wallet
           example: 0xd460efa6d76040a477463e655aa18454bd7bd6a1
           required: true
-      description: !include docs/get-subscription.md
-      responses: !include responses/get-subscription.yml
+      description: !include docs/socket-subscribe.md
+      responses: !include responses/socket-subscribe.yml

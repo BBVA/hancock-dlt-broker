@@ -3,7 +3,7 @@ const config = require('config');
 const cfg = config.get('app');
 
 const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.WebsocketProvider(`ws://${cfg.blockchain.host}:${cfg.blockchain.port}`));
+const web3 = new Web3(new Web3.providers.WebsocketProvider(`ws://${cfg.blockchain.eth.host}:${cfg.blockchain.eth.port}`));
 
 
 web3.eth
@@ -52,9 +52,5 @@ web3.eth
   });
 
   // tx hash => 0xe6d2fc4101ce0724ac53d797cc161d4fec2768fbc941b9ea652aec26a93fcc6c
-  // address => 0x3392be3C68A52049cCa0e85108874160436c2FB7
-  // new instasnce => 0x3392be3C68A52049cCa0e85108874160436c2FB7
-
-//   tx hash => 0xf4d57250cf3f85464ae8faeb8011fb569b549eb3e961d758e992d6e1102cfbf3
-// address => 0xd2Bb4b9C30DE543C2a247E818391F37A98E62D3F
-// new instasnce => 0xd2Bb4b9C30DE543C2a247E818391F37A98E62D3F
+  // address => 0x8b72a93AC71f111BF00F0ba2F50A2555b03183aD
+  // new instasnce => 0x8b72a93AC71f111BF00F0ba2F50A2555b03183aD

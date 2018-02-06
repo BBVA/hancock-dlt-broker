@@ -6,7 +6,7 @@ export interface IEthereumContractModel {
 
 export type ethAddress = string;
 export type ethContractAddress = string;
-export type ethTrxHash = string;
+export type ethTxHash = string;
 export type ethBlockHash = string;
 export type ethData = string;
 export type ethTopic = string;
@@ -14,7 +14,7 @@ export type ethTopic = string;
 export interface IEthContractEventBody {
   logIndex: number;
   transactionIndex: number;
-  transactionHash: ethTrxHash;
+  transactionHash: ethTxHash;
   blockHash: ethBlockHash;
   blockNumber: number;
   address: ethContractAddress;
@@ -37,13 +37,13 @@ export interface IEthContractLogBody {
   id: 'log_5daf9707';
   logIndex: number;
   topics: ethTopic[];
-  transactionHash: ethTrxHash;
+  transactionHash: ethTxHash;
   transactionIndex: number;
   type: 'mined';
 }
 
 export interface IEthTransactionBody {
-  hash: ethTrxHash;
+  hash: ethTxHash;
   nonce: number;
   blockHash: ethBlockHash;
   blockNumber: number;
