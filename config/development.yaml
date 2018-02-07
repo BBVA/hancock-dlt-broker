@@ -2,6 +2,9 @@ env: development
 app:
   server:
     port: 3000
+  blockchain:
+    eth:
+      host: ganache
   db:
     host: mongo
     database: admin
