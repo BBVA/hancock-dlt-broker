@@ -9,7 +9,7 @@
     "serve:prod": "nodemon dist/index.js",
     "serve:debug": "nodemon --inspect=0.0.0.0 dist/index.js",
     "build:ts": "tsc",
-    "watch:ts": "tsc -w",
+    "watch:ts": "tsc -w --inlineSources --inlineSourceMap",
     "test": "echo \"Error: no test specified\" && exit 0",
     "docs": "rimraf documentation && mkdirp documentation && raml2html --theme raml2html-markdown-theme raml/api.raml > documentation/api.md"
   },

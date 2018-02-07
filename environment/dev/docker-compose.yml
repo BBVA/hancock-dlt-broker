@@ -11,8 +11,7 @@ services:
       - './scripts/:/code/scripts/'
     ports:
       - "3009:3000"
-      - "8080:8080"
-      - "8545"
+      - "9229:9229"
     depends_on:
       mongo:
         condition: service_healthy
