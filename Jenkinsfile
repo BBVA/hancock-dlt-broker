@@ -1,6 +1,6 @@
 nodePipeline{
 
-  // ---- DEVELOP ----
+  // ---- DEVELOP ---- 
   if (env.BRANCH_NAME == 'develop') {
 
     docker_shuttle_stage()
