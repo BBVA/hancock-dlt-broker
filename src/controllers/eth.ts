@@ -1,10 +1,14 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import * as http from 'http';
 import * as url from 'url';
-import { default as Web3Type } from 'Web3';
 import * as WebSocket from 'ws';
 import * as domain from '../domain/eth';
-import { IEthContractEventBody, IEthereumContractModel, IEthTransactionBody, IEthContractLogBody } from '../models/eth';
+import {
+  IEthContractEventBody,
+  IEthContractLogBody,
+  IEthereumContractModel,
+  IEthTransactionBody,
+} from '../models/eth';
 import config from '../utils/config';
 
 // tslint:disable-next-line:no-var-requires
