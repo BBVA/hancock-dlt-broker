@@ -14,6 +14,8 @@ resources:
 forward_logs: true
 monitoring: true
 
+websocket: true
+
 ## only external services
 externalDns: hancock-dlt-broker
-SSL: true
+#SSL: true
