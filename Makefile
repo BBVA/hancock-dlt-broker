@@ -15,9 +15,6 @@ build-prod:
 dev: build-dev
 	${COMPOSE_DEV} run --rm --service-ports hancock_dlt_broker dev && ${COMPOSE_DEV} down
 
-prod: build-prod
-	${COMPOSE_PROD} run --rm --service-ports hancock_dlt_broker prod && ${COMPOSE_PROD} down
-
 test: build-dev
 	${COMPOSE_DEV} run --rm --service-ports hancock_dlt_broker test && ${COMPOSE_DEV} down
 
@@ -29,6 +26,9 @@ docs: build-dev
 
 db-shell-dev: build-dev
 	${COMPOSE_DEV} run --rm --service-ports mongo-shell && ${COMPOSE_DEV} down
+
+db-shell-prod:
+	docker run -it --rm bitnami/mongodb:latest /bin/bash -c "mongo --host mongo.blockchainhub-develop.svc.cluster.local:27017 hancock"
 
 db-init-dev: build-dev
 	${COMPOSE_DEV} run --rm --service-ports mongo-shell /scripts/init_db.js && ${COMPOSE_DEV} down

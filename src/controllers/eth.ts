@@ -10,29 +10,25 @@ import {
   IEthTransactionBody,
 } from '../models/eth';
 import config from '../utils/config';
-
-// tslint:disable-next-line:no-var-requires
-const Web3 = require('web3');
+import * as Web3 from '../utils/web3';
 
 export function SubscribeController(req: Request, res: Response, next: NextFunction) {
 
   const address: string = req.query.address;
-  const sender: string = req.query.sender;
+  // const sender: string = req.query.sender;
 
-  console.log(address, sender);
-
-  if (!address || !sender) {
+  if (!address) {
     throw new Error('DEFAULT_ERROR');
   }
 
   domain
-    .subscribe(address, sender)
+    .subscribe(address)
     .then((response: any) => res.send(response))
     .catch(next);
 
 }
 
-export function SocketSubscribeController(socket: WebSocket, req: http.IncomingMessage) {
+export async function SocketSubscribeController(socket: WebSocket, req: http.IncomingMessage) {
 
   const { query } = url.parse(req.url as string, true);
 
@@ -41,112 +37,109 @@ export function SocketSubscribeController(socket: WebSocket, req: http.IncomingM
 
   console.log('Incoming socket connection => ', address, sender);
 
-  let web3: any;
-  let logsSubscription: any;
-  let eventsSubscription: any;
-  let txSubscription: any;
+  if (!address && !sender) {
+    onError(socket);
+    return;
+  }
+
+  const web3I = Web3.getWeb3();
+  const subscriptions: any[] = [];
 
   socket.on('close', () => {
 
-    console.log('closing...');
+    console.log('unsubscribing...');
 
-    if (web3) {
-
-      console.log('unsubscribing...');
-      logsSubscription.unsubscribe();
-      eventsSubscription.unsubscribe();
-      txSubscription.unsubscribe();
-      web3 = undefined;
-
-    }
-
-    socket.terminate();
+    subscriptions.forEach((sub) => {
+      sub.unsubscribe();
+    });
 
   });
 
-  if (!address || !sender) {
-    onError(socket);
-  }
+  if (address) {
 
-  domain
-    .subscribe(address, sender)
-    .then((ethContractModel: IEthereumContractModel) => {
+    try {
 
-      if (!ethContractModel) {
+      const ethContractModel: IEthereumContractModel = await domain.subscribe(address);
 
-        onError(socket);
+      if (ethContractModel) {
 
-      } else {
-
-        console.log('connection accepted');
-
-        const cfg: any = config.blockchain.eth;
-        web3 = new Web3(new Web3.providers.WebsocketProvider(`ws://${cfg.host}:${cfg.port}`));
-        const contract = new web3.eth.Contract(ethContractModel.abi, ethContractModel.address);
-
-        // List all avalible accounts in the net (debug)
-        if (config.env === 'development') {
-
-          web3.eth
-            .getAccounts()
-            .then((accounts: any) => {
-
-              console.log('accounts => \n', accounts);
-
-            });
-
-        }
+        const contract = new web3I.eth.Contract(ethContractModel.abi, ethContractModel.address);
 
         // Subscribe to contract events
-        eventsSubscription = contract.events
-          .allEvents({
-            address: ethContractModel.address,
-          })
-          .on('error', console.error)
-          .on('data', (eventBody: IEthContractEventBody) => {
+        console.info('Subscribing to contract events...');
+        subscriptions.push(
+          contract.events
+            .allEvents({
+              address: ethContractModel.address,
+            })
+            .on('error', console.error)
+            .on('data', (eventBody: IEthContractEventBody) => {
 
-            console.log(`new event from contract ${ethContractModel.alias} =>> ${eventBody.id} (${eventBody.event}) `);
-            socket.send(JSON.stringify({ kind: 'event', body: eventBody }));
+              // tslint:disable-next-line:max-line-length
+              console.log(`new event from contract ${ethContractModel.alias} =>> ${eventBody.id} (${eventBody.event}) `);
+              socket.send(JSON.stringify({ kind: 'event', body: eventBody }));
 
-          });
+            }),
+        );
 
         // Subscribe to contract logs (Events)
-        logsSubscription = web3.eth
-          .subscribe('logs', {
-            address: ethContractModel.address,
-          })
-          .on('error', console.error)
-          .on('data', (logBody: IEthContractLogBody) => {
+        console.info('Subscribing to contract logs...');
+        subscriptions.push(
+          web3I.eth
+            .subscribe('logs', {
+              address: ethContractModel.address,
+            })
+            .on('error', console.error)
+            .on('data', (logBody: IEthContractLogBody) => {
 
-            console.log(`new log from contract ${ethContractModel.alias} =>> ${logBody.id}`);
-            socket.send(JSON.stringify({ kind: 'log', body: logBody }));
+              console.log(`new log from contract ${ethContractModel.alias} =>> ${logBody.id}`);
+              socket.send(JSON.stringify({ kind: 'log', body: logBody }));
 
-          });
-
-        // Subscribe to pending transactions
-        txSubscription = web3.eth
-          .subscribe('pendingTransactions')
-          .on('error', console.error)
-          .on('data', (txHash: any) => {
-
-            web3.eth
-              .getTransaction(txHash)
-              .then((txBody: IEthTransactionBody) => {
-
-                if (!sender || txBody.from.toUpperCase() === sender.toUpperCase()) {
-
-                  console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
-                  socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
-
-                }
-
-              });
-          });
+            }),
+        );
 
       }
 
-    })
-    .catch((error: any) => onError(socket, error));
+    } catch (error) {
+
+      onError(socket, error);
+
+    }
+
+  }
+
+  if (sender) {
+
+    // Subscribe to pending transactions
+    console.info('Subscribing to pending transactions...');
+    subscriptions.push(
+      web3I.eth
+        .subscribe('pendingTransactions')
+        .on('error', console.error)
+        .on('data', (txHash: any) => {
+
+          web3I.eth
+            .getTransaction(txHash)
+            .then((txBody: IEthTransactionBody) => {
+
+              if (txBody.from.toUpperCase() === sender.toUpperCase()) {
+
+                console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
+                socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
+
+              }
+
+            });
+
+        }),
+    );
+
+  }
+
+  // Check if there is at least one subscription
+  if (subscriptions.length === 0) {
+    onError(socket, 'No subscriptions');
+  }
 
 }
 

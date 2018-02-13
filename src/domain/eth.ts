@@ -11,7 +11,7 @@ async function getCollection(): Promise<Collection> {
   return await db.getDb(database).then((client: Db) => client.collection(collection));
 }
 
-export async function subscribe(address: string, sender: string): Promise<IEthereumContractModel> {
+export async function subscribe(address: string): Promise<IEthereumContractModel> {
 
   const coll = await getCollection();
 
