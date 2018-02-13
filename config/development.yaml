@@ -6,5 +6,7 @@ app:
     eth:
       host: ganache
   db:
-    host: mongo.blockchainhub-develop.svc.cluster.local
-    database: hancock
+    host: mongo
+    database: admin
+    user: root
+    pass: password
