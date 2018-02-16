@@ -2,7 +2,7 @@ env:
 app:
   server:
     port:
-    base: '/api/v1/'
+    base: ''
   blockchain:
     eth:
       host:

@@ -2,13 +2,13 @@ import { NextFunction, Request, Response, Router } from 'express';
 import * as http from 'http';
 import * as url from 'url';
 import * as WebSocket from 'ws';
-import * as domain from '../domain/eth';
+import * as domain from '../domain/ethereum';
 import {
   IEthContractEventBody,
   IEthContractLogBody,
   IEthereumContractModel,
   IEthTransactionBody,
-} from '../models/eth';
+} from '../models/ethereum';
 import config from '../utils/config';
 import * as Web3 from '../utils/web3';
 
