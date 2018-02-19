@@ -15,7 +15,6 @@ app:
     params: ''
     user: ''
     pass: ''
-
     ethereum:
       database: ETH
       collection: contracts

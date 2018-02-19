@@ -42,7 +42,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
     return;
   }
 
-  const web3I = Web3.getWeb3();
+  const web3I = await Web3.getWeb3();
   const subscriptions: any[] = [];
 
   socket.on('close', () => {
