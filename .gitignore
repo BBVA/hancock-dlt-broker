@@ -5,4 +5,4 @@ node_modules/
 documentation/
 .sonar/
 .editorconfig
-dist/
+dist/*

@@ -3,11 +3,11 @@ app:
   server:
     port: 80
   blockchain:
-    eth:
+    ethereum:
       host: kst-hancock-ms-ganache-cli.blockchainhub-develop
   db:
     host: mongo.blockchainhub-develop
     database: hancock
-    eth:
+    ethereum:
       database: hancock
       collection: smartcontracts

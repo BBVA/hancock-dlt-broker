@@ -1,6 +1,6 @@
 app:
   blockchain:
-    eth:
+    ethereum:
       host: ETH_HOST
       port: ETH_PORT
   db:
@@ -11,6 +11,6 @@ app:
     user: DB_USER
     pass: DB_PASS
 
-    eth:
+    ethereum:
       database: DB_ETH_DATABASE
       collection: DB_ETH_COLL_CONTRACTS

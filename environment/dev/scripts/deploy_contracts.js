@@ -3,7 +3,7 @@ const config = require('config');
 const cfg = config.get('app');
 
 const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.WebsocketProvider(`ws://${cfg.blockchain.eth.host}:${cfg.blockchain.eth.port}`));
+const web3 = new Web3(new Web3.providers.WebsocketProvider(`ws://${cfg.blockchain.ethereum.host}:${cfg.blockchain.ethereum.port}`));
 
 
 web3.eth

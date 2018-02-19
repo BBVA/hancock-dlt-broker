@@ -4,8 +4,8 @@ import { IEthereumContractModel } from '../models/ethereum';
 import config from '../utils/config';
 import * as db from '../utils/db';
 
-const database: string = config.db.eth.database;
-const collection: string = config.db.eth.collection;
+const database: string = config.db.ethereum.database;
+const collection: string = config.db.ethereum.collection;
 
 async function getCollection(): Promise<Collection> {
   return await db.getDb(database).then((client: Db) => client.collection(collection));

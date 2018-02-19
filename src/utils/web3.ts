@@ -9,7 +9,7 @@ let web3: any;
 
 function initWeb3() {
 
-  const cfg: any = config.blockchain.eth;
+  const cfg: any = config.blockchain.ethereum;
   web3 = new Web3(new Web3.providers.WebsocketProvider(`ws://${cfg.host}:${cfg.port}`));
 
 }
