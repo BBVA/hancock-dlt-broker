@@ -1,20 +1,23 @@
 env:
 app:
   server:
-    port:
+    protocol: 'http'
+    host: 'https://kong-blockchainhub-develop.kickstartteam.es'
+    port: 80
     base: ''
   blockchain:
     ethereum:
-      host:
+      host: kst-hancock-ms-ganache-cli.blockchainhub-develop.svc.cluster.local
       port: 8545
   db:
     protocol: mongodb
-    host: ''
+    host: mongo.blockchainhub-develop.svc.cluster.local
     port: 27017
-    database: ''
+    database: hancock
     params: ''
     user: ''
     pass: ''
+
     ethereum:
-      database: ETH
-      collection: contracts
+      database: hancock
+      collection: smartcontracts

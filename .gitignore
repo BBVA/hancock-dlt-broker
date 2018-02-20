@@ -6,3 +6,4 @@ documentation/
 .sonar/
 .editorconfig
 dist/*
+config/local.yaml

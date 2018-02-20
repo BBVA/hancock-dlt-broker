@@ -1,16 +1,21 @@
 app:
+  server:
+    base: HANCOCK_SERVER_BASE
+    host: HANCOCK_SERVER_HOST
+    port: HANCOCK_SERVER_PORT
+    protocol: HANCOCK_SERVER_PROTOCOL
   blockchain:
     ethereum:
-      host: ETH_HOST
-      port: ETH_PORT
+      host: HANCOCK_BLOCKCHAIN_ETHEREUM_HOST
+      port: HANCOCK_BLOCKCHAIN_ETHEREUM_PORT
   db:
-    protocol: DB_PROTO
-    host: DB_HOST
-    port: DB_PORT
-    database: DB_DATABASE
-    user: DB_USER
-    pass: DB_PASS
+    protocol: HANCOCK_DB_PROTOCOL
+    host: HANCOCK_DB_HOST
+    port: HANCOCK_DB_PORT
+    database: HANCOCK_DB_DATABASE
+    params: HANCOCK_DB_PARAMS
+    user: HANCOCK_DB_USER
+    pass: HANCOCK_DB_PASS
 
     ethereum:
-      database: DB_ETH_DATABASE
-      collection: DB_ETH_COLL_CONTRACTS
+      database: HANCOCK_DB_ETHEREUM_DATABASE
