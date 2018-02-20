@@ -1,8 +1,8 @@
 env:
 app:
   server:
-    protocol: 'http'
-    host: 'https://kong-blockchainhub-develop.kickstartteam.es'
+    protocol: 'ws'
+    host: 'hancock-dlt-broker-blockchainhub-develop.kickstartteam.es'
     port: 80
     base: ''
   blockchain:
