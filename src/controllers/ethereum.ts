@@ -9,7 +9,6 @@ import {
   IEthereumContractModel,
   IEthTransactionBody,
 } from '../models/ethereum';
-import config from '../utils/config';
 import * as Web3 from '../utils/web3';
 
 export function SubscribeController(req: Request, res: Response, next: NextFunction) {

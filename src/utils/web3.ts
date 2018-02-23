@@ -16,7 +16,17 @@ function initWeb3() {
 
 export async function getWeb3() {
 
-  const connReady: boolean = web3 && await web3.eth.net.isListening();
+  let connReady: boolean;
+
+  try {
+
+    connReady = !!web3 && await web3.eth.net.isListening();
+
+  } catch (e) {
+
+    connReady = false;
+
+  }
 
   if (!connReady) {
     initWeb3();

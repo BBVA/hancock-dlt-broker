@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npm run serve:dev",
     "serve:dev": "concurrently \"npm run watch:ts\" \"sleep 3 && npm run serve:debug\"",
-    "serve:prod": "nodemon dist/index.js",
+    "serve:prod": "node dist/index.js",
     "serve:debug": "nodemon --inspect=0.0.0.0 dist/index.js",
     "build:ts": "tsc",
     "watch:ts": "tsc -w --inlineSources --inlineSourceMap",
