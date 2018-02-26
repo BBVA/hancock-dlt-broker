@@ -13,7 +13,6 @@ try {
       collection.drop(),
       collection.createIndex({ 'alias': 1 }),
       collection.createIndex({ 'address': 1 }),
-      collection.createIndex({ 'abi': 1 }),
       collection.insert({ "alias": "exchanger", "address": "0x39d658743881ef3a53cc6c969377613baab46b1e", "abi": exchangerAbi }),      
       collection.insert({ "alias": "token-DRGN", "address": "0x965cf4d51ddbb5505588a0de66c34baa8eb9e10d", "abi": tokenAbi }),
       collection.insert({ "alias": "token-OMG", "address": "0x040bc133e7b526ab13d5b08aa7c7e6b2bca6cea3", "abi": tokenAbi }),
