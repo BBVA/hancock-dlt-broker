@@ -1,0 +1,145 @@
+[
+  {
+    "inputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "_owner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "_fromToken",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "name": "_toToken",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "_price",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "_exchanger",
+        "type": "string"
+      }
+    ],
+    "name": "ChangedToken",
+    "type": "event"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_symbol",
+        "type": "string"
+      },
+      {
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "name": "registerToken",
+    "outputs": [
+      {
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_symbol",
+        "type": "string"
+      }
+    ],
+    "name": "deleteToken",
+    "outputs": [
+      {
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_fromToken",
+        "type": "string"
+      },
+      {
+        "name": "_toToken",
+        "type": "string"
+      },
+      {
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "name": "_price",
+        "type": "uint256"
+      },
+      {
+        "name": "_exchanger",
+        "type": "string"
+      }
+    ],
+    "name": "changeToken",
+    "outputs": [
+      {
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_token",
+        "type": "string"
+      },
+      {
+        "name": "_owner",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "name": "balance",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
