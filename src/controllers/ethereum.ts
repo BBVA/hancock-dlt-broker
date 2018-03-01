@@ -11,6 +11,7 @@ import {
 } from '../models/ethereum';
 import config from '../utils/config';
 import * as Web3 from '../utils/web3';
+import {SocketError} from './error';
 
 export function SubscribeController(req: Request, res: Response, next: NextFunction) {
 
@@ -38,7 +39,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
   console.log('Incoming socket connection => ', address, sender);
 
   if (!address && !sender) {
-    onError(socket);
+    onError(socket, 'Address or sender must be included');
     return;
   }
 
@@ -72,7 +73,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
             .allEvents({
               address: ethContractModel.address,
             })
-            .on('error', console.error)
+            .on('error', (error: Error) => onError(socket, error.message))
             .on('data', (eventBody: IEthContractEventBody) => {
 
               // tslint:disable-next-line:max-line-length
@@ -89,7 +90,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
             .subscribe('logs', {
               address: ethContractModel.address,
             })
-            .on('error', console.error)
+            .on('error', (error: Error) => onError(socket, error.message))
             .on('data', (logBody: IEthContractLogBody) => {
 
               console.log(`new log from contract ${ethContractModel.alias} =>> ${logBody.id}`);
@@ -98,14 +99,15 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
             }),
         );
 
+      } else {
+        onError(socket, 'Contract not found');
       }
 
     } catch (error) {
 
-      onError(socket, error);
+      onError(socket, error.message);
 
     }
-
   }
 
   if (sender) {
@@ -115,7 +117,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
     subscriptions.push(
       web3I.eth
         .subscribe('pendingTransactions')
-        .on('error', console.error)
+        .on('error', (error: Error) => onError(socket, error.message))
         .on('data', (txHash: any) => {
 
           web3I.eth
@@ -138,12 +140,16 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   // Check if there is at least one subscription
   if (subscriptions.length === 0) {
-    onError(socket, 'No subscriptions');
+    onError(socket, 'No subscriptions', true);
   }
 
 }
 
-function onError(socket: WebSocket, error: any = new Error('DEFAULT_ERROR')) {
-  socket.send(JSON.stringify({ kind: 'error', error }));
-  socket.terminate();
+function onError(socket: WebSocket, message: string, terminate: boolean = false) {
+  const socketError: SocketError = new SocketError(message);
+  socket.send(JSON.stringify({ kind: 'error', body: socketError }));
+
+  if (terminate) {
+    socket.terminate();
+  }
 }

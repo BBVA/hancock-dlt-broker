@@ -12,21 +12,21 @@ export type ethData = string;
 export type ethTopic = string;
 
 export interface IEthContractEventBody {
-  logIndex: number;
-  transactionIndex: number;
-  transactionHash: ethTxHash;
+  address: ethContractAddress;
   blockHash: ethBlockHash;
   blockNumber: number;
-  address: ethContractAddress;
-  type: 'mined';
-  id: 'log_5daf9707';
-  returnValues: any;
   event: undefined;
-  signature: null;
+  id: 'log_5daf9707';
+  logIndex: number;
   raw: {
     data: ethData;
     topics: ethTopic[];
   };
+  returnValues: any;
+  signature: null;
+  transactionHash: ethTxHash;
+  transactionIndex: number;
+  type: 'mined';
 }
 
 export interface IEthContractLogBody {
@@ -43,17 +43,17 @@ export interface IEthContractLogBody {
 }
 
 export interface IEthTransactionBody {
-  hash: ethTxHash;
-  nonce: number;
   blockHash: ethBlockHash;
   blockNumber: number;
-  transactionIndex: number;
   from: ethAddress;
-  to: ethContractAddress;
-  value: '0';
   gas: number;
   gasPrice: '100000000000';
+  hash: ethTxHash;
   input: string;
+  nonce: number;
+  to: ethContractAddress;
+  transactionIndex: number;
+  value: '0';
 }
 
 export interface IEthBlockHeader {

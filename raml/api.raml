@@ -2,7 +2,7 @@
 ---
 title: Hancock DLT Broker
 version: v1
-baseUri: https://hancock-dlt-broker-blockchain-develop.es
+baseUri: https://hancock-dlt-broker-blockchain-develop.es/{version}
 mediaType: application/json
 
 documentation:
@@ -20,6 +20,7 @@ securitySchemes:
     responses: !include responses/get-healthcheck.yml
 
 /{dlt_type}:
+  title: Ethereum
   uriParameters:
     dlt_type:
       type: string
