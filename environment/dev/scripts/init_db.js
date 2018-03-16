@@ -22,7 +22,7 @@ try {
       collection.insert({ "alias": "token-BNB", "address": "0x99caf3e67f148d703cb53f33128693bce393e67f", "abi": tokenAbi }),
       collection.insert({ "alias": "token-VEN", "address": "0x4e569f9425e0decabd6427631de605ea8a5ad57d", "abi": tokenAbi }),
 
-      collection.insert({ "alias": "campus-wallet", "address": "0x585ae0c55fa2404edd0b57ea1f96ae8955e17736", "abi": campusAbi})    
+      collection.insert({ "alias": "campus-wallet", "address": "0xf126b88bcf56ae8f3338b169ef25e2dacb2d2378", "abi": campusAbi})    
     ];
 
     printjson(res);
