@@ -14,15 +14,15 @@ import {SocketError} from './error';
 
 export function SubscribeController(req: Request, res: Response, next: NextFunction) {
 
-  const address: string = req.query.address;
+  const addressorAlias: string = req.query.address || req.query.alias;
   // const sender: string = req.query.sender;
 
-  if (!address) {
+  if (!addressorAlias) {
     throw new Error('DEFAULT_ERROR');
   }
 
   domain
-    .subscribe(address)
+    .subscribe(addressorAlias)
     .then((response: any) => res.send(response))
     .catch(next);
 
@@ -32,13 +32,13 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   const { query } = url.parse(req.url as string, true);
 
-  const address: string = query.address as string;
+  const addressOrAlias: string = (query.address || query.alias) as string;
   const sender: string = query.sender as string;
 
-  console.log('Incoming socket connection => ', address, sender);
+  console.log('Incoming socket connection => ', addressOrAlias, sender);
 
-  if (!address && !sender) {
-    onError(socket, 'Address or sender must be included');
+  if (!addressOrAlias && !sender) {
+    onError(socket, 'Address/Alias or sender must be included');
     return;
   }
 
@@ -55,11 +55,11 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   });
 
-  if (address) {
+  if (addressOrAlias) {
 
     try {
 
-      const ethContractModel: IEthereumContractModel = await domain.subscribe(address);
+      const ethContractModel: IEthereumContractModel = await domain.subscribe(addressOrAlias);
 
       if (ethContractModel) {
 

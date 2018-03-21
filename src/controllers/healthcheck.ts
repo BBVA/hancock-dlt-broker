@@ -5,6 +5,7 @@ export function HealthCheckController(req: Request, res: Response, next: NextFun
   res
     .status(200)
     .json({
+      service: 'hancock-dlt-broker',
       success: true,
     });
 
