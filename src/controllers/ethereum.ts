@@ -35,15 +35,10 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
   const addressOrAlias: string = (query.address || query.alias) as string;
   const sender: string = query.sender as string;
 
-  console.log('Incoming socket connection => ', addressOrAlias, sender);
+  console.log('Incoming socket connection => ', addressOrAlias || sender);
 
-  if (!addressOrAlias && !sender) {
-    onError(socket, 'Address/Alias or sender must be included');
-    return;
-  }
-
-  const web3I = await Web3.getWeb3();
   const subscriptions: any[] = [];
+  const web3I = await Web3.getWeb3();
 
   socket.on('close', () => {
 
@@ -55,10 +50,28 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   });
 
-  if (addressOrAlias) {
+  socket.on('message', (data: any) => {
+    const dataObj = JSON.parse(data);
+    if(dataObj.type === 'transfer'){
+      SubscribeSendersController(socket, dataObj.addresses, web3I, subscriptions);
+    }else if(dataObj.type === 'contracts'){
+      SubscribeContractsController(socket, dataObj.contracts, web3I, subscriptions)
+    }
+  });
+
+  if(addressOrAlias){
+    SubscribeContractsController(socket, [addressOrAlias], web3I, subscriptions);
+  }else if(sender){
+    SubscribeSendersController(socket, [sender], web3I, subscriptions)
+  }
+
+}
+
+export async function SubscribeContractsController(socket: WebSocket, address: string[], web3I: any, subscriptions: any[]){
+  address.map(async addressOrAlias => {
 
     try {
-
+      
       const ethContractModel: IEthereumContractModel = await domain.subscribe(addressOrAlias);
 
       if (ethContractModel) {
@@ -107,10 +120,12 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
       onError(socket, error.message);
 
     }
-  }
+  })
+}
 
-  if (sender) {
+export async function SubscribeSendersController(socket: WebSocket, senders: string[], web3I: any, subscriptions: any[]){
 
+  senders.map(sender => {
     // Subscribe to pending transactions
     console.info('Subscribing to pending transactions...');
     subscriptions.push(
@@ -123,7 +138,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
             .getTransaction(txHash)
             .then((txBody: IEthTransactionBody) => {
 
-              if (txBody.from.toUpperCase() === sender.toUpperCase()) {
+              if (txBody.from.toUpperCase() === sender.toUpperCase() || txBody.to.toUpperCase() === sender.toUpperCase()) {
 
                 console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
                 socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
@@ -134,14 +149,8 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
         }),
     );
-
-  }
-
-  // Check if there is at least one subscription
-  if (subscriptions.length === 0) {
-    onError(socket, 'No subscriptions', true);
-  }
-
+  })
+  
 }
 
 function onError(socket: WebSocket, message: string, terminate: boolean = false) {
