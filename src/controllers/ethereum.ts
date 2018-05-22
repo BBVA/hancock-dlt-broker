@@ -53,7 +53,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
   socket.on('message', (data: any) => {
     const dataObj = JSON.parse(data);
     if(dataObj.type === 'transfer'){
-      SubscribeSendersController(socket, dataObj.addresses, web3I, subscriptions);
+      SubscribeTransferController(socket, dataObj.addresses, web3I, subscriptions);
     }else if(dataObj.type === 'contracts'){
       SubscribeContractsController(socket, dataObj.contracts, web3I, subscriptions)
     }
@@ -62,17 +62,17 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
   if(addressOrAlias){
     SubscribeContractsController(socket, [addressOrAlias], web3I, subscriptions);
   }else if(sender){
-    SubscribeSendersController(socket, [sender], web3I, subscriptions)
+    SubscribeTransferController(socket, [sender], web3I, subscriptions)
   }
 
 }
 
-export async function SubscribeContractsController(socket: WebSocket, address: string[], web3I: any, subscriptions: any[]){
-  address.map(async addressOrAlias => {
+export async function SubscribeContractsController(socket: WebSocket, contracts: string[], web3I: any, subscriptions: any[]){
+  contracts.map(async contract => {
 
     try {
       
-      const ethContractModel: IEthereumContractModel = await domain.subscribe(addressOrAlias);
+      const ethContractModel: IEthereumContractModel = await domain.subscribe(contract);
 
       if (ethContractModel) {
 
@@ -123,9 +123,9 @@ export async function SubscribeContractsController(socket: WebSocket, address: s
   })
 }
 
-export async function SubscribeSendersController(socket: WebSocket, senders: string[], web3I: any, subscriptions: any[]){
+export async function SubscribeTransferController(socket: WebSocket, addresses: string[], web3I: any, subscriptions: any[]){
 
-  senders.map(sender => {
+  addresses.map(address => {
     // Subscribe to pending transactions
     console.info('Subscribing to pending transactions...');
     subscriptions.push(
@@ -138,7 +138,7 @@ export async function SubscribeSendersController(socket: WebSocket, senders: str
             .getTransaction(txHash)
             .then((txBody: IEthTransactionBody) => {
 
-              if (txBody.from.toUpperCase() === sender.toUpperCase() || txBody.to.toUpperCase() === sender.toUpperCase()) {
+              if (txBody.from.toUpperCase() === address.toUpperCase() || txBody.to.toUpperCase() === address.toUpperCase()) {
 
                 console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
                 socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
