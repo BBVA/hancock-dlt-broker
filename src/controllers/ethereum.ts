@@ -8,8 +8,8 @@ import {
   IEthContractLogBody,
   IEthereumContractModel,
   IEthTransactionBody,
-  IEthSocketMessage
 } from '../models/ethereum';
+import {ISocketMessage} from '../models/models';
 import * as Web3 from '../utils/web3';
 import {SocketError} from './error';
 
@@ -52,11 +52,11 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
   });
 
   socket.on('message', (data: any) => {
-    const dataObj:IEthSocketMessage = JSON.parse(data);
-    if(dataObj.type === 'transfer'){
-      SubscribeTransferController(socket, dataObj.data, web3I, subscriptions);
-    } else if(dataObj.type === 'contract'){
-      SubscribeContractsController(socket, dataObj.data, web3I, subscriptions)
+    const dataObj:ISocketMessage = JSON.parse(data);
+    if(dataObj.kind === 'watch-addresses'){
+      SubscribeTransferController(socket, dataObj.body, web3I, subscriptions);
+    } else if(dataObj.kind === 'watch-contracts'){
+      SubscribeContractsController(socket, dataObj.body, web3I, subscriptions)
     }
   });
 
