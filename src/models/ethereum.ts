@@ -74,3 +74,8 @@ export interface IEthBlockHeader {
   extraData: '0x00';
   size: undefined;
 }
+
+export interface IEthSocketMessage {
+  type: string;
+  data: string[];
+}

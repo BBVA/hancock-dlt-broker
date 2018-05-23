@@ -8,6 +8,7 @@ import {
   IEthContractLogBody,
   IEthereumContractModel,
   IEthTransactionBody,
+  IEthSocketMessage
 } from '../models/ethereum';
 import * as Web3 from '../utils/web3';
 import {SocketError} from './error';
@@ -51,18 +52,23 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
   });
 
   socket.on('message', (data: any) => {
-    const dataObj = JSON.parse(data);
+    const dataObj:IEthSocketMessage = JSON.parse(data);
     if(dataObj.type === 'transfer'){
-      SubscribeTransferController(socket, dataObj.addresses, web3I, subscriptions);
-    }else if(dataObj.type === 'contracts'){
-      SubscribeContractsController(socket, dataObj.contracts, web3I, subscriptions)
+      SubscribeTransferController(socket, dataObj.data, web3I, subscriptions);
+    } else if(dataObj.type === 'contract'){
+      SubscribeContractsController(socket, dataObj.data, web3I, subscriptions)
     }
   });
 
   if(addressOrAlias){
     SubscribeContractsController(socket, [addressOrAlias], web3I, subscriptions);
-  }else if(sender){
+  } else if(sender){
     SubscribeTransferController(socket, [sender], web3I, subscriptions)
+  }
+
+  // Check if there is at least one subscription
+  if (subscriptions.length === 0) {
+    onError(socket, 'No subscriptions', true);
   }
 
 }
@@ -125,31 +131,40 @@ export async function SubscribeContractsController(socket: WebSocket, contracts:
 
 export async function SubscribeTransferController(socket: WebSocket, addresses: string[], web3I: any, subscriptions: any[]){
 
-  addresses.map(address => {
-    // Subscribe to pending transactions
-    console.info('Subscribing to pending transactions...');
-    subscriptions.push(
-      web3I.eth
-        .subscribe('pendingTransactions')
-        .on('error', (error: Error) => onError(socket, error.message))
-        .on('data', (txHash: any) => {
+  try{
 
-          web3I.eth
-            .getTransaction(txHash)
-            .then((txBody: IEthTransactionBody) => {
+    addresses.map(address => {
+      // Subscribe to pending transactions
+      console.info('Subscribing to pending transactions...');
+      subscriptions.push(
+        web3I.eth
+          .subscribe('pendingTransactions')
+          .on('error', (error: Error) => onError(socket, error.message))
+          .on('data', (txHash: any) => {
+  
+            web3I.eth
+              .getTransaction(txHash)
+              .then((txBody: IEthTransactionBody) => {
+  
+                if (txBody.from.toUpperCase() === address.toUpperCase() || txBody.to.toUpperCase() === address.toUpperCase()) {
+  
+                  console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
+                  socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
+  
+                }
+  
+              });
+  
+          }),
+      );
+    })
 
-              if (txBody.from.toUpperCase() === address.toUpperCase() || txBody.to.toUpperCase() === address.toUpperCase()) {
+  } catch(error) {
 
-                console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
-                socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
+    onError(socket, error.message);
 
-              }
-
-            });
-
-        }),
-    );
-  })
+  }
+  
   
 }
 
