@@ -9,6 +9,7 @@ import {
   IEthereumContractModel,
   IEthTransactionBody,
 } from '../models/ethereum';
+import {ISocketMessage} from '../models/models';
 import * as Web3 from '../utils/web3';
 import {SocketError} from './error';
 
@@ -35,15 +36,10 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
   const addressOrAlias: string = (query.address || query.alias) as string;
   const sender: string = query.sender as string;
 
-  console.log('Incoming socket connection => ', addressOrAlias, sender);
+  console.log('Incoming socket connection => ', addressOrAlias || sender);
 
-  if (!addressOrAlias && !sender) {
-    onError(socket, 'Address/Alias or sender must be included');
-    return;
-  }
-
-  const web3I = await Web3.getWeb3();
   const subscriptions: any[] = [];
+  const web3I = await Web3.getWeb3();
 
   socket.on('close', () => {
 
@@ -55,11 +51,34 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   });
 
-  if (addressOrAlias) {
+  socket.on('message', (data: any) => {
+    const dataObj:ISocketMessage = JSON.parse(data);
+    if(dataObj.kind === 'watch-addresses'){
+      SubscribeTransferController(socket, dataObj.body, web3I, subscriptions);
+    } else if(dataObj.kind === 'watch-contracts'){
+      SubscribeContractsController(socket, dataObj.body, web3I, subscriptions)
+    }
+  });
+
+  if(addressOrAlias){
+    SubscribeContractsController(socket, [addressOrAlias], web3I, subscriptions);
+  } else if(sender){
+    SubscribeTransferController(socket, [sender], web3I, subscriptions)
+  }
+
+  // Check if there is at least one subscription
+  if (subscriptions.length === 0) {
+    onError(socket, 'No subscriptions', true);
+  }
+
+}
+
+export async function SubscribeContractsController(socket: WebSocket, contracts: string[], web3I: any, subscriptions: any[]){
+  contracts.map(async contract => {
 
     try {
-
-      const ethContractModel: IEthereumContractModel = await domain.subscribe(addressOrAlias);
+      
+      const ethContractModel: IEthereumContractModel = await domain.subscribe(contract);
 
       if (ethContractModel) {
 
@@ -107,41 +126,46 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
       onError(socket, error.message);
 
     }
+  })
+}
+
+export async function SubscribeTransferController(socket: WebSocket, addresses: string[], web3I: any, subscriptions: any[]){
+
+  try{
+
+    addresses.map(address => {
+      // Subscribe to pending transactions
+      console.info('Subscribing to pending transactions...');
+      subscriptions.push(
+        web3I.eth
+          .subscribe('pendingTransactions')
+          .on('error', (error: Error) => onError(socket, error.message))
+          .on('data', (txHash: any) => {
+  
+            web3I.eth
+              .getTransaction(txHash)
+              .then((txBody: IEthTransactionBody) => {
+  
+                if (txBody.from.toUpperCase() === address.toUpperCase() || txBody.to.toUpperCase() === address.toUpperCase()) {
+  
+                  console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
+                  socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
+  
+                }
+  
+              });
+  
+          }),
+      );
+    })
+
+  } catch(error) {
+
+    onError(socket, error.message);
+
   }
-
-  if (sender) {
-
-    // Subscribe to pending transactions
-    console.info('Subscribing to pending transactions...');
-    subscriptions.push(
-      web3I.eth
-        .subscribe('pendingTransactions')
-        .on('error', (error: Error) => onError(socket, error.message))
-        .on('data', (txHash: any) => {
-
-          web3I.eth
-            .getTransaction(txHash)
-            .then((txBody: IEthTransactionBody) => {
-
-              if (txBody.from.toUpperCase() === sender.toUpperCase()) {
-
-                console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
-                socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
-
-              }
-
-            });
-
-        }),
-    );
-
-  }
-
-  // Check if there is at least one subscription
-  if (subscriptions.length === 0) {
-    onError(socket, 'No subscriptions', true);
-  }
-
+  
+  
 }
 
 function onError(socket: WebSocket, message: string, terminate: boolean = false) {
