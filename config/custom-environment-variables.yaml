@@ -16,6 +16,14 @@ app:
     params: HANCOCK_DB_PARAMS
     user: HANCOCK_DB_USER
     pass: HANCOCK_DB_PASS
-
     ethereum:
       database: HANCOCK_DB_ETHEREUM_DATABASE
+  consumers:
+    cryptvault:
+      api:
+        getByAddressEndpoint: HANCOCK_CRYPTVAULT_GET_BY_ADDRESS_ENDPOINT
+        notifyEndpoint: HANCOCK_CRYPTVAULT_SIGN_ENDPOINT
+      credentials:
+        key: HANCOK_CRYPTVAULT_KEY
+        secret: HANCOCK_CRYPTVAULT_SECRET
+        expires_in: HANCOCK_CRYPTVAULT_EXPIRES_IN
