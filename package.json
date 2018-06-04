@@ -27,7 +27,11 @@
   "devDependencies": {
     "@types/config": "0.0.33",
     "@types/express": "4.11.0",
+    "@types/jsonwebtoken": "^7.2.7",
     "@types/mongodb": "2.2.18",
+    "@types/request": "^2.47.0",
+    "@types/request-promise-native": "^1.0.14",
+    "@types/uuid": "^3.4.3",
     "@types/ws": "4.0.0",
     "concurrently": "3.5.1",
     "mkdirp": "0.5.1",
@@ -41,8 +45,12 @@
     "config": "1.29.2",
     "express": "4.16.2",
     "js-yaml": "3.10.0",
+    "jsonwebtoken": "^8.2.1",
     "mongodb": "3.0.2",
+    "node-forge": "0.7.5",
     "nodemon": "1.14.12",
+    "request-promise-native": "^1.0.5",
+    "uuid": "^3.2.1",
     "web3": "1.0.0-beta.26",
     "ws": "4.0.0"
   }

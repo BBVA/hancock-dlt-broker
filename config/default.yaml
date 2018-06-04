@@ -17,7 +17,15 @@ app:
     params: ''
     user: ''
     pass: ''
-
     ethereum:
       database: hancock
       collection: smartcontracts
+  consumers:
+    cryptvault:
+      api:
+        getByAddressEndpoint: 'http://kong:8000/v1/wallets/:address'
+        notifyEndpoint: 'http://kong:8000/v1/wallets/:address/notify'
+      credentials:
+        key: 'OiYdLKOblAicxiasy2tJolbc3oBYkiyg'
+        secret: 'umFfDtKwdv9k6uhu7EEA2Hwoe3aWaoTT'
+        expires_in: '1555674519'

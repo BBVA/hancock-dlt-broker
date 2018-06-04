@@ -2,6 +2,9 @@ import { NextFunction, Request, Response, Router } from 'express';
 import * as http from 'http';
 import * as url from 'url';
 import * as WebSocket from 'ws';
+import { IConsumer } from '../consumers/consumer';
+import { getConsumer } from '../consumers/consumerFactory';
+import { CONSUMERS } from '../consumers/types';
 import * as domain from '../domain/ethereum';
 import {
   IEthContractEventBody,
@@ -9,9 +12,9 @@ import {
   IEthereumContractModel,
   IEthTransactionBody,
 } from '../models/ethereum';
-import {ISocketMessage} from '../models/models';
+import { ISocketMessage } from '../models/models';
 import * as Web3 from '../utils/web3';
-import {SocketError} from './error';
+import { SocketError } from './error';
 
 export function SubscribeController(req: Request, res: Response, next: NextFunction) {
 
@@ -35,8 +38,9 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   const addressOrAlias: string = (query.address || query.alias) as string;
   const sender: string = query.sender as string;
+  const consumer: CONSUMERS = query.consumer as CONSUMERS;
 
-  console.log('Incoming socket connection => ', addressOrAlias || sender);
+  console.log('Incoming socket connection => ', consumer, addressOrAlias || sender);
 
   const subscriptions: any[] = [];
   const web3I = await Web3.getWeb3();
@@ -52,51 +56,68 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
   });
 
   socket.on('message', (data: any) => {
-    const dataObj:ISocketMessage = JSON.parse(data);
-    if(dataObj.kind === 'watch-addresses'){
-      SubscribeTransferController(socket, dataObj.body, web3I, subscriptions);
-    } else if(dataObj.kind === 'watch-contracts'){
-      SubscribeContractsController(socket, dataObj.body, web3I, subscriptions)
+
+    const dataObj: ISocketMessage = JSON.parse(data);
+
+    console.log('Incoming message => ', dataObj);
+
+    switch (dataObj.kind) {
+      case 'watch-addresses':
+        SubscribeTransferController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+        break;
+      case 'watch-contracts':
+        SubscribeContractsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+        break;
     }
+
   });
 
-  if(addressOrAlias){
-    SubscribeContractsController(socket, [addressOrAlias], web3I, subscriptions);
-  } else if(sender){
-    SubscribeTransferController(socket, [sender], web3I, subscriptions)
+  if (addressOrAlias) {
+
+    await SubscribeContractsController(socket, [addressOrAlias], web3I, subscriptions, consumer);
+
+  } else if (sender) {
+
+    SubscribeTransferController(socket, [sender], web3I, subscriptions, consumer);
+
   }
 
   // Check if there is at least one subscription
-  if (subscriptions.length === 0) {
-    onError(socket, 'No subscriptions', true);
-  }
+  // if (subscriptions.length === 0) {
+  //   onError(socket, 'No subscriptions', true);
+  // }
 
 }
 
-export async function SubscribeContractsController(socket: WebSocket, contracts: string[], web3I: any, subscriptions: any[]){
-  contracts.map(async contract => {
+export async function SubscribeContractsController(
+  socket: WebSocket, contracts: string[], web3I: any, subscriptions: any[], consumer: CONSUMERS = CONSUMERS.Default) {
+
+  const consumerInstance: IConsumer = getConsumer(socket, consumer);
+
+  contracts.map(async (contractAddressOrAlias: string) => {
 
     try {
-      
-      const ethContractModel: IEthereumContractModel = await domain.subscribe(contract);
+
+      const ethContractModel: IEthereumContractModel = await domain.subscribe(contractAddressOrAlias);
 
       if (ethContractModel) {
 
-        const contract = new web3I.eth.Contract(ethContractModel.abi, ethContractModel.address);
+        const web3Contract: any = new web3I.eth.Contract(ethContractModel.abi, ethContractModel.address);
 
         // Subscribe to contract events
         console.info('Subscribing to contract events...');
         subscriptions.push(
-          contract.events
+          web3Contract.events
             .allEvents({
               address: ethContractModel.address,
             })
-            .on('error', (error: Error) => onError(socket, error.message))
+            .on('error', (error: Error) => onError(socket, error.message, false, consumerInstance))
             .on('data', (eventBody: IEthContractEventBody) => {
 
               // tslint:disable-next-line:max-line-length
               console.log(`new event from contract ${ethContractModel.alias} =>> ${eventBody.id} (${eventBody.event}) `);
-              socket.send(JSON.stringify({ kind: 'event', body: eventBody }));
+              // socket.send(JSON.stringify({ kind: 'event', body: eventBody }));
+              consumerInstance.notify({ kind: 'event', body: eventBody, matchedAddress: ethContractModel.address });
 
             }),
         );
@@ -108,69 +129,88 @@ export async function SubscribeContractsController(socket: WebSocket, contracts:
             .subscribe('logs', {
               address: ethContractModel.address,
             })
-            .on('error', (error: Error) => onError(socket, error.message))
+            .on('error', (error: Error) => onError(socket, error.message, false, consumerInstance))
             .on('data', (logBody: IEthContractLogBody) => {
 
               console.log(`new log from contract ${ethContractModel.alias} =>> ${logBody.id}`);
-              socket.send(JSON.stringify({ kind: 'log', body: logBody }));
+              // socket.send(JSON.stringify({ kind: 'log', body: logBody }));
+              consumerInstance.notify({ kind: 'log', body: logBody, matchedAddress: ethContractModel.address });
 
             }),
         );
 
       } else {
-        onError(socket, 'Contract not found');
+        onError(socket, 'Contract not found', false, consumerInstance);
       }
 
     } catch (error) {
 
-      onError(socket, error.message);
+      onError(socket, error.message, false, consumerInstance);
 
     }
-  })
+  });
 }
 
-export async function SubscribeTransferController(socket: WebSocket, addresses: string[], web3I: any, subscriptions: any[]){
+export function SubscribeTransferController(
+  socket: WebSocket, addresses: string[], web3I: any, subscriptions: any[], consumer: CONSUMERS = CONSUMERS.Default) {
 
-  try{
+  const consumerInstance: IConsumer = getConsumer(socket, consumer);
 
-    addresses.map(address => {
+  try {
+
+    addresses.map((address: string) => {
       // Subscribe to pending transactions
       console.info('Subscribing to pending transactions...');
       subscriptions.push(
         web3I.eth
           .subscribe('pendingTransactions')
-          .on('error', (error: Error) => onError(socket, error.message))
+          .on('error', (error: Error) => onError(socket, error.message, false, consumerInstance))
           .on('data', (txHash: any) => {
-  
+
             web3I.eth
               .getTransaction(txHash)
               .then((txBody: IEthTransactionBody) => {
-  
-                if (txBody.from.toUpperCase() === address.toUpperCase() || txBody.to.toUpperCase() === address.toUpperCase()) {
-  
+
+                if (txBody.from.toUpperCase() === address.toUpperCase()) {
+
                   console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
-                  socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
-  
+                  // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
+                  consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
+
                 }
-  
+
+                if (txBody.to.toUpperCase() === address.toUpperCase()) {
+
+                  console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
+                  // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
+                  consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
+
+                }
+
               });
-  
+
           }),
       );
-    })
+    });
 
-  } catch(error) {
+  } catch (error) {
 
-    onError(socket, error.message);
+    onError(socket, error.message, false, consumerInstance);
 
   }
-  
-  
+
 }
 
-function onError(socket: WebSocket, message: string, terminate: boolean = false) {
+function onError(socket: WebSocket, message: string, terminate: boolean = false, consumer?: IConsumer) {
+
+  console.log(`onError => ${message}`);
   const socketError: SocketError = new SocketError(message);
-  socket.send(JSON.stringify({ kind: 'error', body: socketError }));
+
+  if (consumer) {
+    consumer.notify({ kind: 'error', body: socketError });
+  } else {
+    socket.send(JSON.stringify({ kind: 'error', body: socketError }));
+  }
 
   if (terminate) {
     socket.terminate();

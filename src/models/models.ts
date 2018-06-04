@@ -1,7 +1,25 @@
+import { CONSUMERS } from './../consumers/types';
 
-export type ISocketKind = 'watch-addresses' | 'watch-contracts';
-export type ISocketBody = any;
+export type dltAddress = string;
+
+export interface IRawTransaction {
+  from: dltAddress;
+  to: dltAddress;
+  value: string;
+}
+
+export type ISocketMessageKind = 'watch-addresses' | 'watch-contracts';
+export type ISocketMessageBody = any;
 export interface ISocketMessage {
-    kind: ISocketKind;
-    body: ISocketBody;
-  }
+  kind: ISocketMessageKind;
+  body: ISocketMessageBody;
+  consumer: CONSUMERS;
+}
+
+export type ISocketEventKind = 'tx' | 'log' | 'event' | 'error';
+export type ISocketEventBody = any;
+export interface ISocketEvent {
+  kind: ISocketEventKind;
+  body: ISocketEventBody;
+  matchedAddress?: dltAddress;
+}

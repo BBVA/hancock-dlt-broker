@@ -1,3 +1,5 @@
+import { ISocketEventBody } from './models';
+
 export interface IEthereumContractModel {
   alias: string;
   address: string;
@@ -11,7 +13,7 @@ export type ethBlockHash = string;
 export type ethData = string;
 export type ethTopic = string;
 
-export interface IEthContractEventBody {
+export interface IEthContractEventBody extends ISocketEventBody {
   address: ethContractAddress;
   blockHash: ethBlockHash;
   blockNumber: number;
@@ -29,7 +31,7 @@ export interface IEthContractEventBody {
   type: 'mined';
 }
 
-export interface IEthContractLogBody {
+export interface IEthContractLogBody extends ISocketEventBody {
   address: ethContractAddress;
   blockHash: ethBlockHash;
   blockNumber: number;
@@ -42,7 +44,7 @@ export interface IEthContractLogBody {
   type: 'mined';
 }
 
-export interface IEthTransactionBody {
+export interface IEthTransactionBody extends ISocketEventBody {
   blockHash: ethBlockHash;
   blockNumber: number;
   from: ethAddress;

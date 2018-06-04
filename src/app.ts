@@ -22,7 +22,7 @@ export function run() {
 
         const ws = getSocket(`/${dlt}/subscribe`, server);
         ws.on('connection', controller);
-        
+
       }
 
     });
