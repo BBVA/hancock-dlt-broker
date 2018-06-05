@@ -11,6 +11,8 @@ import {
   IEthContractLogBody,
   IEthereumContractModel,
   IEthTransactionBody,
+  IEthBlockHeader,
+  IEthBlockBody,
 } from '../models/ethereum';
 import { ISocketMessage } from '../models/models';
 import * as Web3 from '../utils/web3';
@@ -160,33 +162,40 @@ export function SubscribeTransferController(
 
     addresses.map((address: string) => {
       // Subscribe to pending transactions
-      console.info('Subscribing to pending transactions...');
+      console.info('Subscribing to mined transactions...');
       subscriptions.push(
         web3I.eth
-          .subscribe('pendingTransactions')
+          .subscribe('newBlockHeaders')
           .on('error', (error: Error) => onError(socket, error.message, false, consumerInstance))
-          .on('data', (txHash: any) => {
+          .on('data', (blockMined: IEthBlockHeader) => {
 
             web3I.eth
-              .getTransaction(txHash)
-              .then((txBody: IEthTransactionBody) => {
+              .getBlock(blockMined.hash, true)
+              .then((blockBody: IEthBlockBody) => {
 
-                if (txBody.from.toUpperCase() === address.toUpperCase()) {
+                blockBody.transactions.map((txBody: IEthTransactionBody) => {
 
-                  console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
-                  // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
-                  consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
+                  if (txBody.from.toUpperCase() === address.toUpperCase()) {
 
-                }
+                    web3I.eth.getCode(txBody.to)
+                    .then((code: string) => {
+                      if(code === '0x0'){
+                        console.log(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+                        // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
+                        consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
+                      }
+                    })
 
-                if (txBody.to.toUpperCase() === address.toUpperCase()) {
+                  }
 
-                  console.log(`new tx =>> ${txHash}, from: ${txBody.from}`);
-                  // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
-                  consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
+                  if (txBody.to.toUpperCase() === address.toUpperCase()) {
 
-                }
+                    console.log(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+                    // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
+                    consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
 
+                  }
+                })
               });
 
           }),
@@ -216,3 +225,4 @@ function onError(socket: WebSocket, message: string, terminate: boolean = false,
     socket.terminate();
   }
 }
+
