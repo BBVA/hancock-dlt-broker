@@ -65,7 +65,7 @@ export interface IEthBlockHeader {
   miner: '0x0000000000000000000000000000000000000000';
   stateRoot: '0x261b0543dcd4474efe4f249eeb99fde8ed9b3e5b942cca1d5d8ef33055c75feb';
   transactionsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421';
-  receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421';
+  receiptRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421';
   logsBloom: string;
   difficulty: '0';
   number: number;
@@ -75,4 +75,25 @@ export interface IEthBlockHeader {
   timestamp: number;
   extraData: '0x00';
   size: undefined;
+}
+
+export interface IEthBlockBody {
+  number: number;
+  hash: '0xf22152edb76673b5f6909e5693f786128760a3761c8a3ccd6b63a3ca45bd053c';
+  parentHash: ethBlockHash;
+  nonce: '0x0000000000000000';
+  sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347';
+  logsBloom: string;
+  transactionsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421';
+  stateRoot: '0x261b0543dcd4474efe4f249eeb99fde8ed9b3e5b942cca1d5d8ef33055c75feb';
+  miner: '0x0000000000000000000000000000000000000000';
+  difficulty: '0';
+  totalDifficulty: string;
+  extraData: '0x00';
+  size: number;
+  gasLimit: number;
+  gasUsed: number;
+  timestamp: number;
+  transactions: IEthTransactionBody[];
+  uncles: string[];
 }
