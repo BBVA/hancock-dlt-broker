@@ -23,8 +23,10 @@ app:
   consumers:
     cryptvault:
       api:
-        getByAddressEndpoint: 'http://kong:8000/v1/wallets/:address'
-        notifyEndpoint: 'http://kong:8000/v1/wallets/:address/notify'
+        #getByAddressEndpoint: 'http://kong:8000/v1/wallets/:address' 
+        #notifyEndpoint: 'http://kong:8000/v1/wallets/:address/notify' 
+        getByAddressEndpoint: 'http://kst-hancock-ms-wallet-hub.blockchainhub-develop/v1/wallets/:address' 
+        notifyEndpoint: 'http://kst-hancock-ms-wallet-hub.blockchainhub-develop/v1/wallets/:address/notify' 
       credentials:
         key: 'OiYdLKOblAicxiasy2tJolbc3oBYkiyg'
         secret: 'umFfDtKwdv9k6uhu7EEA2Hwoe3aWaoTT'
