@@ -84,6 +84,8 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   }
 
+  socket.send(JSON.stringify({'kind':'ready'}));
+
   // Check if there is at least one subscription
   // if (subscriptions.length === 0) {
   //   onError(socket, 'No subscriptions', true);
