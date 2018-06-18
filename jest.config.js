@@ -7,8 +7,7 @@ module.exports = {
     moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
     collectCoverageFrom: [
         "src/**/*.ts",
-        "!**/node_modules/**",
-        "!src/custom-typings.d.ts",
+        "!**/node_modules/**"
     ],
     // coverageReporters: [
     //     "json",
