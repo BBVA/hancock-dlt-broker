@@ -10,7 +10,8 @@
     "serve:debug": "nodemon --inspect=0.0.0.0 dist/index.js",
     "build:ts": "tsc",
     "watch:ts": "tsc -w --inlineSources --inlineSourceMap",
-    "test": "echo \"Error: no test specified\" && exit 0",
+    "test": "jest",
+    "coverage": "jest --coverage",
     "docs": "rimraf documentation && mkdirp documentation && raml2html --theme raml2html-markdown-theme raml/api.raml > documentation/api.md"
   },
   "repository": {
@@ -39,17 +40,20 @@
     "raml2html-markdown-theme": "1.0.2",
     "rimraf": "2.6.2",
     "tslint": "5.8.0",
-    "typescript": "2.6.2"
+    "typescript": "^2.9.2"
   },
   "dependencies": {
+    "@types/jest": "^23.1.0",
     "config": "1.29.2",
-    "express": "4.16.2",
+    "express": "^4.16.2",
+    "jest": "^23.1.0",
     "js-yaml": "3.10.0",
     "jsonwebtoken": "^8.2.1",
     "mongodb": "3.0.2",
     "node-forge": "0.7.5",
     "nodemon": "1.14.12",
     "request-promise-native": "^1.0.5",
+    "ts-jest": "^22.4.6",
     "uuid": "^3.2.1",
     "web3": "1.0.0-beta.26",
     "ws": "4.0.0"

@@ -7,3 +7,4 @@ documentation/
 .editorconfig
 dist/*
 config/local.yaml
+coverage/
