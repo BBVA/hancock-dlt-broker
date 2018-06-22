@@ -8,3 +8,4 @@ documentation/
 dist/*
 config/local.yaml
 coverage/
+tests/reports

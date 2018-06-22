@@ -48,6 +48,7 @@
     "config": "1.29.2",
     "express": "^4.16.2",
     "jest": "^23.1.0",
+    "jest-junit": "^5.1.0",
     "js-yaml": "3.10.0",
     "jsonwebtoken": "^8.2.1",
     "mongodb": "3.0.2",
