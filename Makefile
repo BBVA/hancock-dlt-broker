@@ -12,6 +12,9 @@ dev: build-dev down-dev
 test: build-dev down-dev
 	${COMPOSE_DEV} run --rm --service-ports hancock_dlt_broker test
 
+coverage: build-dev down-dev
+	${COMPOSE_DEV} run --rm --service-ports hancock_dlt_broker coverage
+
 shell: build-dev down-dev
 	${COMPOSE_DEV} run --rm --no-deps hancock_dlt_broker /bin/bash
 

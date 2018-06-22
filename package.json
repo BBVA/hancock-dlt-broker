@@ -11,6 +11,7 @@
     "build:ts": "tsc",
     "watch:ts": "tsc -w --inlineSources --inlineSourceMap",
     "test": "jest",
+    "test:watch": "jest --watchAll",
     "coverage": "jest --coverage",
     "docs": "rimraf documentation && mkdirp documentation && raml2html --theme raml2html-markdown-theme raml/api.raml > documentation/api.md"
   },
