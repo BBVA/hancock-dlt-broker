@@ -5,7 +5,7 @@ nodePipeline{
 
     docker_shuttle_stage()
 
-    stage('Create coverage and junit xml'){
+    stage('Unit tests'){
       container('node'){
         sh """
           npm run coverage
