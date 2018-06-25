@@ -14,5 +14,14 @@ module.exports = {
     coverageDirectory: 'tests/reports/coverage',
     coverageReporters: [
         "cobertura"
-    ]
+    ],
+    bail: true,
+    coverageThreshold: {
+      global: {
+        branches: 60,
+        functions: 60,
+        lines: 60,
+        statements: 60
+      }
+    }
 };
