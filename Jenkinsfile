@@ -3,15 +3,24 @@ nodePipeline{
   // ---- DEVELOP ----
   if (env.BRANCH_NAME == 'develop') {
 
-    docker_shuttle_stage()
+    stage('Install Dependencies'){
+      container('node'){
+        sh """
+          yarn cache clean --force
+          yarn install
+        """
+      }
+    }
 
     stage('Unit tests'){
       container('node'){
         sh """
-          npm run coverage
+          yarn run coverage
         """
       }
     }
+
+    docker_shuttle_stage()
 
     //qa_data_shuttle_stage()
 

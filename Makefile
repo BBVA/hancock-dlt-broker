@@ -1,4 +1,4 @@
-.PHONY: build-dev dev test shell db-shell-prod docs db-dev db-shell-dev db-init-dev down-dev
+.PHONY: build-dev dev test coverage shell db-shell-prod docs db-dev db-shell-dev db-init-dev down-dev
 
 YML_DEV=environment/dev/docker-compose.yml
 COMPOSE_DEV=docker-compose -f ${YML_DEV}
