@@ -5,10 +5,19 @@ nodePipeline{
 
     docker_shuttle_stage()
 
+    stage('Install Dependencies'){
+      container('node'){
+        sh """
+          yarn cache clean --force
+          yarn install
+        """
+      }
+    }
+
     stage('Unit tests'){
       container('node'){
         sh """
-          npm run coverage
+          yarn run coverage
         """
       }
     }
