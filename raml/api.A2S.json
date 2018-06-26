@@ -34,8 +34,8 @@
     },
     "events": {
         "receive": [
-            { "$ref": "#/components/messages/address" },
-            { "$ref": "#/components/messages/contracts" }
+            { "$ref": "#/components/messages/watch-addresses" },
+            { "$ref": "#/components/messages/watch-contracts" }
         ],
         "send": [
             { "$ref": "#/components/messages/tx" },
@@ -46,13 +46,13 @@
     },
     "components": {
         "messages": {
-            "address": {
+            "watch-addresses": {
                 "summary": "New address to subscribe",
                 "payload":{
                     "$ref": "#/components/schemas/recieveMessage"
                 }
             },
-            "contracts": {
+            "watch-contracts": {
                 "summary": "New contracts to subscribe",
                 "payload":{
                     "$ref": "#/components/schemas/recieveMessage"
@@ -88,7 +88,10 @@
                 "type": "object",
                 "properties": {
                     "kind":{
-                        "type": "string"
+                        "enum": [
+                            "watch-addresses",
+                            "watch-contracts"
+                        ]
                     },
                     "body":{
                         "type": "object"
@@ -102,7 +105,12 @@
                 "type": "object",
                 "properties": {
                     "kind":{
-                        "type": "string"
+                        "enum": [
+                            "tx",
+                            "log",
+                            "event",
+                            "error"
+                        ]
                     },
                     "body":{
                         "type": "object"
