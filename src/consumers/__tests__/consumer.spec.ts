@@ -44,6 +44,17 @@ describe('consumer', () => {
 
   });
 
+  it('should throw exception', async () => {
+
+    try {
+      await testConsumer.notify(null);
+      fail('it should fail');
+    } catch (error) {
+      expect(error).toBeDefined();
+    }
+
+  });
+
   it('call getSenderFromRawTx should return sender successfully', async () => {
 
     const response = (testConsumer as any).getSenderFromRawTx(tx);

@@ -21,6 +21,16 @@ describe('consumerFactory', () => {
 
     });
 
+    it('::getConsumer should return the consumer successfully without consumer', () => {
+
+        const webSocket = {} as any;
+        const response = getConsumer(webSocket);
+
+        expect(consumer.Consumer).toHaveBeenCalledWith(webSocket);
+        expect(response).toEqual((consumer as any).__consumerInstance__);
+
+    });
+
     it('::getConsumer should return the cryptvaultConsumer successfully', () => {
 
         const webSocket = {} as any;
