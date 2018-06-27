@@ -1,5 +1,8 @@
 const mock = {
   application: 'applicationName',
+  blockchain: {
+    ethereum: 'mockBlockchain',
+  },
   consumers: {
     cryptvault: {
       api: {

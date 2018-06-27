@@ -15,7 +15,7 @@ import {
   IEthTransactionBody,
 } from '../models/ethereum';
 import { ISocketMessage } from '../models/models';
-import * as Web3 from '../utils/web3';
+import * as Ethereum from '../utils/ethereum';
 import { SocketError } from './error';
 
 export function SubscribeController(req: Request, res: Response, next: NextFunction) {
@@ -45,7 +45,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
   console.log('Incoming socket connection => ', consumer, addressOrAlias || sender);
 
   const subscriptions: any[] = [];
-  const web3I = await Web3.getWeb3();
+  const web3I = await Ethereum.getWeb3();
 
   socket.on('close', () => {
 
@@ -186,7 +186,7 @@ export function SubscribeTransferController(
                         // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
                         consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
                       }
-                    })
+                    });
 
                   }
 
@@ -197,7 +197,7 @@ export function SubscribeTransferController(
                     consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
 
                   }
-                })
+                });
               });
 
           }),
@@ -227,4 +227,3 @@ function onError(socket: WebSocket, message: string, terminate: boolean = false,
     socket.terminate();
   }
 }
-
