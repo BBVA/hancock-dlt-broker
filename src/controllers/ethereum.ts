@@ -7,12 +7,12 @@ import { getConsumer } from '../consumers/consumerFactory';
 import { CONSUMERS } from '../consumers/types';
 import * as domain from '../domain/ethereum';
 import {
+  IEthBlockBody,
+  IEthBlockHeader,
   IEthContractEventBody,
   IEthContractLogBody,
   IEthereumContractModel,
   IEthTransactionBody,
-  IEthBlockHeader,
-  IEthBlockBody,
 } from '../models/ethereum';
 import { ISocketMessage } from '../models/models';
 import * as Web3 from '../utils/web3';
@@ -84,7 +84,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   }
 
-  socket.send(JSON.stringify({'kind':'ready'}));
+  socket.send(JSON.stringify({kind: 'ready'}));
 
   // Check if there is at least one subscription
   // if (subscriptions.length === 0) {

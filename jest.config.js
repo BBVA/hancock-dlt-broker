@@ -13,7 +13,9 @@ module.exports = {
     reporters: [ "default", [ "jest-junit", { output: "tests/reports/unit/junit.xml" } ] ],
     coverageDirectory: 'tests/reports/coverage',
     coverageReporters: [
-        "cobertura"
+        "cobertura",
+        "lcov",
+        "text"
     ],
     bail: true,
     coverageThreshold: {
