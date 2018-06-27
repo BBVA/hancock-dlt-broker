@@ -18,8 +18,7 @@ module.exports = {
     coverageDirectory: 'tests/reports/coverage',
     coverageReporters: [
         "cobertura",
-        "lcov",
-        "text"
+        "lcov"
     ],
     bail: true,
     coverageThreshold: {
