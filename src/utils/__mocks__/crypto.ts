@@ -25,4 +25,4 @@ export const __cryptoUtilsInstance__ = {
 };
 
 // tslint:disable-next-line:variable-name
-export const CryptoUtils = jest.fn().mockImplementation(() => __cryptoUtilsInstance__);
+export const CryptoUtils =  __cryptoUtilsInstance__;
