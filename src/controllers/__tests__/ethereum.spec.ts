@@ -166,8 +166,11 @@ describe('_subscribeContractsController', () => {
   let socket: any;
   let req: any;
   let example: any;
+  let web3: any;
+  let newblock: any;
+  let blockBody: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
 
       socket = {
         on: jest.fn(),
@@ -183,24 +186,24 @@ describe('_subscribeContractsController', () => {
         consumer: 'Consumer',
         kind: 'watch-contracts',
       };
+
+      web3 = await Ethereum.getWeb3();
+      newblock = {
+        hash: '0xf22152edb76673b5f6909e5693f786128760a3761c8a3ccd6b63a3ca45bd053c',
+      };
+
+      blockBody = {
+        transactions: [
+          {
+            from: 'from',
+            hash: 'hash',
+            to: 'to',
+          },
+        ],
+      };
   });
 
   it('should call _subscribeContractsController correctly', async () => {
-
-    const web3 = await Ethereum.getWeb3();
-    const newblock = {
-      hash: '0xf22152edb76673b5f6909e5693f786128760a3761c8a3ccd6b63a3ca45bd053c',
-    };
-
-    const blockBody = {
-      transactions: [
-        {
-          from: 'from',
-          hash: 'hash',
-          to: 'to',
-        },
-      ],
-    };
 
     web3.eth.subscribe =  jest.fn().mockImplementation(() => {
       const promise = Promise.resolve('whatever');
@@ -228,6 +231,31 @@ describe('_subscribeContractsController', () => {
 
     expect(web3.eth.getBlock).toHaveBeenCalledWith(newblock.hash, true);
     expect(web3.eth.getCode).toHaveBeenCalledWith('to');
+
+  });
+
+  it('should call _subscribeContractsController correctly 2', async () => {
+
+    web3.eth.subscribe =  jest.fn().mockImplementation(() => {
+      const promise = Promise.resolve('whatever');
+      (promise as any).on = jest.fn().mockImplementationOnce(() => {
+        const promise2 = Promise.resolve('whatever');
+        (promise2 as any).on = jest.fn().mockImplementationOnce((message, callback) => {
+          callback(newblock);
+        });
+        return promise2;
+      });
+      return promise;
+    });
+
+    web3.eth.getBlock =  jest.fn().mockImplementation(() => {
+      const promise = Promise.resolve(blockBody);
+      return promise;
+    });
+
+    await ethereumController._subscribeTransferController(socket, ['to'], web3, []);
+
+    expect(web3.eth.getBlock).toHaveBeenCalledWith(newblock.hash, true);
 
   });
 
