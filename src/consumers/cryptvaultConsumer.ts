@@ -74,7 +74,6 @@ export class CryptvaultConsumer extends Consumer {
     if (walletResponse.result && walletResponse.result.status_code === 200) {
 
       const txPayload: ISocketEventBody = event.body;
-
       const itemKey: symmetricKey = CryptoUtils.generateSymmetricKey(32);
       const iv: symmetricKey = CryptoUtils.generateSymmetricKey(12);
       const aad: string = 'notifyTransaction';

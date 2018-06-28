@@ -36,7 +36,7 @@ export const ErrorMap: IErrorMap = {
   NOT_FOUND: { code_internal: 'DC4040', code_http: 404, message: 'Not Found' },
 };
 
-export function ErrorController(error: any, req: Request, res: Response, next: NextFunction) {
+export function errorController(error: any, req: Request, res: Response, next: NextFunction) {
 
   const customError: ICustomError = ErrorMap[error.message] || ErrorMap[Errors.DEFAULT_ERROR];
   // const logger = loggerUtils.getLogger(customError.code_internal);
