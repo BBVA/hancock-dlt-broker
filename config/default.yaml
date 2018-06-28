@@ -19,7 +19,8 @@ app:
     pass: ''
     ethereum:
       database: hancock
-      collection: smartcontracts
+      collections:
+        contracts: smartcontracts
   consumers:
     cryptvault:
       api:
