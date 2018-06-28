@@ -34,6 +34,7 @@ export function SubscribeController(req: Request, res: Response, next: NextFunct
 
 }
 
+// tslint:disable-next-line:variable-name
 export async function SocketSubscribeController(socket: WebSocket, req: http.IncomingMessage) {
 
   const { query } = url.parse(req.url as string, true);
@@ -65,10 +66,10 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     switch (dataObj.kind) {
       case 'watch-addresses':
-        SubscribeTransferController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+        _subscribeTransferController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
         break;
       case 'watch-contracts':
-        SubscribeContractsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+        _subscribeContractsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
         break;
     }
 
@@ -76,11 +77,11 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   if (addressOrAlias) {
 
-    await SubscribeContractsController(socket, [addressOrAlias], web3I, subscriptions, consumer);
+    _subscribeContractsController(socket, [addressOrAlias], web3I, subscriptions, consumer);
 
   } else if (sender) {
 
-    SubscribeTransferController(socket, [sender], web3I, subscriptions, consumer);
+    _subscribeTransferController(socket, [sender], web3I, subscriptions, consumer);
 
   }
 
@@ -93,8 +94,9 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
 }
 
-export async function SubscribeContractsController(
-  socket: WebSocket, contracts: string[], web3I: any, subscriptions: any[], consumer: CONSUMERS = CONSUMERS.Default) {
+// tslint:disable-next-line:variable-name
+export const _subscribeContractsController = async (
+  socket: WebSocket, contracts: string[], web3I: any, subscriptions: any[], consumer: CONSUMERS = CONSUMERS.Default) => {
 
   const consumerInstance: IConsumer = getConsumer(socket, consumer);
 
@@ -155,8 +157,9 @@ export async function SubscribeContractsController(
   });
 }
 
-export function SubscribeTransferController(
-  socket: WebSocket, addresses: string[], web3I: any, subscriptions: any[], consumer: CONSUMERS = CONSUMERS.Default) {
+// tslint:disable-next-line:variable-name
+export const _subscribeTransferController = (
+  socket: WebSocket, addresses: string[], web3I: any, subscriptions: any[], consumer: CONSUMERS = CONSUMERS.Default) => {
 
   const consumerInstance: IConsumer = getConsumer(socket, consumer);
 
@@ -181,7 +184,7 @@ export function SubscribeTransferController(
 
                     web3I.eth.getCode(txBody.to)
                     .then((code: string) => {
-                      if(code === '0x0'){
+                      if (code === '0x0') {
                         console.log(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
                         // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
                         consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
@@ -210,7 +213,7 @@ export function SubscribeTransferController(
 
   }
 
-}
+};
 
 function onError(socket: WebSocket, message: string, terminate: boolean = false, consumer?: IConsumer) {
 
