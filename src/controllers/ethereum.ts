@@ -155,7 +155,7 @@ export const _subscribeContractsController = async (
 
     }
   });
-}
+};
 
 // tslint:disable-next-line:variable-name
 export const _subscribeTransferController = (
@@ -168,6 +168,7 @@ export const _subscribeTransferController = (
     addresses.map((address: string) => {
       // Subscribe to pending transactions
       console.info('Subscribing to mined transactions...');
+
       subscriptions.push(
         web3I.eth
           .subscribe('newBlockHeaders')

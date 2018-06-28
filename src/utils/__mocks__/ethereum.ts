@@ -1,12 +1,27 @@
 // tslint:disable-next-line:variable-name
 export const __mockWeb3__ = {
     eth: {
+        getBlock: jest.fn().mockImplementation(() => {
+            const promise = Promise.resolve('whatever');
+            (promise as any).on = jest.fn().mockReturnValue(promise);
+            return promise;
+        }),
+        getCode: jest.fn().mockImplementation(() => {
+            const promise = Promise.resolve('whatever');
+            (promise as any).on = jest.fn().mockReturnValue(promise);
+            return promise;
+        }),
         sendSignedTransaction: jest.fn().mockImplementation(() => {
             const promise = Promise.resolve('whatever');
             (promise as any).on = jest.fn().mockReturnValue(promise);
             return promise;
         }),
         sendTransaction: jest.fn().mockImplementation(() => {
+            const promise = Promise.resolve('whatever');
+            (promise as any).on = jest.fn().mockReturnValue(promise);
+            return promise;
+        }),
+        subscribe: jest.fn().mockImplementation(() => {
             const promise = Promise.resolve('whatever');
             (promise as any).on = jest.fn().mockReturnValue(promise);
             return promise;
