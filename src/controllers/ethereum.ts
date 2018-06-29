@@ -104,7 +104,7 @@ export const _subscribeContractsController = async (
 
     try {
 
-      const ethContractModel: IEthereumContractModel = await domain.subscribe(contractAddressOrAlias);
+      const ethContractModel: IEthereumContractModel | null = await domain.subscribe(contractAddressOrAlias);
 
       if (ethContractModel) {
 
