@@ -41,11 +41,10 @@ describe('cryptvaultConsumer', () => {
 
   it('should call cypherAndSendTransfer method on notify of tx', async () => {
 
-    const spy = jest.spyOn(CryptvaultConsumer.prototype, 'cypherAndSendTransfer')
+    const spy = jest.spyOn((CryptvaultConsumer.prototype as any), 'cypherAndSendTransfer')
     .mockImplementation(() => Promise.resolve(true));
     await testConsumer.notify(event);
     expect(spy).toHaveBeenCalledWith(event);
-    spy.mockRestore();
   });
 
   it('should call cypherAndSendTransfer method on notify of not tx', async () => {
@@ -56,7 +55,6 @@ describe('cryptvaultConsumer', () => {
     .mockImplementation(() => Promise.resolve(true));
     await testConsumer.notify(event);
     expect(spy).toHaveBeenCalledWith(event);
-    spy.mockRestore();
   });
 
   it('should call cypherAndSendTransfer method successfully', async () => {
@@ -74,9 +72,9 @@ describe('cryptvaultConsumer', () => {
     };
     (request.get as any) = jest.fn().mockReturnValue(response);
 
-    const getTokenspy = jest.spyOn(CryptvaultConsumer.prototype, 'getToken')
+    const getTokenspy = jest.spyOn((CryptvaultConsumer.prototype as any), 'getToken')
     .mockImplementation(() => Promise.resolve('whatever'));
-    const getTxDirectionspy = jest.spyOn(CryptvaultConsumer.prototype, 'getTxDirection')
+    const getTxDirectionspy = jest.spyOn((CryptvaultConsumer.prototype as any), 'getTxDirection')
     .mockImplementation(() => Promise.resolve('whatever'));
     const spy = jest.spyOn(Consumer.prototype, 'notify')
     .mockImplementation(() => Promise.resolve(true));
@@ -86,10 +84,6 @@ describe('cryptvaultConsumer', () => {
     expect(getTokenspy).toHaveBeenCalledTimes(1);
     expect(getTxDirectionspy).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalledTimes(1);
-
-    getTokenspy.mockRestore();
-    getTxDirectionspy.mockRestore();
-    spy.mockRestore();
   });
 
   it('should call cypherAndSendTransfer method and throw exception', async () => {
@@ -107,9 +101,9 @@ describe('cryptvaultConsumer', () => {
     };
     (request.get as any) = jest.fn().mockReturnValue(response);
 
-    const getTokenspy = jest.spyOn(CryptvaultConsumer.prototype, 'getToken')
+    const getTokenspy = jest.spyOn((CryptvaultConsumer.prototype as any), 'getToken')
     .mockImplementation(() => Promise.resolve('whatever'));
-    const getTxDirectionspy = jest.spyOn(CryptvaultConsumer.prototype, 'getTxDirection')
+    const getTxDirectionspy = jest.spyOn((CryptvaultConsumer.prototype as any), 'getTxDirection')
     .mockImplementation(() => Promise.resolve('whatever'));
     const spy = jest.spyOn(Consumer.prototype, 'notify')
     .mockImplementation(() => Promise.resolve(true));
@@ -120,10 +114,6 @@ describe('cryptvaultConsumer', () => {
     } catch (error) {
       expect(error).toBeDefined();
     }
-
-    getTokenspy.mockRestore();
-    getTxDirectionspy.mockRestore();
-    spy.mockRestore();
   });
 
   it('should call getTxDirection method successfully and return 0', () => {
