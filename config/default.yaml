@@ -7,11 +7,11 @@ app:
     base: ''
   blockchain:
     ethereum:
-      host: kst-hancock-ms-ganache-cli.blockchainhub-develop.svc.cluster.local
+      host: mongo
       port: 8545
   db:
     protocol: mongodb
-    host: mongo.blockchainhub-develop.svc.cluster.local
+    host: mongo
     port: 27017
     database: hancock
     params: ''
