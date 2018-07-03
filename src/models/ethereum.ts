@@ -3,6 +3,7 @@ import { ISocketEventBody } from './models';
 export interface IEthereumContractModel {
   alias: string;
   address: string;
+  abiName: string;
   abi: any[];
 }
 

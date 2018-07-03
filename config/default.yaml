@@ -20,7 +20,8 @@ app:
     ethereum:
       database: hancock
       collections:
-        contracts: smartcontracts
+        contractAbis: sc_abi
+        contractInstances: sc_instance
   consumers:
     cryptvault:
       api:
