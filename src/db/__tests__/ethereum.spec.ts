@@ -1,5 +1,5 @@
 import 'jest';
-import { Collection, AggregationCursor } from 'mongodb';
+import { AggregationCursor, Collection } from 'mongodb';
 import * as db from '../../utils/db';
 import * as utils from '../../utils/utils';
 import * as ethereumDb from '../ethereum';
@@ -18,11 +18,11 @@ describe('dbEthereum', async () => {
 
     await ethereumDb._getCollection('whateverCollectionToRetrieve');
 
-    expect(getDbMock.mock.calls.length).toBe(1);
-    expect(getDbMock.mock.calls).toEqual([['mockDatabase']]);
+    expect(getDbMock).toHaveBeenCalled();
+    expect(getDbMock).toHaveBeenCalledWith('mockDatabase');
 
-    expect(dbClientMock.collection.mock.calls.length).toBe(1);
-    expect(dbClientMock.collection.mock.calls).toEqual([['whateverCollectionToRetrieve']]);
+    expect(dbClientMock.collection).toHaveBeenCalled();
+    expect(dbClientMock.collection).toHaveBeenCalledWith('whateverCollectionToRetrieve');
 
   });
 
