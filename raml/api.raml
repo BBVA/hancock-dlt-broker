@@ -18,29 +18,3 @@ securitySchemes:
   get:
     description: !include docs/get-healthcheck.md
     responses: !include responses/get-healthcheck.yml
-    
-/{dlt_type}:
-  title: Ethereum
-  uriParameters:
-    dlt_type:
-      type: string
-
-  /subscribe:
-    description: |
-      Websocket that recieve smart contract events from the DLT.
-    get:
-      queryParameters:
-        address:
-          displayName: Address
-          type: string
-          description: The adress of the smart contract which we want to subscribe
-          example: 0x2d467F4D9DAA9C4713Cf063CE57364C4856ee217
-          required: true
-        sender:
-          displayName: Sender
-          type: string
-          description: The adress of the sender wallet
-          example: 0xd460efa6d76040a477463e655aa18454bd7bd6a1
-          required: true
-      description: !include docs/socket-subscribe.md
-      responses: !include responses/socket-subscribe.yml

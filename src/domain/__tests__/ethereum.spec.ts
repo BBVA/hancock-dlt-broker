@@ -1,13 +1,9 @@
 import 'jest';
-import { Collection } from 'mongodb';
+import * as db from '../../db/ethereum';
 import { IEthereumContractModel } from '../../models/ethereum';
-import * as db from '../../utils/db';
-import { getScQueryByAddressOrAlias } from '../../utils/utils';
 import * as ethereumDomain from '../ethereum';
 
-jest.mock('../../utils/config');
-jest.mock('../../utils/utils');
-jest.mock('../../utils/db');
+jest.mock('../../db/ethereum');
 
 describe('ethereumDomain', async () => {
 
@@ -19,35 +15,18 @@ describe('ethereumDomain', async () => {
 
   });
 
-  it('::_getCollection should return the mongodb collection successfully', async () => {
+  describe('::findOne', () => {
 
-    const getDbMock = (db.getDb as jest.Mock);
-    const dbClientMock = ((db as any).__client__);
-
-    const coll: Collection = await ethereumDomain._getCollection();
-
-    expect(getDbMock).toHaveBeenCalledWith('mockDatabase');
-    expect(dbClientMock.collection).toHaveBeenCalledWith('mockDatabaseCollectionContracts');
-    expect(coll).toBe(collMock);
-
-  });
-
-  describe('::subscribe', () => {
-
-    it('should call SocketSubscribeController correctly', async () => {
+    it('should call db.getSmartContractByAddressOrAlias and retrieve the ContractModel', async () => {
 
       const addressOrAlias: string = 'mockedAddressOrAlias';
       const contractModelResponse: IEthereumContractModel = {} as any;
-      const queryResponse = {};
 
-      (getScQueryByAddressOrAlias as jest.Mock).mockReturnValue(queryResponse);
-      jest.spyOn(ethereumDomain, '_getCollection').mockResolvedValue(collMock);
-      (collMock.findOne as jest.Mock).mockResolvedValue(contractModelResponse);
+      const dbMock = (db.getSmartContractByAddressOrAlias as jest.Mock).mockResolvedValue(contractModelResponse);
 
-      const result = await ethereumDomain.subscribe(addressOrAlias);
+      const result: IEthereumContractModel = await ethereumDomain.findOne(addressOrAlias);
 
-      expect(getScQueryByAddressOrAlias).toHaveBeenCalledWith(addressOrAlias);
-      expect(collMock.findOne).toHaveBeenCalledWith(queryResponse);
+      expect(dbMock).toHaveBeenCalledWith(addressOrAlias);
       expect(result).toEqual(contractModelResponse);
 
     });
