@@ -1,4 +1,3 @@
-import { NextFunction, Request, Response, Router } from 'express';
 import * as http from 'http';
 import * as url from 'url';
 import * as WebSocket from 'ws';
@@ -17,22 +16,6 @@ import {
 import { ISocketMessage } from '../models/models';
 import * as Ethereum from '../utils/ethereum';
 import { SocketError } from './error';
-
-export function SubscribeController(req: Request, res: Response, next: NextFunction) {
-
-  const addressorAlias: string = req.query.address || req.query.alias;
-  // const sender: string = req.query.sender;
-
-  if (!addressorAlias) {
-    throw new Error('DEFAULT_ERROR');
-  }
-
-  domain
-    .subscribe(addressorAlias)
-    .then((response: any) => res.send(response))
-    .catch(next);
-
-}
 
 // tslint:disable-next-line:variable-name
 export async function SocketSubscribeController(socket: WebSocket, req: http.IncomingMessage) {
@@ -104,7 +87,7 @@ export const _subscribeContractsController = async (
 
     try {
 
-      const ethContractModel: IEthereumContractModel | null = await domain.subscribe(contractAddressOrAlias);
+      const ethContractModel: IEthereumContractModel | null = await domain.findOne(contractAddressOrAlias);
 
       if (ethContractModel) {
 
