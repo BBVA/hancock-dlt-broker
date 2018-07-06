@@ -6,6 +6,7 @@ app:
     protocol: HANCOCK_SERVER_PROTOCOL
   blockchain:
     ethereum:
+      protocol: HANCOCK_BLOCKCHAIN_ETHEREUM_PROTOCOL
       host: HANCOCK_BLOCKCHAIN_ETHEREUM_HOST
       port: HANCOCK_BLOCKCHAIN_ETHEREUM_PORT
   db:

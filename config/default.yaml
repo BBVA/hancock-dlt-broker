@@ -7,7 +7,8 @@ app:
     base: ''
   blockchain:
     ethereum:
-      host: mongo
+      protocol: ws
+      host: ganache
       port: 8545
   db:
     protocol: mongodb
