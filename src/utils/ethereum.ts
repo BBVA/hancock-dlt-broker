@@ -1,4 +1,3 @@
-import { Express } from 'express';
 import config from './config';
 
 // tslint:disable-next-line:no-var-requires
@@ -9,7 +8,7 @@ let web3: any;
 function initWeb3() {
 
   const cfg: any = config.blockchain.ethereum;
-  web3 = new Web3(new Web3.providers.WebsocketProvider(`ws://${cfg.host}:${cfg.port}`));
+  web3 = new Web3(new Web3.providers.WebsocketProvider(`${cfg.protocol}://${cfg.host}:${cfg.port}`));
 
 }
 
