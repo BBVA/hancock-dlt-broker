@@ -41,6 +41,12 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   });
 
+  // Fix connection timeout problems
+  // TODO: think about it and take a better solution
+  setTimeout(() => {
+    socket.send(JSON.stringify({ kind: 'ping', body: (new Date()).toISOString() }));
+  }, 5000);
+
   socket.on('message', (data: any) => {
 
     const dataObj: ISocketMessage = JSON.parse(data);
@@ -68,7 +74,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   }
 
-  socket.send(JSON.stringify({kind: 'ready'}));
+  socket.send(JSON.stringify({ kind: 'ready' }));
 
   // Check if there is at least one subscription
   // if (subscriptions.length === 0) {
@@ -167,13 +173,13 @@ export const _subscribeTransferController = (
                   if (txBody.from.toUpperCase() === address.toUpperCase()) {
 
                     web3I.eth.getCode(txBody.to)
-                    .then((code: string) => {
-                      if (code === '0x0') {
-                        console.log(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-                        // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
-                        consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
-                      }
-                    });
+                      .then((code: string) => {
+                        if (code === '0x0') {
+                          console.log(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+                          // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
+                          consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
+                        }
+                      });
 
                   }
 
