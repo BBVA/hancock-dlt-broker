@@ -58,7 +58,7 @@ export class CryptvaultConsumer extends Consumer {
 
     const token: string = this.getToken();
     // tslint:disable-next-line:max-line-length
-    const walletEndpoint: string = config.consumers.cryptvault.api.getByAddressEndpoint.replace(':address', event.body.from);
+    const walletEndpoint: string = config.consumers.cryptvault.api.getByAddressEndpoint.replace(':address', event.matchedAddress);
 
     console.log('getting PK from cryptvault', walletEndpoint);
 
