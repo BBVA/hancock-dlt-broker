@@ -3,7 +3,7 @@ nodePipeline{
   // ---- DEVELOP ----
   if (env.BRANCH_NAME == 'develop') {
 
-    sonar_shuttle_stage()
+    // sonar_shuttle_stage()
 
     stage('Install Dependencies'){
       container('node'){
@@ -22,8 +22,6 @@ nodePipeline{
       }
     }
 
-
-
     docker_shuttle_stage()
 
     qa_data_shuttle_stage()
@@ -36,7 +34,7 @@ nodePipeline{
   // ---- RELEASE ----
   if (env.BRANCH_NAME == 'qa' ||env.BRANCH_NAME =~ 'release/*') {
 
-    sonar_shuttle_stage()
+    // sonar_shuttle_stage()
 
     stage('Install Dependencies'){
       container('node'){

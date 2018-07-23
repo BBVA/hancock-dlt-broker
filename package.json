@@ -13,6 +13,8 @@
     "test": "jest",
     "test:watch": "jest --watchAll",
     "coverage": "jest --coverage",
+    "lint": "tslint --project .",
+    "lint:fix": "npm run lint -- --fix",
     "docs": "rimraf documentation && mkdirp documentation && raml2html --theme raml2html-markdown-theme raml/api.raml > documentation/api.md"
   },
   "repository": {
@@ -45,7 +47,7 @@
     "raml2html-markdown-theme": "1.0.2",
     "rimraf": "2.6.2",
     "ts-jest": "^22.4.6",
-    "tslint": "5.8.0",
+    "tslint": "^5.8.0",
     "typescript": "^2.9.2"
   },
   "dependencies": {
