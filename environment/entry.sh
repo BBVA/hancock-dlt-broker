@@ -34,6 +34,12 @@ then
     install_deps
     yarn run coverage
 
+elif [ "$1" = 'lint' ]
+then
+
+    install_deps
+    yarn run lint:fix
+    
 elif [ "$1" = 'prod' ]
 then
 
