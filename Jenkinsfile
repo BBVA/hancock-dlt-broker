@@ -1,3 +1,13 @@
+def lint() {
+  stage('Linter'){
+    container('node'){
+      sh """
+        yarn run lint
+      """
+    }
+  }
+}
+
 nodePipeline{
 
   // ---- DEVELOP ----
@@ -13,6 +23,8 @@ nodePipeline{
         """
       }
     }
+
+    lint()
 
     stage('Unit tests'){
       container('node'){
@@ -44,6 +56,8 @@ nodePipeline{
         """
       }
     }
+
+    lint()
 
     stage('Unit tests'){
       container('node'){
