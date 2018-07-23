@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as http from 'http';
-import { AppRouter } from './routes/index';
+import { appRouter } from './routes/index';
 import config from './utils/config';
 import * as db from './utils/db';
 import { getSocket } from './utils/socket';
@@ -10,7 +10,7 @@ export function run() {
   return db.connect().then(() => {
 
     const app = express();
-    app.use(config.server.base, AppRouter);
+    app.use(config.server.base, appRouter);
 
     const server = http.createServer(app);
 

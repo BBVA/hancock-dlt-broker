@@ -4,9 +4,9 @@ import { errorController } from '../controllers/error';
 import { fallbackController } from '../controllers/fallback';
 import { healthCheckController } from '../controllers/healthcheck';
 
-export const AppRouter = Router();
+export const appRouter = Router();
 
-AppRouter
+appRouter
   .use('/health', healthCheckController)
   .use(fallbackController)
   .use(errorController);

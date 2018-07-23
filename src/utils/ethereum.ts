@@ -1,14 +1,14 @@
 import config from './config';
 
 // tslint:disable-next-line:no-var-requires
-const Web3 = require('web3');
+const web3 = require('web3');
 
-let web3: any;
+let web3Instance: any;
 
 function initWeb3() {
 
   const cfg: any = config.blockchain.ethereum;
-  web3 = new Web3(new Web3.providers.WebsocketProvider(`${cfg.protocol}://${cfg.host}:${cfg.port}`));
+  web3Instance = new web3(new web3.providers.WebsocketProvider(`${cfg.protocol}://${cfg.host}:${cfg.port}`));
 
 }
 
@@ -18,7 +18,7 @@ export async function getWeb3() {
 
   try {
 
-    connReady = !!web3 && await web3.eth.net.isListening();
+    connReady = !!web3Instance && await web3Instance.eth.net.isListening();
 
   } catch (e) {
 
@@ -30,6 +30,6 @@ export async function getWeb3() {
     initWeb3();
   }
 
-  return web3;
+  return web3Instance;
 
 }
