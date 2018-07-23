@@ -1,6 +1,4 @@
-import { Express } from 'express';
 import * as WebSocket from 'ws';
-import config from './config';
 
 export function getSocket(path: string, server?: any) {
 

@@ -1,6 +1,6 @@
 
 import 'jest';
-import { errorController, ErrorMap, Errors } from '../error';
+import { errorController, errorMap, Errors } from '../error';
 
 describe('errorController', async () => {
 
@@ -33,7 +33,7 @@ describe('errorController', async () => {
 
   it('should return the correct status code and error body given an specific error', async () => {
 
-    const expectedBody = ErrorMap[Errors.NOT_FOUND];
+    const expectedBody = errorMap[Errors.NOT_FOUND];
     await errorController(error, req, res, next);
 
     expect(res.status.mock.calls).toEqual([[expectedBody.code_http]]);
@@ -45,7 +45,7 @@ describe('errorController', async () => {
 
   it('should return the default status code and error body when the given error is not matched', async () => {
 
-    const expectedBody = ErrorMap[Errors.DEFAULT_ERROR];
+    const expectedBody = errorMap[Errors.DEFAULT_ERROR];
     await errorController(new Error('WHATEVER'), req, res, next);
 
     expect(res.status.mock.calls).toEqual([[expectedBody.code_http]]);

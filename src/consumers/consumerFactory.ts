@@ -3,7 +3,7 @@ import { Consumer, IConsumer } from './consumer';
 import { CryptvaultConsumer } from './cryptvaultConsumer';
 import { CONSUMERS } from './types';
 
-const consumerSingletons: {[k: string]: IConsumer} = {};
+// const consumerSingletons: {[k: string]: IConsumer} = {};
 
 export function getConsumer(ws: WebSocket, consumer: CONSUMERS = CONSUMERS.Default): IConsumer {
 

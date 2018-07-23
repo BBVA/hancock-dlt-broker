@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 export class SocketError {
   private message: string;

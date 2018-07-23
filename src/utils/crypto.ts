@@ -1,10 +1,9 @@
-import * as crypto from 'crypto';
 import * as forge from 'node-forge';
-import {Bytes} from 'node-forge';
 import {
-  asymmetricPrivateKey, asymmetricPublicKey, encryptedData
-  , IRSAKeyPair, ISignature, ISymmetricEncData
-  , signature, symmetricKey,
+  asymmetricPublicKey,
+  encryptedData,
+  ISymmetricEncData,
+  symmetricKey,
 } from '../models/crypto';
 
 // import ByteBuffer from "node-forge";
@@ -46,9 +45,9 @@ export class CryptoUtils {
 
     const encription = cipher.output.data;
     const encription64 = forge.util.encode64(encription);
-    const tagHex	 = tag.toHex();
+    const tagHex = tag.toHex();
 
-    return {data: encription64, iv, aad, tag: tagHex};
+    return { data: encription64, iv, aad, tag: tagHex };
   }
 
   // /**
@@ -288,5 +287,5 @@ export class CryptoUtils {
   //   return buffer.toString('utf8').replace(/\0/g, '');
   // }
 
-  private static M1: string = '8e7b99b596cebcc7b3c8a040f130a0c0467192ff257eadde1acad3026d13b18d';
+  // private static M1: string = '8e7b99b596cebcc7b3c8a040f130a0c0467192ff257eadde1acad3026d13b18d';
 }

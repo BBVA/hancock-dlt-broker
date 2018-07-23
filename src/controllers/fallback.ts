@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { errorController, Errors } from './error';
 
 export function fallbackController(req: Request, res: Response, next: NextFunction) {
