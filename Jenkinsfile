@@ -13,7 +13,7 @@ nodePipeline{
   // ---- DEVELOP ----
   if (env.BRANCH_NAME == 'develop') {
 
-    // sonar_shuttle_stage()
+    sonar_shuttle_stage()
 
     stage('Install Dependencies'){
       container('node'){
