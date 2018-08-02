@@ -3,6 +3,7 @@ import 'jest';
 import { healthCheckController } from '../healthcheck';
 
 jest.mock('../../utils/config');
+jest.mock('../../utils/logger');
 
 describe('healthcheckController', async () => {
   let req: any;
@@ -28,7 +29,7 @@ describe('healthcheckController', async () => {
 
     expect(res.status.mock.calls).toEqual([[200]]);
     expect(res.json.mock.calls).toEqual([[{
-      service: 'hancock-dlt-broker',
+      app: 'applicationName',
       success: true,
     }]]);
 

@@ -5,8 +5,16 @@ import { encryptedData, ISymmetricEncData, symmetricKey } from '../models/crypto
 import { ISocketEvent } from '../models/models';
 import config from '../utils/config';
 import { CryptoUtils } from '../utils/crypto';
+import { error } from '../utils/error';
+import logger from '../utils/logger';
 import { dltAddress } from './../models/models';
 import { Consumer } from './consumer';
+import {
+  hancockEncryptError,
+  hancockGetConsumerPKError,
+  hancockGetConsumerTokenError,
+  hancockGetWalletError,
+} from './models/error';
 
 export interface ICryptoVaultResult {
   status_code: number;
@@ -59,60 +67,89 @@ export class CryptvaultConsumer extends Consumer {
     // tslint:disable-next-line:max-line-length
     const walletEndpoint: string = config.consumers.cryptvault.api.getByAddressEndpoint.replace(':address', event.matchedAddress);
 
-    console.log('getting PK from cryptvault', walletEndpoint);
+    logger.info('getting PK from cryptvault', walletEndpoint);
 
-    const walletResponse: ICryptoVaultWalletResponse = await request.get(walletEndpoint, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      json: true,
-    });
+    let walletResponse: ICryptoVaultWalletResponse;
 
-    console.log('Wallet response: ' + JSON.stringify(walletResponse));
+    try {
+
+      walletResponse = await request.get(walletEndpoint, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        json: true,
+      });
+
+      logger.info('Wallet response: ' + JSON.stringify(walletResponse));
+
+    } catch (err) {
+
+      logger.error(err);
+      throw error(hancockGetConsumerPKError, err);
+
+    }
 
     if (walletResponse.result && walletResponse.result.status_code === 200) {
 
-      const itemKey: symmetricKey = CryptoUtils.generateSymmetricKey(32);
-      const iv: symmetricKey = CryptoUtils.generateSymmetricKey(12);
-      const aad: string = 'notifyTransaction';
-      const txPayload: any = {
-        item_id: walletResponse.data.item_id,
-        raw_tx: event.body,
-      };
+      try {
 
-      const cypheredTx: ICryptoVaultCypheredTransaction = {
-        item_enc_key: CryptoUtils.encryptRSA(walletResponse.data.public_key, itemKey) as encryptedData,
-        item_json: CryptoUtils.aesGCMEncrypt(JSON.stringify(txPayload), iv, aad, itemKey) as ISymmetricEncData,
-      };
+        const itemKey: symmetricKey = CryptoUtils.generateSymmetricKey(32);
+        const iv: symmetricKey = CryptoUtils.generateSymmetricKey(12);
+        const aad: string = 'notifyTransaction';
+        const txPayload: any = {
+          item_id: walletResponse.data.item_id,
+          raw_tx: event.body,
+        };
 
-      const eventResponse: ICryptoVaultEvent = {
-        address: event.matchedAddress as dltAddress,
-        inOut: this.getTxDirection(event),
-        tx: cypheredTx,
-      };
+        const cypheredTx: ICryptoVaultCypheredTransaction = {
+          item_enc_key: CryptoUtils.encryptRSA(walletResponse.data.public_key, itemKey) as encryptedData,
+          item_json: CryptoUtils.aesGCMEncrypt(JSON.stringify(txPayload), iv, aad, itemKey) as ISymmetricEncData,
+        };
 
-      console.log('Notify response: ' + JSON.stringify(eventResponse));
+        const eventResponse: ICryptoVaultEvent = {
+          address: event.matchedAddress as dltAddress,
+          inOut: this.getTxDirection(event),
+          tx: cypheredTx,
+        };
 
-      super.notify({ kind: event.kind, body: eventResponse, matchedAddress: event.matchedAddress });
-      return Promise.resolve(true);
+        logger.info('Notify response: ' + JSON.stringify(eventResponse));
+
+        super.notify({ kind: event.kind, body: eventResponse, matchedAddress: event.matchedAddress });
+        return Promise.resolve(true);
+
+      } catch (err) {
+
+        throw error(hancockEncryptError, err);
+      }
 
     } else {
-      throw new Error('error recovering wallet');
+
+      throw error(hancockGetWalletError);
+
     }
   }
 
   private getToken(): string {
 
-    const requestId: string = uuidv4();
+    try {
 
-    return jwt.sign(
-      {
-       iss: config.consumers.cryptvault.credentials.key,
-       txid: requestId,
-      },
-      config.consumers.cryptvault.credentials.secret,
-      { expiresIn: config.consumers.cryptvault.credentials.expires_in },
-    );
+      const requestId: string = uuidv4();
+
+      return jwt.sign(
+        {
+         iss: config.consumers.cryptvault.credentials.key,
+         txid: requestId,
+        },
+        config.consumers.cryptvault.credentials.secret,
+        { expiresIn: config.consumers.cryptvault.credentials.expires_in },
+      );
+
+    } catch (err) {
+
+      logger.error(err);
+      throw error(hancockGetConsumerTokenError, err);
+
+    }
   }
 
   private getTxDirection(event: ISocketEvent): ICryptoVaultEventTxDirection {

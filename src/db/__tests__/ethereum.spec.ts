@@ -7,6 +7,7 @@ import * as ethereumDb from '../ethereum';
 jest.mock('../../utils/config');
 jest.mock('../../utils/db');
 jest.mock('../../utils/utils');
+jest.mock('../../utils/logger');
 jest.mock('mongodb');
 
 describe('dbEthereum', async () => {

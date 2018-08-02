@@ -6,7 +6,19 @@ import { getConsumer } from '../consumers/consumerFactory';
 import { CONSUMERS } from '../consumers/types';
 import * as domain from '../domain/ethereum';
 import {
-  IEthBlockBody,
+  hancockContractNotFoundError,
+  HancockError,
+  hancockEventError,
+  hancockGetBlockError,
+  hancockGetCodeError,
+  hancockLogsError,
+  hancockNewBlockHeadersError,
+  hancockParseError,
+  hancockSubscribeToContractError,
+  hancockSubscribeToTransferError,
+  hancockSubscriptionUnknownError,
+} from '../models/error';
+import {
   IEthBlockHeader,
   IEthContractEventBody,
   IEthContractLogBody,
@@ -14,8 +26,9 @@ import {
   IEthTransactionBody,
 } from '../models/ethereum';
 import { ISocketMessage } from '../models/models';
+import { error } from '../utils/error';
 import * as Ethereum from '../utils/ethereum';
-import { SocketError } from './error';
+import logger from '../utils/logger';
 
 // tslint:disable-next-line:variable-name
 export async function SocketSubscribeController(socket: WebSocket, req: http.IncomingMessage) {
@@ -26,14 +39,14 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
   const sender: string = query.sender as string;
   const consumer: CONSUMERS = query.consumer as CONSUMERS;
 
-  console.log('Incoming socket connection => ', consumer, addressOrAlias || sender);
+  logger.info('Incoming socket connection => ', consumer, addressOrAlias || sender);
 
   const subscriptions: any[] = [];
   const web3I = await Ethereum.getWeb3();
 
   socket.on('close', () => {
 
-    console.log('unsubscribing...');
+    logger.info('unsubscribing...');
 
     subscriptions.forEach((sub) => {
       sub.unsubscribe();
@@ -49,9 +62,21 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   socket.on('message', (data: any) => {
 
-    const dataObj: ISocketMessage = JSON.parse(data);
+    let dataObj: ISocketMessage;
+    const consumerInstance: IConsumer = getConsumer(socket, consumer);
 
-    console.log('Incoming message => ', dataObj);
+    try {
+
+      dataObj = JSON.parse(data);
+
+    } catch (err) {
+
+      _onError(socket, error(hancockParseError, err), false, consumerInstance);
+      return;
+
+    }
+
+    logger.info('Incoming message => ', dataObj);
 
     switch (dataObj.kind) {
       case 'watch-addresses':
@@ -60,6 +85,8 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
       case 'watch-contracts':
         _subscribeContractsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
         break;
+      default:
+        _onError(socket, hancockSubscriptionUnknownError, false, consumerInstance);
     }
 
   });
@@ -76,11 +103,6 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   socket.send(JSON.stringify({ kind: 'ready' }));
 
-  // Check if there is at least one subscription
-  // if (subscriptions.length === 0) {
-  //   onError(socket, 'No subscriptions', true);
-  // }
-
 }
 
 // tslint:disable-next-line:variable-name
@@ -94,23 +116,23 @@ export const _subscribeContractsController = async (
     try {
 
       const ethContractModel: IEthereumContractModel | null = await domain.findOne(contractAddressOrAlias);
-
+      console.log(subscriptions);
       if (ethContractModel) {
 
         const web3Contract: any = new web3I.eth.Contract(ethContractModel.abi, ethContractModel.address);
-
+        console.log(web3Contract.events.allEvents().on().on());
         // Subscribe to contract events
-        console.info('Subscribing to contract events...');
+        logger.info('Subscribing to contract events...');
         subscriptions.push(
           web3Contract.events
             .allEvents({
               address: ethContractModel.address,
             })
-            .on('error', (error: Error) => onError(socket, error.message, false, consumerInstance))
+            .on('error', (err: Error) => _onError(socket, error(hancockEventError, err), false, consumerInstance))
             .on('data', (eventBody: IEthContractEventBody) => {
-
+              console.log(event);
               // tslint:disable-next-line:max-line-length
-              console.log(`new event from contract ${ethContractModel.alias} =>> ${eventBody.id} (${eventBody.event}) `);
+              logger.info(`new event from contract ${ethContractModel.alias} =>> ${eventBody.id} (${eventBody.event}) `);
               // socket.send(JSON.stringify({ kind: 'event', body: eventBody }));
               consumerInstance.notify({ kind: 'event', body: eventBody, matchedAddress: ethContractModel.address });
 
@@ -118,16 +140,16 @@ export const _subscribeContractsController = async (
         );
 
         // Subscribe to contract logs (Events)
-        console.info('Subscribing to contract logs...');
+        logger.info('Subscribing to contract logs...');
         subscriptions.push(
           web3I.eth
             .subscribe('logs', {
               address: ethContractModel.address,
             })
-            .on('error', (error: Error) => onError(socket, error.message, false, consumerInstance))
+            .on('error', (err: Error) => _onError(socket, error(hancockLogsError, err), false, consumerInstance))
             .on('data', (logBody: IEthContractLogBody) => {
 
-              console.log(`new log from contract ${ethContractModel.alias} =>> ${logBody.id}`);
+              logger.info(`new log from contract ${ethContractModel.alias} =>> ${logBody.id}`);
               // socket.send(JSON.stringify({ kind: 'log', body: logBody }));
               consumerInstance.notify({ kind: 'log', body: logBody, matchedAddress: ethContractModel.address });
 
@@ -135,12 +157,12 @@ export const _subscribeContractsController = async (
         );
 
       } else {
-        onError(socket, 'Contract not found', false, consumerInstance);
+        _onError(socket, hancockContractNotFoundError, false, consumerInstance);
       }
 
-    } catch (error) {
+    } catch (err) {
 
-      onError(socket, error.message, false, consumerInstance);
+      _onError(socket, error(hancockSubscribeToContractError, err), false, consumerInstance);
 
     }
   });
@@ -156,67 +178,82 @@ export const _subscribeTransferController = (
 
     addresses.map((address: string) => {
       // Subscribe to pending transactions
-      console.info('Subscribing to mined transactions...');
+      logger.info('Subscribing to mined transactions...');
 
       subscriptions.push(
         web3I.eth
           .subscribe('newBlockHeaders')
-          .on('error', (error: Error) => onError(socket, error.message, false, consumerInstance))
+          .on('error', (err: Error) => _onError(socket, error(hancockNewBlockHeadersError, err), false, consumerInstance))
           .on('data', (blockMined: IEthBlockHeader) => {
 
-            web3I.eth
-              .getBlock(blockMined.hash, true)
-              .then((blockBody: IEthBlockBody) => {
+            try {
 
-                blockBody.transactions.map((txBody: IEthTransactionBody) => {
+              const blockBody = web3I.eth.getBlock(blockMined.hash, true);
+              blockBody.transactions.map((txBody: IEthTransactionBody) => {
 
-                  if (txBody.from.toUpperCase() === address.toUpperCase()) {
+                if (txBody.from.toUpperCase() === address.toUpperCase()) {
 
-                    web3I.eth.getCode(txBody.to)
-                      .then((code: string) => {
-                        if (code === '0x0') {
-                          console.log(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-                          // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
-                          consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
-                        }
-                      });
+                  try {
 
-                  }
+                    const code = web3I.eth.getCode(txBody.to);
+                    if (code === '0x0') {
+                      logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+                      consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
+                    }
 
-                  if (txBody.to.toUpperCase() === address.toUpperCase()) {
+                  } catch (err) {
 
-                    console.log(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-                    // socket.send(JSON.stringify({ kind: 'tx', body: txBody }));
-                    consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
+                    _onError(socket, error(hancockGetCodeError, err), false, consumerInstance);
 
                   }
-                });
+
+                }
+
+                if (txBody.to.toUpperCase() === address.toUpperCase()) {
+
+                  logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+                  consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
+
+                }
               });
+
+            } catch (err) {
+
+              _onError(socket, error(hancockGetBlockError, err), false, consumerInstance);
+
+            }
 
           }),
       );
     });
 
-  } catch (error) {
+  } catch (err) {
 
-    onError(socket, error.message, false, consumerInstance);
+    _onError(socket, error(hancockSubscribeToTransferError, err), false, consumerInstance);
 
   }
 
 };
 
-function onError(socket: WebSocket, message: string, terminate: boolean = false, consumer?: IConsumer) {
+export const _onError = async (socket: WebSocket, err: HancockError, terminate: boolean = false, consumer?: IConsumer) => {
 
-  console.log(`onError => ${message}`);
-  const socketError: SocketError = new SocketError(message);
+  logger.error(err);
 
-  if (consumer) {
-    consumer.notify({ kind: 'error', body: socketError });
-  } else {
-    socket.send(JSON.stringify({ kind: 'error', body: socketError }));
+  try {
+
+    if (consumer) {
+      consumer.notify({ kind: 'error', body: err });
+    } else {
+      socket.send(JSON.stringify({ kind: 'error', body: err }));
+    }
+
+  } catch (innerErr) {
+
+    logger.error(innerErr);
+
   }
 
   if (terminate) {
     socket.terminate();
   }
-}
+};

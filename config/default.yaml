@@ -1,5 +1,7 @@
 env:
 app:
+  application: 'hancock:ms-wallet-hub'
+  hostname: 'localhost'
   server:
     protocol: 'ws'
     host: 'hancock-dlt-broker-blockchainhub-develop.kickstartteam.es'
@@ -32,3 +34,5 @@ app:
         key: 'OiYdLKOblAicxiasy2tJolbc3oBYkiyg'
         secret: 'umFfDtKwdv9k6uhu7EEA2Hwoe3aWaoTT'
         expires_in: '1555674519'
+  logger:
+    logLevel: debug
