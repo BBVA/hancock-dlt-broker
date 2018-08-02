@@ -116,11 +116,10 @@ export const _subscribeContractsController = async (
     try {
 
       const ethContractModel: IEthereumContractModel | null = await domain.findOne(contractAddressOrAlias);
-      console.log(subscriptions);
+
       if (ethContractModel) {
 
         const web3Contract: any = new web3I.eth.Contract(ethContractModel.abi, ethContractModel.address);
-        console.log(web3Contract.events.allEvents().on().on());
         // Subscribe to contract events
         logger.info('Subscribing to contract events...');
         subscriptions.push(
@@ -130,7 +129,6 @@ export const _subscribeContractsController = async (
             })
             .on('error', (err: Error) => _onError(socket, error(hancockEventError, err), false, consumerInstance))
             .on('data', (eventBody: IEthContractEventBody) => {
-              console.log(event);
               // tslint:disable-next-line:max-line-length
               logger.info(`new event from contract ${ethContractModel.alias} =>> ${eventBody.id} (${eventBody.event}) `);
               // socket.send(JSON.stringify({ kind: 'event', body: eventBody }));
