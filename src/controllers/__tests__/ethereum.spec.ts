@@ -1,8 +1,8 @@
 import 'jest';
 import * as url from 'url';
-import { __consumerInstance__ } from '../../consumers/__mocks__/consumer';
-import * as consumer from '../../consumers/consumer';
-import { getConsumer } from '../../consumers/consumerFactory';
+import { __consumerInstance__ } from '../../domain/consumers/__mocks__/consumer';
+import * as consumer from '../../domain/consumers/consumer';
+import { getConsumer } from '../../domain/consumers/consumerFactory';
 import { findOne } from '../../domain/ethereum';
 import {
   hancockGetBlockError,
@@ -17,8 +17,8 @@ import * as ethereumController from '../ethereum';
 
 jest.mock('url');
 jest.mock('../../utils/config');
-jest.mock('../../consumers/consumerFactory');
-jest.mock('../../consumers/consumer');
+jest.mock('../../domain/consumers/consumerFactory');
+jest.mock('../../domain/consumers/consumer');
 jest.mock('../../utils/ethereum');
 jest.mock('../../utils/logger');
 jest.mock('../../utils/error');

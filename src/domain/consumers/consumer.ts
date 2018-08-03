@@ -1,6 +1,6 @@
 import * as WebSocket from 'ws';
-import { IEthTransactionBody } from '../models/ethereum';
-import { ISocketEvent } from '../models/models';
+import { IEthTransactionBody } from '../../models/ethereum';
+import { ISocketEvent } from '../../models/models';
 
 export interface IConsumer {
   notify(event: ISocketEvent): Promise<boolean>;

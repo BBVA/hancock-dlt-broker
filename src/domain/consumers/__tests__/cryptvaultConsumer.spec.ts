@@ -2,10 +2,10 @@ import 'jest';
 import * as jwt from 'jsonwebtoken';
 import * as request from 'request-promise-native';
 import { v4 as uuidv4 } from 'uuid';
-import { hancockDefaultError } from '../../models/error';
-import { IEthTransactionBody } from '../../models/ethereum';
-import { ISocketEvent } from '../../models/models';
-import config from '../../utils/config';
+import { hancockDefaultError } from '../../../models/error';
+import { IEthTransactionBody } from '../../../models/ethereum';
+import { ISocketEvent } from '../../../models/models';
+import config from '../../../utils/config';
 import { Consumer } from '../consumer';
 import { CryptvaultConsumer, ICryptoVaultEventTxDirection } from '../cryptvaultConsumer';
 import {
@@ -18,9 +18,9 @@ import {
 jest.mock('request-promise-native');
 jest.mock('jsonwebtoken');
 jest.mock('uuid');
-jest.mock('../../utils/config');
-jest.mock('../../utils/logger');
-jest.mock('../../utils/error');
+jest.mock('../../../utils/config');
+jest.mock('../../../utils/logger');
+jest.mock('../../../utils/error');
 
 describe('cryptvaultConsumer', () => {
 

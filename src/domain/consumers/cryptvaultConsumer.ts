@@ -1,13 +1,13 @@
 import * as jwt from 'jsonwebtoken';
 import * as request from 'request-promise-native';
 import { v4 as uuidv4 } from 'uuid';
-import { encryptedData, ISymmetricEncData, symmetricKey } from '../models/crypto';
-import { ISocketEvent } from '../models/models';
-import config from '../utils/config';
-import { CryptoUtils } from '../utils/crypto';
-import { error } from '../utils/error';
-import logger from '../utils/logger';
-import { dltAddress } from './../models/models';
+import { encryptedData, ISymmetricEncData, symmetricKey } from '../../models/crypto';
+import { ISocketEvent } from '../../models/models';
+import config from '../../utils/config';
+import { CryptoUtils } from '../../utils/crypto';
+import { error } from '../../utils/error';
+import logger from '../../utils/logger';
+import { dltAddress } from './../../models/models';
 import { Consumer } from './consumer';
 import {
   hancockEncryptError,

@@ -6,7 +6,7 @@ import * as types from '../types';
 
 jest.mock('../consumer');
 jest.mock('../cryptvaultConsumer');
-jest.mock('../../utils/logger');
+jest.mock('../../../utils/logger');
 
 import { getConsumer } from '../consumerFactory';
 

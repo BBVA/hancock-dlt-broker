@@ -1,9 +1,9 @@
 import * as http from 'http';
 import * as url from 'url';
 import * as WebSocket from 'ws';
-import { IConsumer } from '../consumers/consumer';
-import { getConsumer } from '../consumers/consumerFactory';
-import { CONSUMERS } from '../consumers/types';
+import { IConsumer } from '../domain/consumers/consumer';
+import { getConsumer } from '../domain/consumers/consumerFactory';
+import { CONSUMERS } from '../domain/consumers/types';
 import * as domain from '../domain/ethereum';
 import {
   hancockContractNotFoundError,

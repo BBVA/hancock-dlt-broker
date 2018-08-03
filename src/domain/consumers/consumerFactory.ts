@@ -1,5 +1,5 @@
 import * as WebSocket from 'ws';
-import logger from '../utils/logger';
+import logger from '../../utils/logger';
 import { Consumer, IConsumer } from './consumer';
 import { CryptvaultConsumer } from './cryptvaultConsumer';
 import { CONSUMERS } from './types';
