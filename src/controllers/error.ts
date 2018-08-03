@@ -1,21 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
 
-export class SocketError {
-  private message: string;
-
-  constructor(message: string) {
-    this.message = message;
-  }
-
-  public getMessage() {
-    return this.message;
-  }
-
-  public setMessage(message: string) {
-    this.message = message;
-  }
-}
-
 export interface ICustomError {
   code_internal: string;
   code_http: number;

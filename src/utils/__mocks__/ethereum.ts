@@ -26,6 +26,11 @@ export const __mockWeb3__ = {
             (promise as any).on = jest.fn().mockReturnValue(promise);
             return promise;
         }),
+        Contract: jest.fn().mockImplementation(() => {
+            const promise = Promise.resolve('whatever');
+            (promise as any).on = jest.fn().mockReturnValue(promise);
+            return promise;
+        }),
     },
   };
 

@@ -1,7 +1,9 @@
 import 'jest';
-import { IEthTransactionBody } from '../../models/ethereum';
-import { ISocketEvent } from '../../models/models';
+import { IEthTransactionBody } from '../../../models/ethereum';
+import { ISocketEvent } from '../../../models/models';
 import { Consumer } from '../consumer';
+
+jest.mock('../../../utils/logger');
 
 describe('consumer', () => {
 

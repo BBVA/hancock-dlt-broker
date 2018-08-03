@@ -1,4 +1,4 @@
-import { CONSUMERS } from './../consumers/types';
+import { CONSUMERS } from './../domain/consumers/types';
 
 export type dltAddress = string;
 

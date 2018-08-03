@@ -6,6 +6,7 @@ import * as utilsDb from '../db';
 
 jest.mock('mongodb');
 jest.mock('../config');
+jest.mock('../logger');
 
 describe('utilsDb', () => {
 

@@ -2,17 +2,25 @@ import 'jest';
 import * as jwt from 'jsonwebtoken';
 import * as request from 'request-promise-native';
 import { v4 as uuidv4 } from 'uuid';
-import { IEthTransactionBody } from '../../models/ethereum';
-import { ISocketEvent } from '../../models/models';
-import config from '../../utils/config';
+import { hancockDefaultError } from '../../../models/error';
+import { IEthTransactionBody } from '../../../models/ethereum';
+import { ISocketEvent } from '../../../models/models';
+import config from '../../../utils/config';
 import { Consumer } from '../consumer';
 import { CryptvaultConsumer, ICryptoVaultEventTxDirection } from '../cryptvaultConsumer';
+import {
+  hancockEncryptError,
+  hancockGetConsumerPKError,
+  hancockGetConsumerTokenError,
+  hancockGetWalletError,
+} from '../models/error';
 
-jest.mock('../../utils/crypto');
 jest.mock('request-promise-native');
 jest.mock('jsonwebtoken');
 jest.mock('uuid');
-jest.mock('../../utils/config');
+jest.mock('../../../utils/config');
+jest.mock('../../../utils/logger');
+jest.mock('../../../utils/error');
 
 describe('cryptvaultConsumer', () => {
 
@@ -112,7 +120,52 @@ describe('cryptvaultConsumer', () => {
       await (testConsumer as any).cypherAndSendTransfer(event);
       fail('it should fail');
     } catch (error) {
-      expect(error).toBeDefined();
+      expect(error).toEqual(hancockGetWalletError);
+    }
+  });
+
+  it('should call cypherAndSendTransfer method and throw exception when request fail', async () => {
+
+    (request.get as any) = jest.fn().mockRejectedValue(hancockDefaultError);
+
+    const getTokenspy = jest.spyOn((CryptvaultConsumer.prototype as any), 'getToken')
+    .mockImplementation(() => Promise.resolve('whatever'));
+
+    try {
+      await (testConsumer as any).cypherAndSendTransfer(event);
+      fail('it should fail');
+    } catch (error) {
+      expect(error).toEqual(hancockGetConsumerPKError);
+    }
+  });
+
+  it('should call cypherAndSendTransfer method and throw exception when encrypt fails', async () => {
+
+    const response = {
+      data: {
+        item_id: 'mockid',
+        public_key: 'mockKey',
+      },
+      result: {
+        description: 'mockdes',
+        internal_code: 'mockcode',
+        status_code: 200,
+      },
+    };
+    (request.get as any) = jest.fn().mockReturnValue(response);
+
+    const getTokenspy = jest.spyOn((CryptvaultConsumer.prototype as any), 'getToken')
+    .mockImplementation(() => Promise.resolve('whatever'));
+    const getTxDirectionspy = jest.spyOn((CryptvaultConsumer.prototype as any), 'getTxDirection')
+    .mockImplementation(() => { throw new Error('Error!'); });
+    const spy = jest.spyOn(Consumer.prototype, 'notify')
+    .mockImplementation(() => Promise.resolve(true));
+
+    try {
+      await (testConsumer as any).cypherAndSendTransfer(event);
+      fail('it should fail');
+    } catch (error) {
+      expect(error).toEqual(hancockEncryptError);
     }
   });
 
@@ -140,6 +193,23 @@ describe('cryptvaultConsumer', () => {
        config.consumers.cryptvault.credentials.secret,
        { expiresIn: config.consumers.cryptvault.credentials.expires_in },
     );
+  });
+
+  it('should call getTxDirection method successfully and throw exception', () => {
+
+    (jwt.sign as any) = jest.fn().mockImplementationOnce(() => {
+      throw new Error('Error!');
+    });
+
+    try {
+
+      (testConsumer as any).getToken();
+
+    } catch (error) {
+
+      expect(error).toEqual(hancockGetConsumerTokenError);
+
+    }
   });
 
 });
