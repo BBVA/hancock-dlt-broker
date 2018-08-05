@@ -1,4 +1,7 @@
+import * as fs from 'fs';
 import * as http from 'http';
+import { validate } from 'jsonschema';
+import * as path from 'path';
 import * as url from 'url';
 import * as WebSocket from 'ws';
 import { IConsumer } from '../domain/consumers/consumer';
@@ -6,17 +9,18 @@ import { getConsumer } from '../domain/consumers/consumerFactory';
 import { CONSUMERS } from '../domain/consumers/types';
 import * as domain from '../domain/ethereum';
 import {
+  hancockBadRequestError,
   hancockContractNotFoundError,
   HancockError,
   hancockEventError,
   hancockGetBlockError,
   hancockGetCodeError,
   hancockLogsError,
+  hancockMessageKindUnknownError,
   hancockNewBlockHeadersError,
   hancockParseError,
   hancockSubscribeToContractError,
   hancockSubscribeToTransferError,
-  hancockSubscriptionUnknownError,
 } from '../models/error';
 import {
   IEthBlockHeader,
@@ -29,6 +33,9 @@ import { ISocketMessage } from '../models/models';
 import { error } from '../utils/error';
 import * as Ethereum from '../utils/ethereum';
 import logger from '../utils/logger';
+
+const schemaPath: string = path.normalize(__dirname + '/../../../raml/schemas');
+const receiveMessageSchema = JSON.parse(fs.readFileSync(`${schemaPath}/requests/recieveMessage.json`, 'utf-8'));
 
 // tslint:disable-next-line:variable-name
 export async function SocketSubscribeController(socket: WebSocket, req: http.IncomingMessage) {
@@ -54,12 +61,6 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   });
 
-  // Fix connection timeout problems
-  // TODO: think about it and take a better solution
-  setTimeout(() => {
-    socket.send(JSON.stringify({ kind: 'ping', body: (new Date()).toISOString() }));
-  }, 5000);
-
   socket.on('message', (data: any) => {
 
     let dataObj: ISocketMessage;
@@ -80,13 +81,17 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     switch (dataObj.kind) {
       case 'watch-addresses':
-        _subscribeTransferController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+        if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+          _subscribeTransferController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+        }
         break;
       case 'watch-contracts':
-        _subscribeContractsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+        if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+          _subscribeContractsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+        }
         break;
       default:
-        _onError(socket, hancockSubscriptionUnknownError, false, consumerInstance);
+        _onError(socket, hancockMessageKindUnknownError, false, consumerInstance);
     }
 
   });
@@ -254,4 +259,21 @@ export const _onError = async (socket: WebSocket, err: HancockError, terminate: 
   if (terminate) {
     socket.terminate();
   }
+};
+
+export const _validateSchema = (data: any, schema: any, socket: WebSocket, consumerInstance: IConsumer): boolean => {
+
+  try {
+
+    validate(data, schema, { throwError: true });
+    return true;
+
+  } catch (err) {
+
+    const e: HancockError = error(hancockBadRequestError, err);
+    _onError(socket, e, false, consumerInstance);
+    return false;
+
+  }
+
 };
