@@ -3,9 +3,9 @@ app:
   application: 'hancock:ms-wallet-hub'
   hostname: 'localhost'
   server:
-    protocol: 'ws'
-    host: 'hancock-dlt-broker-blockchainhub-develop.kickstartteam.es'
-    port: 80
+    protocol: ws
+    host: localhost
+    port: 3000
     base: ''
   blockchain:
     ethereum:
