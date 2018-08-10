@@ -13,8 +13,7 @@ nodePipeline{
   // ---- DEVELOP ----
   if (env.BRANCH_NAME == 'develop') {
 
-    sonar_shuttle_stage()
-
+    
     stage('Install Dependencies'){
       container('node'){
         sh """
@@ -25,6 +24,9 @@ nodePipeline{
     }
 
     lint()
+    
+    sonar_shuttle_stage()
+
 
     stage('Unit tests'){
       container('node'){
@@ -34,6 +36,7 @@ nodePipeline{
       }
     }
 
+    
     docker_shuttle_stage()
 
     qa_data_shuttle_stage()
