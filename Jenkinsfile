@@ -25,7 +25,7 @@ nodePipeline{
 
     lint()
     
-    sonar_shuttle_stage()
+    // sonar_shuttle_stage()
 
 
     stage('Unit tests'){
