@@ -187,11 +187,13 @@ export const _subscribeTransferController = (
         web3I.eth
           .subscribe('newBlockHeaders')
           .on('error', (err: Error) => _onError(socket, error(hancockNewBlockHeadersError, err), false, consumerInstance))
-          .on('data', (blockMined: IEthBlockHeader) => {
+          .on('data', async (blockMined: IEthBlockHeader) => {
 
             try {
 
-              const blockBody = web3I.eth.getBlock(blockMined.hash, true);
+              logger.debug('newBlock mined', blockMined.hash);
+
+              const blockBody = await web3I.eth.getBlock(blockMined.hash, true);
               blockBody.transactions.map((txBody: IEthTransactionBody) => {
 
                 if (txBody.from.toUpperCase() === address.toUpperCase()) {
