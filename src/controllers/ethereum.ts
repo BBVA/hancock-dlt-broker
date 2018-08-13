@@ -179,7 +179,7 @@ export const _subscribeTransferController = (
 
   try {
 
-    addresses.map((address: string) => {
+    addresses.forEach((address: string) => {
       // Subscribe to pending transactions
       logger.info('Subscribing to mined transactions...');
 
@@ -187,49 +187,9 @@ export const _subscribeTransferController = (
         web3I.eth
           .subscribe('newBlockHeaders')
           .on('error', (err: Error) => _onError(socket, error(hancockNewBlockHeadersError, err), false, consumerInstance))
-          .on('data', async (blockMined: IEthBlockHeader) => {
-
-            try {
-
-              logger.debug('newBlock mined', blockMined.hash);
-
-              const blockBody = await web3I.eth.getBlock(blockMined.hash, true);
-              blockBody.transactions.map(async (txBody: IEthTransactionBody) => {
-
-                if (txBody.from.toUpperCase() === address.toUpperCase()) {
-
-                  try {
-
-                    const code = await web3I.eth.getCode(txBody.to);
-                    if (code === '0x0') {
-                      logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-                      consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
-                    }
-
-                  } catch (err) {
-
-                    _onError(socket, error(hancockGetCodeError, err), false, consumerInstance);
-
-                  }
-
-                }
-
-                if (txBody.to.toUpperCase() === address.toUpperCase()) {
-
-                  logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-                  consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
-
-                }
-              });
-
-            } catch (err) {
-
-              _onError(socket, error(hancockGetBlockError, err), false, consumerInstance);
-
-            }
-
-          }),
+          .on('data', (blockMined: IEthBlockHeader) => _reactToNewTransfer(socket, address, web3I, blockMined, consumerInstance)),
       );
+
     });
 
   } catch (err) {
@@ -238,6 +198,51 @@ export const _subscribeTransferController = (
 
   }
 
+};
+
+export const _reactToNewTransfer = async (socket: WebSocket, address: string, web3I: any, blockMined: IEthBlockHeader, consumerInstance: IConsumer) => {
+
+  try {
+
+    logger.debug('newBlock mined', blockMined.hash);
+
+    const blockBody = await web3I.eth.getBlock(blockMined.hash, true);
+
+    return await Promise.all(blockBody.transactions.map(async (txBody: IEthTransactionBody) => {
+
+      if (txBody.from.toUpperCase() === address.toUpperCase()) {
+
+        try {
+
+          const code = await web3I.eth.getCode(txBody.to);
+
+          if (code === '0x0') {
+            logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+            consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
+          }
+
+        } catch (err) {
+
+          _onError(socket, error(hancockGetCodeError, err), false, consumerInstance);
+
+        }
+
+      }
+
+      if (txBody.to.toUpperCase() === address.toUpperCase()) {
+
+        logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+        consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
+
+      }
+
+    }));
+
+  } catch (err) {
+
+    _onError(socket, error(hancockGetBlockError, err), false, consumerInstance);
+
+  }
 };
 
 export const _onError = async (socket: WebSocket, err: HancockError, terminate: boolean = false, consumer?: IConsumer) => {
