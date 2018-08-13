@@ -194,13 +194,13 @@ export const _subscribeTransferController = (
               logger.debug('newBlock mined', blockMined.hash);
 
               const blockBody = await web3I.eth.getBlock(blockMined.hash, true);
-              blockBody.transactions.map((txBody: IEthTransactionBody) => {
+              blockBody.transactions.map(async (txBody: IEthTransactionBody) => {
 
                 if (txBody.from.toUpperCase() === address.toUpperCase()) {
 
                   try {
 
-                    const code = web3I.eth.getCode(txBody.to);
+                    const code = await web3I.eth.getCode(txBody.to);
                     if (code === '0x0') {
                       logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
                       consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
