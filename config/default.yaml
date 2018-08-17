@@ -1,6 +1,6 @@
 env:
 app:
-  application: 'hancock:ms-wallet-hub'
+  application: 'hancock:ms-dlt-broker'
   hostname: 'localhost'
   server:
     protocol: ws
