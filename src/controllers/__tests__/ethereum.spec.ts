@@ -48,7 +48,7 @@ describe('ethereumController', async () => {
     };
 
     spySubscribeTransferController = jest
-      .spyOn(ethereumController, '_subscribeTransferController')
+      .spyOn(ethereumController, '_subscribeTransactionsController')
       .mockImplementation(() => Promise.resolve(true));
 
     spySubscribeContractsController = jest
@@ -133,9 +133,9 @@ describe('ethereumController', async () => {
     expect(spyOnErrorController).toHaveBeenCalledTimes(0);
   });
 
-  it('should call on message correctly and _subscribeTransferController', async () => {
+  it('should call on message correctly and _subscribeTransactionsController', async () => {
 
-    example.kind = 'watch-addresses';
+    example.kind = 'watch-transfers';
     socket.on = jest.fn().mockImplementationOnce((kind, callbacks) => {
       callbacks();
     }).mockImplementationOnce((kind, callbacks) => {
@@ -187,7 +187,7 @@ describe('ethereumController', async () => {
 
   it('should call on message correctly and onError with parseError', async () => {
 
-    example.kind = 'watch-addresses';
+    example.kind = 'watch-transfers';
     socket.on = jest.fn().mockImplementationOnce((kind, callbacks) => {
       callbacks();
     }).mockImplementationOnce((kind, callbacks) => {
@@ -295,7 +295,7 @@ describe('subscribers', () => {
     });
   });
 
-  describe('_subscribeTransferController', () => {
+  describe('_subscribeTransactionsController', () => {
 
     let reactToNewTransfer: any;
 
@@ -304,7 +304,7 @@ describe('subscribers', () => {
       jest.clearAllMocks();
 
       reactToNewTransfer = jest
-        .spyOn((ethereumController as any), '_reactToNewTransfer')
+        .spyOn((ethereumController as any), '_reactToNewTransaction')
         .mockImplementation(() => Promise.resolve(true));
 
     });
@@ -315,20 +315,20 @@ describe('subscribers', () => {
 
     });
 
-    it('should call _subscribeTransferController correctly', async () => {
+    it('should call _subscribeTransactionsController correctly', async () => {
 
-      await ethereumController._subscribeTransferController(socket, ['from'], web3, []);
+      await ethereumController._subscribeTransactionsController(socket, ['from'], web3, []);
 
-      expect(reactToNewTransfer).toHaveBeenCalledWith(socket, 'from', web3, newBlock, __consumerInstance__);
+      expect(reactToNewTransfer).toHaveBeenCalledWith(socket, 'from', web3, newBlock, __consumerInstance__, false);
 
     });
 
-    it('should call _subscribeTransferController and onError in web3 fail', async () => {
+    it('should call _subscribeTransactionsController and onError in web3 fail', async () => {
 
       web3.eth.subscribe = jest.fn().mockImplementationOnce(() => {
         throw new Error('Error!');
       });
-      await ethereumController._subscribeTransferController(socket, ['from'], web3, []);
+      await ethereumController._subscribeTransactionsController(socket, ['from'], web3, []);
 
       expect(spyOnErrorController).toHaveBeenCalledWith(socket, error(hancockSubscribeToTransferError, new Error('Error!')), false, __consumerInstance__);
 
@@ -336,15 +336,15 @@ describe('subscribers', () => {
 
   });
 
-  describe('_reactToNewTransfer', () => {
+  describe('_reactToNewTransaction', () => {
 
-    it('should call _reactToNewTransfer correctly', async () => {
+    it('should call _reactToNewTransaction correctly', async () => {
 
       web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
 
       web3.eth.getCode = jest.fn().mockResolvedValueOnce('0x0');
 
-      await ethereumController._reactToNewTransfer(socket, 'from', web3, newBlock, __consumerInstance__);
+      await ethereumController._reactToNewTransaction(socket, 'from', web3, newBlock, __consumerInstance__, true);
 
       expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
       expect(web3.eth.getCode).toHaveBeenCalledWith('to');
@@ -352,35 +352,35 @@ describe('subscribers', () => {
 
     });
 
-    it('should call _reactToNewTransfer and onError in getCode fail', async () => {
+    it('should call _reactToNewTransaction and onError in getCode fail', async () => {
 
       web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
 
       web3.eth.getCode = jest.fn().mockRejectedValueOnce(new Error('Error!'));
 
-      await ethereumController._reactToNewTransfer(socket, 'from', web3, newBlock, __consumerInstance__);
+      await ethereumController._reactToNewTransaction(socket, 'from', web3, newBlock, __consumerInstance__, true);
 
       expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
       expect(spyOnErrorController).toHaveBeenCalledWith(socket, error(hancockGetCodeError, new Error('Error!')), false, __consumerInstance__);
 
     });
 
-    it('should call _reactToNewTransfer and onError in getBlock fail', async () => {
+    it('should call _reactToNewTransaction and onError in getBlock fail', async () => {
 
       web3.eth.getBlock = jest.fn().mockImplementationOnce(() => { throw new Error('Error!'); });
 
-      await ethereumController._reactToNewTransfer(socket, 'from', web3, newBlock, __consumerInstance__);
+      await ethereumController._reactToNewTransaction(socket, 'from', web3, newBlock, __consumerInstance__, true);
 
       expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
       expect(spyOnErrorController).toHaveBeenCalledWith(socket, error(hancockGetBlockError, new Error('Error!')), false, __consumerInstance__);
 
     });
 
-    it('should call _reactToNewTransfer correctly 2', async () => {
+    it('should call _reactToNewTransaction correctly 2', async () => {
 
       web3.eth.getBlock = jest.fn().mockReturnValueOnce(blockBody);
 
-      await ethereumController._reactToNewTransfer(socket, 'to', web3, newBlock, __consumerInstance__);
+      await ethereumController._reactToNewTransaction(socket, 'to', web3, newBlock, __consumerInstance__, true);
 
       expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
       expect(web3.eth.getCode).not.toHaveBeenCalled();

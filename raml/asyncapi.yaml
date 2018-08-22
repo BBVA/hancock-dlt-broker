@@ -26,7 +26,8 @@ servers:
             description: Kind of consumer
 events:
     receive:
-        - $ref: '#/components/messages/watch-addresses'
+        - $ref: '#/components/messages/watch-transfers'
+        - $ref: '#/components/messages/watch-transactions'
         - $ref: '#/components/messages/watch-contracts'
     send:
         - $ref: '#/components/messages/tx'
@@ -36,8 +37,13 @@ events:
 
 components:
     messages:
-        watch-addresses:
+        watch-transfers:
             summary: New address to subscribe
+            payload:
+                type: object
+                $ref: '#/components/schemas/recieveMessage'
+        watch-transactions:
+            summary: New address to subscribe to all transactions
             payload:
                 type: object
                 $ref: '#/components/schemas/recieveMessage'
