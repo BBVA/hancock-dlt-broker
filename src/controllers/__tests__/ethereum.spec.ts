@@ -344,7 +344,7 @@ describe('subscribers', () => {
 
       web3.eth.getCode = jest.fn().mockResolvedValueOnce('0x0');
 
-      await ethereumController._reactToNewTransaction(socket, 'from', web3, newBlock, __consumerInstance__, true);
+      await ethereumController._reactToNewTransaction(socket, 'from', web3, newBlock, __consumerInstance__, false);
 
       expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
       expect(web3.eth.getCode).toHaveBeenCalledWith('to');
