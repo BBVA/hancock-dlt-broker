@@ -226,9 +226,11 @@ export const _reactToNewTransaction = async (
 
         try {
 
-          const check = onlyTransfers && txBody.to !== null && await web3I.eth.getCode(txBody.to) !== '0x0';
+          const isDeploy = txBody.to === null;
+          const isInvoke = await web3I.eth.getCode(txBody.to) === '0x0';
+          const sendTx = !onlyTransfers || (!isDeploy && !isInvoke);
 
-          if (!onlyTransfers || check) {
+          if (sendTx) {
             logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
             consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
           }
