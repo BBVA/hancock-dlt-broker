@@ -226,9 +226,8 @@ export const _reactToNewTransaction = async (
 
         try {
 
-          const isDeploy = txBody.to === null;
-          const isInvoke = await web3I.eth.getCode(txBody.to) === '0x0';
-          const sendTx = !onlyTransfers || (!isDeploy && !isInvoke);
+          const isSmartContractRelated = txBody.to === null || await web3I.eth.getCode(txBody.to) === '0x0';
+          const sendTx = !onlyTransfers || !isSmartContractRelated;
 
           if (sendTx) {
             logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
