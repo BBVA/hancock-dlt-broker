@@ -80,9 +80,14 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
     logger.info('Incoming message => ', dataObj);
 
     switch (dataObj.kind) {
-      case 'watch-addresses':
+      case 'watch-transfers':
         if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-          _subscribeTransferController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+          _subscribeTransactionsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer, true);
+        }
+        break;
+      case 'watch-transactions':
+        if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+          _subscribeTransactionsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
         }
         break;
       case 'watch-contracts':
@@ -102,7 +107,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
   } else if (sender) {
 
-    _subscribeTransferController(socket, [sender], web3I, subscriptions, consumer);
+    _subscribeTransactionsController(socket, [sender], web3I, subscriptions, consumer, true);
 
   }
 
@@ -172,8 +177,8 @@ export const _subscribeContractsController = async (
 };
 
 // tslint:disable-next-line:variable-name
-export const _subscribeTransferController = (
-  socket: WebSocket, addresses: string[], web3I: any, subscriptions: any[], consumer: CONSUMERS = CONSUMERS.Default) => {
+export const _subscribeTransactionsController = (
+  socket: WebSocket, addresses: string[], web3I: any, subscriptions: any[], consumer: CONSUMERS = CONSUMERS.Default, onlyTransfers: boolean = false) => {
 
   const consumerInstance: IConsumer = getConsumer(socket, consumer);
 
@@ -187,7 +192,7 @@ export const _subscribeTransferController = (
         web3I.eth
           .subscribe('newBlockHeaders')
           .on('error', (err: Error) => _onError(socket, error(hancockNewBlockHeadersError, err), false, consumerInstance))
-          .on('data', (blockMined: IEthBlockHeader) => _reactToNewTransfer(socket, address, web3I, blockMined, consumerInstance)),
+          .on('data', (blockMined: IEthBlockHeader) => _reactToNewTransaction(socket, address, web3I, blockMined, consumerInstance, onlyTransfers)),
       );
 
     });
@@ -200,7 +205,14 @@ export const _subscribeTransferController = (
 
 };
 
-export const _reactToNewTransfer = async (socket: WebSocket, address: string, web3I: any, blockMined: IEthBlockHeader, consumerInstance: IConsumer) => {
+export const _reactToNewTransaction = async (
+  socket: WebSocket,
+  address: string,
+  web3I: any,
+  blockMined: IEthBlockHeader,
+  consumerInstance: IConsumer,
+  onlyTransfers: boolean,
+) => {
 
   try {
 
@@ -210,13 +222,15 @@ export const _reactToNewTransfer = async (socket: WebSocket, address: string, we
 
     return await Promise.all(blockBody.transactions.map(async (txBody: IEthTransactionBody) => {
 
-      if (txBody.from.toUpperCase() === address.toUpperCase()) {
+      if (txBody.from && txBody.from.toUpperCase() === address.toUpperCase()) {
 
         try {
 
-          const code = await web3I.eth.getCode(txBody.to);
+          const isDeploy = txBody.to === null;
+          const isInvoke = await web3I.eth.getCode(txBody.to) === '0x0';
+          const sendTx = !onlyTransfers || (!isDeploy && !isInvoke);
 
-          if (code === '0x0') {
+          if (sendTx) {
             logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
             consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
           }
@@ -229,7 +243,7 @@ export const _reactToNewTransfer = async (socket: WebSocket, address: string, we
 
       }
 
-      if (txBody.to.toUpperCase() === address.toUpperCase()) {
+      if (txBody.to && txBody.to.toUpperCase() === address.toUpperCase()) {
 
         logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
         consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });

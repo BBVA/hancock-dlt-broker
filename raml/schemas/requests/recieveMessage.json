@@ -6,7 +6,8 @@
     "kind": {
       "type": "string",
       "enum": [
-        "watch-addresses",
+        "watch-transfers",
+        "watch-transactions",
         "watch-contracts"
       ]
     },
