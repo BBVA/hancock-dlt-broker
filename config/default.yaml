@@ -11,8 +11,7 @@ app:
       port: 8545
   db:
     protocol: mongodb
-    host: mongo.blockchainhub-develop.svc.cluster.local
-    port: 27017
+    hosts: mongo.blockchainhub-develop.svc.cluster.local:27017
     database: hancock
     params: ''
     user: ''

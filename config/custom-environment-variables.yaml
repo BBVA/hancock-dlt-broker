@@ -10,8 +10,7 @@ app:
       port: HANCOCK_BLOCKCHAIN_ETHEREUM_PORT
   db:
     protocol: HANCOCK_DB_PROTOCOL
-    host: HANCOCK_DB_HOST
-    port: HANCOCK_DB_PORT
+    hosts: HANCOCK_DB_HOSTS
     database: HANCOCK_DB_DATABASE
     params: HANCOCK_DB_PARAMS
     user: HANCOCK_DB_USER
