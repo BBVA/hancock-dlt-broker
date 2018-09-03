@@ -26,8 +26,20 @@ elif [ "$1" = 'test' ]
 then
 
     install_deps
-    yarn run test
+    yarn run test:watch
 
+elif [ "$1" = 'coverage' ]
+then
+
+    install_deps
+    yarn run coverage
+
+elif [ "$1" = 'lint' ]
+then
+
+    install_deps
+    yarn run lint:fix
+    
 elif [ "$1" = 'prod' ]
 then
 

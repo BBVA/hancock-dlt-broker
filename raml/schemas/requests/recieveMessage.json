@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "description": "received message",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": [
+        "watch-transfers",
+        "watch-transactions",
+        "watch-contracts"
+      ]
+    },
+    "body": {
+      "description": "array of address to be watched",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "consumer": {
+      "description": "the response will be customized depending on consumer type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "kind",
+    "body"
+  ]
+}

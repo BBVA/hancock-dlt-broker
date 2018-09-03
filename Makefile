@@ -1,4 +1,4 @@
-.PHONY: build-dev dev test shell db-shell-prod docs db-dev db-shell-dev db-init-dev down-dev
+.PHONY: build-dev dev test coverage shell db-shell-prod docs db-dev db-shell-dev db-init-dev down-dev lint
 
 YML_DEV=environment/dev/docker-compose.yml
 COMPOSE_DEV=docker-compose -f ${YML_DEV}
@@ -10,7 +10,13 @@ dev: build-dev down-dev
 	${COMPOSE_DEV} run --rm --service-ports hancock_dlt_broker dev
 
 test: build-dev down-dev
-	${COMPOSE_DEV} run --rm --service-ports hancock_dlt_broker test
+	${COMPOSE_DEV} run --rm --no-deps --service-ports hancock_dlt_broker test
+
+coverage: build-dev down-dev
+	${COMPOSE_DEV} run --rm --no-deps --service-ports hancock_dlt_broker coverage
+
+lint: build-dev down-dev
+	${COMPOSE_DEV} run --rm --no-deps --service-ports hancock_dlt_broker lint
 
 shell: build-dev down-dev
 	${COMPOSE_DEV} run --rm --no-deps hancock_dlt_broker /bin/bash

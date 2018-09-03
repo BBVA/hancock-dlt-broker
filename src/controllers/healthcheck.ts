@@ -1,11 +1,12 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import config from '../utils/config';
 
-export function HealthCheckController(req: Request, res: Response, next: NextFunction) {
+export function healthCheckController(req: Request, res: Response, next: NextFunction) {
 
   res
     .status(200)
     .json({
-      service: 'hancock-dlt-broker',
+      app: config.application,
       success: true,
     });
 

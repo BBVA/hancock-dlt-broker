@@ -1,7 +1,7 @@
-import { NextFunction, Request, Response, Router } from 'express';
-import { HealthCheckController } from '../controllers/healthcheck';
+import { Router } from 'express';
+import { healthCheckController } from '../controllers/healthcheck';
 
-export const HealthCheckRouter = Router();
+export const healthCheckRouter = Router();
 
-HealthCheckRouter
-  .get('/', HealthCheckController);
+healthCheckRouter
+  .get('/', healthCheckController);

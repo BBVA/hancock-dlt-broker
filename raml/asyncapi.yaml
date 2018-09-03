@@ -1,0 +1,81 @@
+
+asyncapi: 1.2.0
+title: WS broker API
+version: 1.0
+description: WebSocket API to handler DLT async transactions
+servers: 
+    - url: hancock-dlt-broker-blockchainhub-develop.kickstartteam.es/{dlt}/subscribe?address={address}&sender={sender}&consumer={consumer}
+    scheme: ws
+    description: Open a connection to listen for contracts and address transactions
+    variables:
+        dlt:
+            enum:
+                - ethereum
+            default: ethereum
+        address:
+            default: ""
+            description: Address of the contract we want to listen
+        sender:
+            default: ""
+            description: Address to listen
+        consumer:
+            enum:
+                - Cryptvault
+                - Consumer
+            default: Consumer
+            description: Kind of consumer
+events:
+    receive:
+        - $ref: '#/components/messages/watch-transfers'
+        - $ref: '#/components/messages/watch-transactions'
+        - $ref: '#/components/messages/watch-contracts'
+    send:
+        - $ref: '#/components/messages/tx'
+        - $ref: '#/components/messages/event'
+        - $ref: '#/components/messages/error'
+        - $ref: '#/components/messages/logs'
+
+components:
+    messages:
+        watch-transfers:
+            summary: New address to subscribe
+            payload:
+                type: object
+                $ref: '#/components/schemas/recieveMessage'
+        watch-transactions:
+            summary: New address to subscribe to all transactions
+            payload:
+                type: object
+                $ref: '#/components/schemas/recieveMessage'
+        watch-contracts:
+            summary: New contracts to subscribe
+            payload:
+                type: object
+                $ref: '#/components/schemas/recieveMessage'
+        tx:
+            summary: Message for a new transaction mined
+            payload:
+                type: object
+                $ref: '#/components/schemas/sendMessage'
+        logs:
+            summary: Message for a new logs in a Smart Contract
+            payload:
+                type: object
+                $ref: '#/components/schemas/sendMessage'
+        event:
+            summary: Message for a new event in a Smart Contract
+            payload:
+                type: object
+                $ref: '#/components/schemas/sendMessage'
+        error:
+            summary: Message for a new error
+            payload:
+                type: object
+                $ref: '#/components/schemas/sendMessage'
+    schemas:
+        recieveMessage:
+            type: object
+            $ref: './schemas/requests/recieveMessage'
+        sendMessage:
+            type: object
+            $ref: './schemas/responses/sendMessage'

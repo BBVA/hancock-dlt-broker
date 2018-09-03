@@ -1,28 +1,22 @@
-import { NextFunction, Request, Response, Router } from 'express';
-import { Collection, Db } from 'mongodb';
+import * as db from '../db/ethereum';
+import { hancockDbError } from '../models/error';
 import { IEthereumContractModel } from '../models/ethereum';
-import config from '../utils/config';
-import * as db from '../utils/db';
+import { error } from '../utils/error';
 
-const addressPattern = new RegExp(/^0x[a-fA-F0-9]{40}$/i);
+export async function findOne(addressOrAlias: string): Promise<IEthereumContractModel | null> {
 
-const database: string = config.db.ethereum.database;
-const collection: string = config.db.ethereum.collection;
+  let contractDbModel: IEthereumContractModel | null;
 
-async function getCollection(): Promise<Collection> {
-  return await db.getDb(database).then((client: Db) => client.collection(collection));
-}
+  try {
 
-export async function subscribe(addressOrAlias: string): Promise<IEthereumContractModel> {
+    contractDbModel = await db.getSmartContractByAddressOrAlias(addressOrAlias);
 
-  const query = addressPattern.test(addressOrAlias) ? {address: addressOrAlias} : {alias: addressOrAlias};
+  } catch (err) {
 
-  const coll = await getCollection();
+    throw error(hancockDbError, err);
 
-  return coll
-    .find<IEthereumContractModel>(query)
-    .limit(1)
-    .toArray()
-    .then((items) => items[0]);
+  }
+
+  return contractDbModel;
 
 }

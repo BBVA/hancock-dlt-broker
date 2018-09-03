@@ -1,8 +1,9 @@
 import * as express from 'express';
 import * as http from 'http';
-import { AppRouter } from './routes/index';
+import { appRouter } from './routes/index';
 import config from './utils/config';
 import * as db from './utils/db';
+import logger from './utils/logger';
 import { getSocket } from './utils/socket';
 
 export function run() {
@@ -10,7 +11,7 @@ export function run() {
   return db.connect().then(() => {
 
     const app = express();
-    app.use(config.server.base, AppRouter);
+    app.use(config.server.base, appRouter);
 
     const server = http.createServer(app);
 
@@ -30,12 +31,10 @@ export function run() {
     server.listen(config.server.port, (error: any) => {
 
       if (error) {
-        return console.error('Service is not available', error);
+        return logger.error('Service is not available', error);
       }
 
-      console.log('-----------------------------------------------------------------------');
-      console.log('Service available in port', config.server.port);
-      console.log('-----------------------------------------------------------------------');
+      logger.info('Service available in port', config.server.port);
 
     });
 
@@ -45,10 +44,10 @@ export function run() {
 
 function exitHook(err?: any) {
 
-  console.log('Exiting gracefully...');
+  logger.info('Exiting gracefully...');
 
   if (err) {
-    console.error(err);
+    logger.error(err);
   }
 
   db.close();

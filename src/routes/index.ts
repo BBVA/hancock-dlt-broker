@@ -1,14 +1,12 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { Router } from 'express';
 
-import { ErrorController } from '../controllers/error';
-import { FallbackController } from '../controllers/fallback';
-import { HealthCheckController } from '../controllers/healthcheck';
-import { EthereumRouter } from './ethereum';
+import { errorController } from '../controllers/error';
+import { fallbackController } from '../controllers/fallback';
+import { healthCheckController } from '../controllers/healthcheck';
 
-export const AppRouter = Router();
+export const appRouter = Router();
 
-AppRouter
-  .use('/health', HealthCheckController)
-  .use('/ethereum', EthereumRouter)
-  .use(FallbackController)
-  .use(ErrorController);
+appRouter
+  .use('/health', healthCheckController)
+  .use(fallbackController)
+  .use(errorController);
