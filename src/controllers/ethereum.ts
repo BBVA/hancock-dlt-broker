@@ -40,78 +40,86 @@ const receiveMessageSchema = JSON.parse(fs.readFileSync(`${schemaPath}/requests/
 // tslint:disable-next-line:variable-name
 export async function SocketSubscribeController(socket: WebSocket, req: http.IncomingMessage) {
 
-  const { query } = url.parse(req.url as string, true);
+  try {
 
-  const addressOrAlias: string = (query.address || query.alias) as string;
-  const sender: string = query.sender as string;
-  const consumer: CONSUMERS = query.consumer as CONSUMERS;
+    const { query } = url.parse(req.url as string, true);
 
-  logger.info('Incoming socket connection => ', consumer, addressOrAlias || sender);
+    const addressOrAlias: string = (query.address || query.alias) as string;
+    const sender: string = query.sender as string;
+    const consumer: CONSUMERS = query.consumer as CONSUMERS;
 
-  const subscriptions: any[] = [];
-  const web3I = await Ethereum.getWeb3();
+    logger.info('Incoming socket connection => ', consumer, addressOrAlias || sender);
 
-  socket.on('close', () => {
+    const subscriptions: any[] = [];
+    const web3I = await Ethereum.getWeb3();
 
-    logger.info('unsubscribing...');
+    socket.on('close', () => {
 
-    subscriptions.forEach((sub) => {
-      sub.unsubscribe();
+      logger.info('unsubscribing...');
+
+      subscriptions.forEach((sub) => {
+        sub.unsubscribe();
+      });
+
     });
 
-  });
+    socket.on('message', (data: any) => {
 
-  socket.on('message', (data: any) => {
+      let dataObj: ISocketMessage;
+      const consumerInstance: IConsumer = getConsumer(socket, consumer);
 
-    let dataObj: ISocketMessage;
-    const consumerInstance: IConsumer = getConsumer(socket, consumer);
+      try {
 
-    try {
+        dataObj = JSON.parse(data);
 
-      dataObj = JSON.parse(data);
+      } catch (err) {
 
-    } catch (err) {
+        _onError(socket, error(hancockParseError, err), false, consumerInstance);
+        return;
 
-      _onError(socket, error(hancockParseError, err), false, consumerInstance);
-      return;
+      }
+
+      logger.info('Incoming message => ', dataObj);
+
+      switch (dataObj.kind) {
+        case 'watch-transfers':
+          if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+            _subscribeTransactionsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer, true);
+          }
+          break;
+        case 'watch-transactions':
+          if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+            _subscribeTransactionsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+          }
+          break;
+        case 'watch-contracts':
+          if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+            _subscribeContractsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+          }
+          break;
+        default:
+          _onError(socket, hancockMessageKindUnknownError, false, consumerInstance);
+      }
+
+    });
+
+    if (addressOrAlias) {
+
+      _subscribeContractsController(socket, [addressOrAlias], web3I, subscriptions, consumer);
+
+    } else if (sender) {
+
+      _subscribeTransactionsController(socket, [sender], web3I, subscriptions, consumer, true);
 
     }
 
-    logger.info('Incoming message => ', dataObj);
+    socket.send(JSON.stringify({ kind: 'ready' }));
 
-    switch (dataObj.kind) {
-      case 'watch-transfers':
-        if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-          _subscribeTransactionsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer, true);
-        }
-        break;
-      case 'watch-transactions':
-        if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-          _subscribeTransactionsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
-        }
-        break;
-      case 'watch-contracts':
-        if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-          _subscribeContractsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
-        }
-        break;
-      default:
-        _onError(socket, hancockMessageKindUnknownError, false, consumerInstance);
-    }
+  } catch (e) {
 
-  });
-
-  if (addressOrAlias) {
-
-    _subscribeContractsController(socket, [addressOrAlias], web3I, subscriptions, consumer);
-
-  } else if (sender) {
-
-    _subscribeTransactionsController(socket, [sender], web3I, subscriptions, consumer, true);
+    logger.error(e);
 
   }
-
-  socket.send(JSON.stringify({ kind: 'ready' }));
 
 }
 
