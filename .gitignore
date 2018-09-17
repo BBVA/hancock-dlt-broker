@@ -5,7 +5,7 @@ node_modules/
 documentation/
 .sonar/
 .editorconfig
-dist/*
+dist/
 config/local.yaml
 coverage/
 tests/reports

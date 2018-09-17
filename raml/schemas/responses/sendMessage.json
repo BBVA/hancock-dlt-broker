@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/schema",
-  "description": "send message",
+  "description": "sent messages",
   "type": "object",
   "properties": {
     "kind": {

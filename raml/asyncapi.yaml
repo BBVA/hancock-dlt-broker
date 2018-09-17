@@ -1,81 +1,155 @@
 
 asyncapi: 1.2.0
-title: WS broker API
-version: 1.0
-description: WebSocket API to handler DLT async transactions
+
+info:
+  title: Hancock broker API
+  version: "1.0.0"
+  description: WebSocket API to handler DLT async transactions
+
 servers: 
-    - url: hancock-dlt-broker-blockchainhub-develop.kickstartteam.es/{dlt}/subscribe?address={address}&sender={sender}&consumer={consumer}
+  - url: hancock-dlt-broker-blockchainhub-develop.kickstartteam.es/{dlt}/subscribe?address={address}&sender={sender}&consumer={consumer}
     scheme: ws
     description: Open a connection to listen for contracts and address transactions
     variables:
-        dlt:
-            enum:
-                - ethereum
-            default: ethereum
-        address:
-            default: ""
-            description: Address of the contract we want to listen
-        sender:
-            default: ""
-            description: Address to listen
-        consumer:
-            enum:
-                - Cryptvault
-                - Consumer
-            default: Consumer
-            description: Kind of consumer
+      dlt:
+        enum:
+            - ethereum
+        default: ethereum
+      address:
+        default: ""
+        description: Address of the contract we want to listen
+      sender:
+        default: ""
+        description: Address to listen
+      consumer:
+        enum:
+            - Cryptvault
+            - Consumer
+        default: Consumer
+        description: Kind of consumer
+
 events:
-    receive:
-        - $ref: '#/components/messages/watch-transfers'
-        - $ref: '#/components/messages/watch-transactions'
-        - $ref: '#/components/messages/watch-contracts'
-    send:
-        - $ref: '#/components/messages/tx'
-        - $ref: '#/components/messages/event'
-        - $ref: '#/components/messages/error'
-        - $ref: '#/components/messages/logs'
+  receive:
+    - $ref: '#/components/messages/watch-transfers'
+    - $ref: '#/components/messages/watch-transactions'
+    - $ref: '#/components/messages/watch-contracts'
+  send:
+    - $ref: '#/components/messages/tx'
+    - $ref: '#/components/messages/event'
+    - $ref: '#/components/messages/error'
+    - $ref: '#/components/messages/logs'
 
 components:
-    messages:
-        watch-transfers:
-            summary: New address to subscribe
-            payload:
-                type: object
-                $ref: '#/components/schemas/recieveMessage'
-        watch-transactions:
-            summary: New address to subscribe to all transactions
-            payload:
-                type: object
-                $ref: '#/components/schemas/recieveMessage'
-        watch-contracts:
-            summary: New contracts to subscribe
-            payload:
-                type: object
-                $ref: '#/components/schemas/recieveMessage'
-        tx:
-            summary: Message for a new transaction mined
-            payload:
-                type: object
-                $ref: '#/components/schemas/sendMessage'
-        logs:
-            summary: Message for a new logs in a Smart Contract
-            payload:
-                type: object
-                $ref: '#/components/schemas/sendMessage'
-        event:
-            summary: Message for a new event in a Smart Contract
-            payload:
-                type: object
-                $ref: '#/components/schemas/sendMessage'
-        error:
-            summary: Message for a new error
-            payload:
-                type: object
-                $ref: '#/components/schemas/sendMessage'
-    schemas:
-        recieveMessage:
-            type: object
-            $ref: './schemas/requests/recieveMessage'
-        sendMessage:
-            type: object
-            $ref: './schemas/responses/sendMessage'
+  messages:
+    watch-transfers:
+      summary: Add an address to transfers watch list
+      description: Each time that the given address appears in a block transaction of kind "transfers",
+        an event of kind "tx" will be dispatched back through this channel
+      payload:
+        type: object
+        $ref: '#/components/schemas/sendMessage'
+    watch-transactions:
+      summary: Add an address to transaction watch list
+      description: Each time that the given address appears in a block transaction of any kind,
+        an event of kind "tx" will be dispatched back through this channel
+      payload:
+        type: object
+        $ref: '#/components/schemas/sendMessage'
+    watch-contracts:
+      summary: Add an address or an alias of a smart contract to events watch list
+      description: Each time that the contract identified by the given address or alias dispatch an event,
+        two events of kind "event" and "logs" will be dispatched back through this channel
+      payload:
+        type: object
+        $ref: '#/components/schemas/sendMessage'
+
+    tx:
+      summary: New transaction or transfer mined
+      description: Event dispatched every time a watched address is related with a transaction of kid "transfer"
+      payload:
+        type: object
+        $ref: '#/components/schemas/receiveMessage'
+    logs:
+      summary: New logs in a Smart Contract
+      description: Event dispatched every time a watched contract fires an event
+      payload:
+        type: object
+        $ref: '#/components/schemas/receiveMessage'
+    event:
+      summary: New event in a Smart Contract
+      description: Event dispatched every time a watched contract fires an event
+      payload:
+        type: object
+        $ref: '#/components/schemas/receiveMessage'
+    error:
+      summary: New error
+      description: Event dispatched every time there is an error in the broker service
+      payload:
+        type: object
+        $ref: '#/components/schemas/receiveMessage'
+
+  schemas:
+    sendMessage:
+      type: object
+      description: Commands to add new addresses to the watch list for receiving events related with them
+      properties:
+        kind:
+          description: The kind of the sent event
+          type: string
+          enum:
+            - watch-transfers
+            - watch-transactions
+            - watch-contracts
+        body:
+          description: Array of addresses to be watched
+          type: array
+          minItems: 1
+          items:
+            type: string
+        consumer:
+          description: The response will be customized depending on the consumer type
+          type: string
+      required:
+        - kind
+        - body
+      example: 
+        kind: watch-transfers
+        body:
+          - "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
+          - "0xd452cb5c4ba4c71ef7c14db0d930dc35c4c97ac7"
+        consumer: custom-consumer
+
+    receiveMessage:
+      type: object
+      description: Events received from the broker each time there is a match between the
+        origin or destination address in blockchain and one address added to the watch list
+      properties:
+        kind:
+          description: The kind of the received event
+          type: string
+          enum:
+            - tx
+            - log
+            - event
+            - error
+        body:
+          description: A payload related with the kind of the event
+          type: object
+        matchedAddress:
+          description: The address which originated the event
+          type: string
+      required:
+        - kind
+        - body
+        - matchedAddress
+      example: 
+        kind: event
+        body:
+          address: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
+          blockHash: "0x6c47653f66ac9b733f3b8bf09ed3d300520b4d9c78711ba90162744f5906b1f8"
+          blockNumber: 2812312
+          event: "TransferFrom"
+          transactionHash: "0xde8e772f0350e992ddef81bf8f51d94a8ea9216d"
+          type: 'mined'
+        matchedAddress: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
+
