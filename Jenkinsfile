@@ -55,7 +55,7 @@ nodePipeline{
 
     qa_data_shuttle_stage()
 
-    deploy_shuttle_stage(project: "blockchainhub", environment: "develop", askForConfirmation: false)
+    deploy_shuttle_stage(project: "hancock", environment: "develop", askForConfirmation: false)
 
 
   }
@@ -88,7 +88,7 @@ nodePipeline{
 
     logic_label_shuttle_stage()
 
-    deploy_shuttle_stage(project: "blockchainhub", environment: "qa", askForConfirmation: false)
+    deploy_shuttle_stage(project: "hancock", environment: "qa", askForConfirmation: false)
 
     set2rc_shuttle_stage()
 

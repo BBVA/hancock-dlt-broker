@@ -1,6 +1,7 @@
 port: 80
 healthcheck:
-  type: tcp
+  type: http
+  http_path: /health
 
 resources:
   request:
