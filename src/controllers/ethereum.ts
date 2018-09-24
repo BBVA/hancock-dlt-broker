@@ -35,7 +35,7 @@ import * as Ethereum from '../utils/ethereum';
 import logger from '../utils/logger';
 
 const schemaPath: string = path.normalize(__dirname + '/../../../raml/schemas');
-const receiveMessageSchema = JSON.parse(fs.readFileSync(`${schemaPath}/requests/recieveMessage.json`, 'utf-8'));
+const receiveMessageSchema = JSON.parse(fs.readFileSync(`${schemaPath}/requests/receiveMessage.json`, 'utf-8'));
 
 // tslint:disable-next-line:variable-name
 export async function SocketSubscribeController(socket: WebSocket, req: http.IncomingMessage) {
