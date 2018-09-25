@@ -234,7 +234,7 @@ export const _reactToNewTransaction = async (
 
         try {
 
-          const isSmartContractRelated = txBody.to === null || await web3I.eth.getCode(txBody.to) === '0x0';
+          const isSmartContractRelated = txBody.to === null || await web3I.eth.getCode(txBody.to) !== '0x0';
           const sendTx = !onlyTransfers || !isSmartContractRelated;
 
           if (sendTx) {
