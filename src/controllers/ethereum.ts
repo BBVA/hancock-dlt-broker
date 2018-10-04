@@ -31,7 +31,7 @@ import {
 } from '../models/ethereum';
 import { ISocketMessage } from '../models/models';
 import { error } from '../utils/error';
-import * as Ethereum from '../utils/ethereum';
+import * as Ethereum from '../utils/ethereum/ethereum';
 import logger from '../utils/logger';
 
 const schemaPath: string = path.normalize(__dirname + '/../../../raml/schemas');

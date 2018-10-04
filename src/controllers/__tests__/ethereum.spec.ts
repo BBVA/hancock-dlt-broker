@@ -8,7 +8,7 @@ import {
   hancockSubscribeToTransferError,
 } from '../../models/error';
 import { error } from '../../utils/error';
-import * as Ethereum from '../../utils/ethereum';
+import * as Ethereum from '../../utils/ethereum/ethereum';
 import logger from '../../utils/logger';
 import * as ethereumController from '../ethereum';
 
@@ -56,11 +56,11 @@ describe('ethereumController', async () => {
       .mockImplementation(() => Promise.resolve(true));
 
     spyOnErrorController = jest
-      .spyOn((ethereumController as any), '_onError')
+      .spyOn((ethereumController as any), 'onError')
       .mockImplementation(() => Promise.resolve(true));
 
     spyValidateSchema = jest
-      .spyOn((ethereumController as any), '_validateSchema')
+      .spyOn((ethereumController as any), 'validateSchema')
       .mockImplementation(() => Promise.resolve(true));
 
   });
@@ -250,7 +250,7 @@ describe('subscribers', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
-    spyOnErrorController = jest.spyOn((ethereumController as any), '_onError')
+    spyOnErrorController = jest.spyOn((ethereumController as any), 'onError')
       .mockImplementation(() => true);
 
     socket = {

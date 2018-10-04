@@ -1,7 +1,7 @@
 import 'jest';
 import { AggregationCursor, Collection } from 'mongodb';
 import * as db from '../../utils/db';
-import * as utils from '../../utils/utils';
+import * as utils from '../../utils/ethereum/utils';
 import * as ethereumDb from '../ethereum';
 
 jest.mock('../../utils/config');
