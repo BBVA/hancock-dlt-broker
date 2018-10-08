@@ -1,5 +1,6 @@
 import responses from '../utils/responses';
 
+/* istanbul ignore next */
 export interface IBitcoinTransferSendRequest {
   from: string;
   to: string;
@@ -7,6 +8,7 @@ export interface IBitcoinTransferSendRequest {
   data?: string;
 }
 
+/* istanbul ignore next */
 export interface IBitcoinBlockHeader {
   bits?: string;
   chainwork?: string;
@@ -26,11 +28,13 @@ export interface IBitcoinBlockHeader {
   version?: number;
 }
 
+/* istanbul ignore next */
 export interface IBitcoinBlockBody {
   pagesTotal: number;
   txs: IBitcoinTransaction[];
 }
 
+/* istanbul ignore next */
 export interface IBitcoinTransaction {
   blockhash: string;
   blockheight: number;
@@ -49,6 +53,7 @@ export interface IBitcoinTransaction {
   vout: IBitcoinTransactionVout[];
 }
 
+/* istanbul ignore next */
 export interface IBitcoinTransactionVin {
   coinbase?: string;
   sequence: number;
@@ -65,6 +70,7 @@ export interface IBitcoinTransactionVin {
   vout?: number;
 }
 
+/* istanbul ignore next */
 export interface IBitcoinTransactionVout {
   value: string;
   n: number;
@@ -79,60 +85,70 @@ export interface IBitcoinTransactionVout {
   spentHeight: string;
 }
 
+/* istanbul ignore next */
 export interface IBitcoinResponse {
   code: string;
   message: string;
   statusCode: number;
 }
 
+/* istanbul ignore next */
 export const bitcoinBadRequestResponse: IBitcoinResponse = {
   code: responses.ndbgeneral400.code,
   message: 'Bitcoin - Bad request',
   statusCode: 400,
 };
 
+/* istanbul ignore next */
 export const bitcoinErrorResponse: IBitcoinResponse = {
   code: responses.ndbsmartcontract500.code,
   message: 'Bitcoin - Blockchain request error',
   statusCode: 500,
 };
 
+/* istanbul ignore next */
 export const bitcoinOkResponse: IBitcoinResponse = {
   code: responses.ndbsmartcontract202.code,
   message: 'Bitcoin - Operation successfully requested',
   statusCode: 202,
 };
 
+/* istanbul ignore next */
 export interface IBitcoinTransferResponse {
   code: string;
   message: string;
   statusCode: number;
 }
 
+/* istanbul ignore next */
 export const bitcoinTransferBadRequestResponse: IBitcoinTransferResponse = {
   code: responses.ndbgeneral400.code,
   message: 'BitcoinTransfer - Bad request',
   statusCode: 400,
 };
 
+/* istanbul ignore next */
 export const bitcoinTransferDDBBErrorResponse: IBitcoinTransferResponse = {
   code: responses.ndbsmartcontract500.code,
   message: 'BitcoinTransfer - Internal ddbb error',
   statusCode: 500,
 };
 
+/* istanbul ignore next */
 export const bitcoinTransferErrorResponse: IBitcoinTransferResponse = {
   code: responses.ndbsmartcontract500.code,
   message: 'BitcoinTransfer - Blockchain request error',
   statusCode: 500,
 };
 
+/* istanbul ignore next */
 export const bitcoinTransferOkResponse: IBitcoinTransferResponse = {
   code: responses.ndbsmartcontract202.code,
   message: 'BitcoinTransfer - Blockchain transaction successfully sent. Consensus pending',
   statusCode: 202,
 };
 
+/* istanbul ignore next */
 export const bitcoinTransferSyncOkResponse: IBitcoinTransferResponse = {
   code: responses.ndbsmartcontract202.code,
   message: 'BitcoinTransfer - Blockchain transaction successful',

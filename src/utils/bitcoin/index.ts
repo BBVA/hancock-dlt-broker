@@ -8,11 +8,13 @@ import {BitcoinSocketService} from './services/socket';
 
 let bitcoinInstance: BitcoinClient;
 
+/* istanbul ignore next */
 export class BitcoinClient {
   constructor(public socket: BitcoinSocketService, public api: BitcoinApiService) {
   }
 }
 
+/* istanbul ignore next */
 function initBitcoinClient() {
 
   const cfg: any = config.blockchain.bitcoin;
@@ -21,6 +23,7 @@ function initBitcoinClient() {
 
 }
 
+/* istanbul ignore next */
 export async function getBitcoinClient(): Promise<BitcoinClient> {
 
   let connReady: boolean;

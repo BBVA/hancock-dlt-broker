@@ -3,6 +3,7 @@ import {IBitcoinBlockBody} from '../../../models/bitcoin';
 import {hancockNewBlockHeadersError} from '../../../models/error';
 import {error} from '../../error';
 
+/* istanbul ignore next */
 export class BitcoinApiService {
   constructor(public urlBase: string) {
   }
