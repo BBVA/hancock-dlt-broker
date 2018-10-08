@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as http from 'http';
-import {validate} from 'jsonschema';
 import * as path from 'path';
 import * as url from 'url';
 import * as WebSocket from 'ws';
@@ -15,7 +14,7 @@ import {
   IBitcoinTransactionVout,
 } from '../models/bitcoin';
 import {
-  hancockBadRequestError, HancockError, hancockGetBlockError,
+  hancockGetBlockError,
   hancockMessageKindUnknownError,
   hancockNewBlockHeadersError, hancockParseError,
   hancockSubscribeToTransferError,
