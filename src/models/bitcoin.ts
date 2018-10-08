@@ -8,22 +8,22 @@ export interface IBitcoinTransferSendRequest {
 }
 
 export interface IBitcoinBlockHeader {
-  bits: string;
-  chainwork: string;
-  confirmations: number;
-  difficulty: number;
+  bits?: string;
+  chainwork?: string;
+  confirmations?: number;
+  difficulty?: number;
   hash: string;
-  height: number;
-  isMainChain: boolean;
-  merkleroot: string;
-  nonce: number;
-  poolInfo: object;
-  previousblockhash: string;
-  reward: number;
-  size: number;
-  time: number;
-  tx: string[];
-  version: number;
+  height?: number;
+  isMainChain?: boolean;
+  merkleroot?: string;
+  nonce?: number;
+  poolInfo?: object;
+  previousblockhash?: string;
+  reward?: number;
+  size?: number;
+  time?: number;
+  tx?: string[];
+  version?: number;
 }
 
 export interface IBitcoinBlockBody {

@@ -5,6 +5,7 @@ import { IEthereumContractModel } from '../../models/ethereum';
 import * as ethereumDomain from '../ethereum';
 
 jest.mock('../../db/ethereum');
+jest.mock('../../utils/error');
 
 describe('ethereumDomain', async () => {
 

@@ -28,7 +28,7 @@ export async function getBitcoinClient(): Promise<BitcoinClient> {
   try {
 
     // connReady = !!bitcoinInstance && await bitcoinInstance.node.getBlockchainInfo() && await bitcoinInstance.api.getInfo();
-    connReady = !!bitcoinInstance && await bitcoinInstance.socket.getInfo();
+    connReady = !!bitcoinInstance;
 
   } catch (e) {
 

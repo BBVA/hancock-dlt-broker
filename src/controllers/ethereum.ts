@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as http from 'http';
-import { validate } from 'jsonschema';
 import * as path from 'path';
 import * as url from 'url';
 import * as WebSocket from 'ws';
@@ -9,9 +8,7 @@ import { getConsumer } from '../domain/consumers/consumerFactory';
 import { CONSUMERS } from '../domain/consumers/types';
 import * as domain from '../domain/ethereum';
 import {
-  hancockBadRequestError,
   hancockContractNotFoundError,
-  HancockError,
   hancockEventError,
   hancockGetBlockError,
   hancockGetCodeError,
@@ -30,9 +27,10 @@ import {
   IEthTransactionBody,
 } from '../models/ethereum';
 import { ISocketMessage } from '../models/models';
-import { error } from '../utils/error';
-import * as Ethereum from '../utils/ethereum/ethereum';
+import {error, onError} from '../utils/error';
+import * as Ethereum from '../utils/ethereum';
 import logger from '../utils/logger';
+import {validateSchema} from '../utils/schema';
 
 const schemaPath: string = path.normalize(__dirname + '/../../../raml/schemas');
 const receiveMessageSchema = JSON.parse(fs.readFileSync(`${schemaPath}/requests/receiveMessage.json`, 'utf-8'));
@@ -74,7 +72,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
       } catch (err) {
 
-        _onError(socket, error(hancockParseError, err), false, consumerInstance);
+        onError(socket, error(hancockParseError, err), false, consumerInstance);
         return;
 
       }
@@ -83,22 +81,22 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
       switch (dataObj.kind) {
         case 'watch-transfers':
-          if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
             _subscribeTransactionsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer, true);
           }
           break;
         case 'watch-transactions':
-          if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
             _subscribeTransactionsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
           }
           break;
         case 'watch-contracts':
-          if (_validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
             _subscribeContractsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
           }
           break;
         default:
-          _onError(socket, hancockMessageKindUnknownError, false, consumerInstance);
+          onError(socket, hancockMessageKindUnknownError, false, consumerInstance);
       }
 
     });
@@ -145,7 +143,7 @@ export const _subscribeContractsController = async (
             .allEvents({
               address: ethContractModel.address,
             })
-            .on('error', (err: Error) => _onError(socket, error(hancockEventError, err), false, consumerInstance))
+            .on('error', (err: Error) => onError(socket, error(hancockEventError, err), false, consumerInstance))
             .on('data', (eventBody: IEthContractEventBody) => {
               // tslint:disable-next-line:max-line-length
               logger.info(`new event from contract ${ethContractModel.alias} =>> ${eventBody.id} (${eventBody.event}) `);
@@ -162,7 +160,7 @@ export const _subscribeContractsController = async (
             .subscribe('logs', {
               address: ethContractModel.address,
             })
-            .on('error', (err: Error) => _onError(socket, error(hancockLogsError, err), false, consumerInstance))
+            .on('error', (err: Error) => onError(socket, error(hancockLogsError, err), false, consumerInstance))
             .on('data', (logBody: IEthContractLogBody) => {
 
               logger.info(`new log from contract ${ethContractModel.alias} =>> ${logBody.id}`);
@@ -173,12 +171,12 @@ export const _subscribeContractsController = async (
         );
 
       } else {
-        _onError(socket, hancockContractNotFoundError, false, consumerInstance);
+        onError(socket, hancockContractNotFoundError, false, consumerInstance);
       }
 
     } catch (err) {
 
-      _onError(socket, error(hancockSubscribeToContractError, err), false, consumerInstance);
+      onError(socket, error(hancockSubscribeToContractError, err), false, consumerInstance);
 
     }
   });
@@ -199,7 +197,7 @@ export const _subscribeTransactionsController = (
       subscriptions.push(
         web3I.eth
           .subscribe('newBlockHeaders')
-          .on('error', (err: Error) => _onError(socket, error(hancockNewBlockHeadersError, err), false, consumerInstance))
+          .on('error', (err: Error) => onError(socket, error(hancockNewBlockHeadersError, err), false, consumerInstance))
           .on('data', (blockMined: IEthBlockHeader) => _reactToNewTransaction(socket, address, web3I, blockMined, consumerInstance, onlyTransfers)),
       );
 
@@ -207,7 +205,7 @@ export const _subscribeTransactionsController = (
 
   } catch (err) {
 
-    _onError(socket, error(hancockSubscribeToTransferError, err), false, consumerInstance);
+    onError(socket, error(hancockSubscribeToTransferError, err), false, consumerInstance);
 
   }
 
@@ -244,7 +242,7 @@ export const _reactToNewTransaction = async (
 
         } catch (err) {
 
-          _onError(socket, error(hancockGetCodeError, err), false, consumerInstance);
+          onError(socket, error(hancockGetCodeError, err), false, consumerInstance);
 
         }
 
@@ -261,47 +259,7 @@ export const _reactToNewTransaction = async (
 
   } catch (err) {
 
-    _onError(socket, error(hancockGetBlockError, err), false, consumerInstance);
+    onError(socket, error(hancockGetBlockError, err), false, consumerInstance);
 
   }
-};
-
-export const _onError = async (socket: WebSocket, err: HancockError, terminate: boolean = false, consumer?: IConsumer) => {
-
-  logger.error(err);
-
-  try {
-
-    if (consumer) {
-      consumer.notify({ kind: 'error', body: err });
-    } else {
-      socket.send(JSON.stringify({ kind: 'error', body: err }));
-    }
-
-  } catch (innerErr) {
-
-    logger.error(innerErr);
-
-  }
-
-  if (terminate) {
-    socket.terminate();
-  }
-};
-
-export const _validateSchema = (data: any, schema: any, socket: WebSocket, consumerInstance: IConsumer): boolean => {
-
-  try {
-
-    validate(data, schema, { throwError: true });
-    return true;
-
-  } catch (err) {
-
-    const e: HancockError = error(hancockBadRequestError, err);
-    _onError(socket, e, false, consumerInstance);
-    return false;
-
-  }
-
 };

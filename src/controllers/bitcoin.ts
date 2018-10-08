@@ -7,7 +7,13 @@ import * as WebSocket from 'ws';
 import {IConsumer} from '../domain/consumers/consumer';
 import {getConsumer} from '../domain/consumers/consumerFactory';
 import {CONSUMERS} from '../domain/consumers/types';
-import {IBitcoinBlockHeader, IBitcoinTransaction, IBitcoinTransactionVin, IBitcoinTransactionVout} from '../models/bitcoin';
+import {
+  IBitcoinBlockBody,
+  IBitcoinBlockHeader,
+  IBitcoinTransaction,
+  IBitcoinTransactionVin,
+  IBitcoinTransactionVout,
+} from '../models/bitcoin';
 import {
   hancockBadRequestError, HancockError, hancockGetBlockError,
   hancockMessageKindUnknownError,
@@ -16,8 +22,9 @@ import {
 } from '../models/error';
 import {ISocketMessage} from '../models/models';
 import {BitcoinClient, getBitcoinClient} from '../utils/bitcoin';
-import {error} from '../utils/error';
+import {error, onError} from '../utils/error';
 import logger from '../utils/logger';
+import {validateSchema} from '../utils/schema';
 
 const schemaPath: string = path.normalize(__dirname + '/../../../raml/schemas');
 const receiveMessageSchema = JSON.parse(fs.readFileSync(`${schemaPath}/requests/receiveMessage.json`, 'utf-8'));
@@ -29,11 +36,10 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     const {query} = url.parse(req.url as string, true);
 
-    const addressOrAlias: string = (query.address || query.alias) as string;
     const sender: string = query.sender as string;
     const consumer: CONSUMERS = query.consumer as CONSUMERS;
 
-    logger.info('Incoming socket connection => ', consumer, addressOrAlias || sender);
+    logger.info('Incoming socket connection => ', consumer, sender);
 
     const subscriptions: any[] = [];
 
@@ -68,12 +74,12 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
       switch (dataObj.kind) {
         case 'watch-transfers':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            subscribeTransactions(socket, dataObj.body, subscriptions, dataObj.consumer, true);
+            _subscribeTransactions(socket, dataObj.body, subscriptions, dataObj.consumer, true);
           }
           break;
         case 'watch-transactions':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            subscribeTransactions(socket, dataObj.body, subscriptions, dataObj.consumer);
+            _subscribeTransactions(socket, dataObj.body, subscriptions, dataObj.consumer);
           }
           break;
         default:
@@ -82,7 +88,9 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     });
 
-    subscribeTransactions(socket, [sender], subscriptions, consumer, true);
+    if (sender) {
+      _subscribeTransactions(socket, [sender], subscriptions, consumer, true);
+    }
 
     socket.send(JSON.stringify({kind: 'ready'}));
 
@@ -95,11 +103,11 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 }
 
 // tslint:disable-next-line:variable-name
-export async function subscribeTransactions(socket: WebSocket,
-                                            addresses: string[],
-                                            subscriptions: any[],
-                                            consumer: CONSUMERS = CONSUMERS.Default,
-                                            onlyTransfers: boolean = false) {
+export const _subscribeTransactions = async (socket: WebSocket,
+                                             addresses: string[],
+                                             subscriptions: any[],
+                                             consumer: CONSUMERS = CONSUMERS.Default,
+                                             onlyTransfers: boolean = false) => {
 
   const consumerInstance: IConsumer = getConsumer(socket, consumer);
   const bitcoinClient: BitcoinClient = await getBitcoinClient();
@@ -114,7 +122,7 @@ export async function subscribeTransactions(socket: WebSocket,
         bitcoinClient.socket
           .subscribeToNewBLocks()
           .on('error', (err: Error) => onError(socket, error(hancockNewBlockHeadersError, err), false, consumerInstance))
-          .on('data', (blockMined: IBitcoinBlockHeader) => reactToNewTransaction(socket, address, blockMined, consumerInstance, onlyTransfers)),
+          .on('data', (blockMined: IBitcoinBlockHeader) => _reactToNewTransaction(socket, address, blockMined, consumerInstance, onlyTransfers)),
       );
     });
 
@@ -124,13 +132,13 @@ export async function subscribeTransactions(socket: WebSocket,
 
   }
 
-}
+};
 
-export async function reactToNewTransaction(socket: WebSocket,
-                                            address: string,
-                                            blockMined: IBitcoinBlockHeader,
-                                            consumerInstance: IConsumer,
-                                            onlyTransfers: boolean) {
+export const _reactToNewTransaction = async (socket: WebSocket,
+                                             address: string,
+                                             blockMined: IBitcoinBlockHeader,
+                                             consumerInstance: IConsumer,
+                                             onlyTransfers: boolean) => {
 
   try {
 
@@ -138,7 +146,7 @@ export async function reactToNewTransaction(socket: WebSocket,
 
     logger.debug('newBlock mined', blockMined.hash);
 
-    const blockBody = await bitcoinClient.api.getBlock(blockMined.hash);
+    const blockBody: IBitcoinBlockBody = await bitcoinClient.api.getBlock(blockMined.hash);
 
     return await Promise.all(blockBody.txs.map(async (txBody: IBitcoinTransaction) => {
 
@@ -165,44 +173,4 @@ export async function reactToNewTransaction(socket: WebSocket,
     onError(socket, error(hancockGetBlockError, err), false, consumerInstance);
 
   }
-}
-
-export function onError(socket: WebSocket, err: HancockError, terminate: boolean = false, consumer?: IConsumer) {
-
-  logger.error(err);
-
-  try {
-
-    if (consumer) {
-      consumer.notify({kind: 'error', body: err});
-    } else {
-      socket.send(JSON.stringify({kind: 'error', body: err}));
-    }
-
-  } catch (innerErr) {
-
-    logger.error(innerErr);
-
-  }
-
-  if (terminate) {
-    socket.terminate();
-  }
-}
-
-export function validateSchema(data: any, schema: any, socket: WebSocket, consumerInstance: IConsumer): boolean {
-
-  try {
-
-    validate(data, schema, {throwError: true});
-    return true;
-
-  } catch (err) {
-
-    const e: HancockError = error(hancockBadRequestError, err);
-    onError(socket, e, false, consumerInstance);
-    return false;
-
-  }
-
-}
+};

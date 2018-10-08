@@ -1,9 +1,9 @@
+import * as ethereum from '../';
 import config from '../../config';
-import * as ethereum from '../ethereum/ethereum';
 // tslint:disable-next-line:no-var-requires
 const web3Lib = require('web3');
 
-jest.mock('../config');
+jest.mock('../../config');
 jest.mock('web3');
 
 describe('getWeb3', async () => {
