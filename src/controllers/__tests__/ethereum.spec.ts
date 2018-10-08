@@ -7,9 +7,8 @@ import {
   hancockGetCodeError,
   hancockSubscribeToTransferError,
 } from '../../models/error';
-import { error } from '../../utils/error';
+import {error, onError} from '../../utils/error';
 import * as Ethereum from '../../utils/ethereum';
-import logger from '../../utils/logger';
 import * as ethereumController from '../ethereum';
 
 jest.mock('url');
@@ -21,6 +20,7 @@ jest.mock('../../domain/consumers/consumer');
 jest.mock('../../utils/ethereum');
 jest.mock('../../utils/logger');
 jest.mock('../../utils/error');
+jest.mock('../../utils/schema');
 
 describe('ethereumController', async () => {
 
@@ -29,8 +29,6 @@ describe('ethereumController', async () => {
   let example: any;
   let spySubscribeTransferController: any;
   let spySubscribeContractsController: any;
-  let spyOnErrorController: any;
-  let spyValidateSchema: any;
 
   beforeEach(() => {
 
@@ -53,14 +51,6 @@ describe('ethereumController', async () => {
 
     spySubscribeContractsController = jest
       .spyOn(ethereumController, '_subscribeContractsController')
-      .mockImplementation(() => Promise.resolve(true));
-
-    spyOnErrorController = jest
-      .spyOn((ethereumController as any), '_onError')
-      .mockImplementation(() => Promise.resolve(true));
-
-    spyValidateSchema = jest
-      .spyOn((ethereumController as any), '_validateSchema')
       .mockImplementation(() => Promise.resolve(true));
 
   });
@@ -130,7 +120,7 @@ describe('ethereumController', async () => {
     expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ kind: 'ready' }));
     expect(spySubscribeTransferController).toHaveBeenCalledTimes(0);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(1);
-    expect(spyOnErrorController).toHaveBeenCalledTimes(0);
+    expect(onError).toHaveBeenCalledTimes(0);
   });
 
   it('should call on message correctly and _subscribeTransactionsController', async () => {
@@ -155,7 +145,7 @@ describe('ethereumController', async () => {
     expect(socket.on).toHaveBeenCalledTimes(2);
     expect(spySubscribeTransferController).toHaveBeenCalledTimes(1);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(0);
-    expect(spyOnErrorController).toHaveBeenCalledTimes(0);
+    expect(onError).toHaveBeenCalledTimes(0);
 
   });
 
@@ -181,7 +171,7 @@ describe('ethereumController', async () => {
     expect(socket.on).toHaveBeenCalledTimes(2);
     expect(spySubscribeTransferController).toHaveBeenCalledTimes(0);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(0);
-    expect(spyOnErrorController).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledTimes(1);
 
   });
 
@@ -207,7 +197,7 @@ describe('ethereumController', async () => {
     expect(socket.on).toHaveBeenCalledTimes(2);
     expect(spySubscribeTransferController).toHaveBeenCalledTimes(0);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(0);
-    expect(spyOnErrorController).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledTimes(1);
 
   });
 
@@ -245,13 +235,9 @@ describe('subscribers', () => {
   let web3: any;
   let newBlock: any;
   let blockBody: any;
-  let spyOnErrorController: any;
 
   beforeEach(async () => {
     jest.clearAllMocks();
-
-    spyOnErrorController = jest.spyOn((ethereumController as any), '_onError')
-      .mockImplementation(() => true);
 
     socket = {
       on: jest.fn(),
@@ -330,7 +316,7 @@ describe('subscribers', () => {
       });
       await ethereumController._subscribeTransactionsController(socket, ['from'], web3, []);
 
-      expect(spyOnErrorController).toHaveBeenCalledWith(socket, error(hancockSubscribeToTransferError, new Error('Error!')), false, __consumerInstance__);
+      expect(onError).toHaveBeenCalledWith(socket, error(hancockSubscribeToTransferError, new Error('Error!')), false, __consumerInstance__);
 
     });
 
@@ -361,7 +347,7 @@ describe('subscribers', () => {
       await ethereumController._reactToNewTransaction(socket, 'from', web3, newBlock, __consumerInstance__, true);
 
       expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
-      expect(spyOnErrorController).toHaveBeenCalledWith(socket, error(hancockGetCodeError, new Error('Error!')), false, __consumerInstance__);
+      expect(onError).toHaveBeenCalledWith(socket, error(hancockGetCodeError, new Error('Error!')), false, __consumerInstance__);
 
     });
 
@@ -372,7 +358,7 @@ describe('subscribers', () => {
       await ethereumController._reactToNewTransaction(socket, 'from', web3, newBlock, __consumerInstance__, true);
 
       expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
-      expect(spyOnErrorController).toHaveBeenCalledWith(socket, error(hancockGetBlockError, new Error('Error!')), false, __consumerInstance__);
+      expect(onError).toHaveBeenCalledWith(socket, error(hancockGetBlockError, new Error('Error!')), false, __consumerInstance__);
 
     });
 
@@ -437,57 +423,9 @@ describe('subscribers', () => {
 
       await ethereumController._subscribeContractsController(socket, ['from'], web3, []);
 
-      expect(spyOnErrorController).toHaveBeenCalled();
+      expect(onError).toHaveBeenCalled();
 
     });
-
-  });
-
-});
-
-describe('onError', () => {
-
-  let socket: any;
-
-  beforeEach(async () => {
-
-    jest.restoreAllMocks();
-
-    socket = {
-      on: jest.fn(),
-      send: jest.fn(),
-      terminate: jest.fn(),
-    };
-
-  });
-
-  it('should call consumer notify', async () => {
-
-    await ethereumController._onError(socket, hancockGetBlockError, false, __consumerInstance__);
-
-    expect(__consumerInstance__.notify).toHaveBeenCalledWith({ kind: 'error', body: hancockGetBlockError });
-    expect(socket.terminate).not.toHaveBeenCalled();
-
-  });
-
-  it('should call socket send', async () => {
-
-    await ethereumController._onError(socket, hancockGetBlockError, true);
-
-    expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ kind: 'error', body: hancockGetBlockError }));
-    expect(socket.terminate).toHaveBeenCalled();
-
-  });
-
-  it('should call logger.error', async () => {
-
-    socket.send = jest.fn().mockImplementationOnce(() => {
-      throw new Error('Error!');
-    });
-
-    await ethereumController._onError(socket, hancockGetBlockError, true);
-
-    expect(logger.error).toHaveBeenCalled();
 
   });
 
