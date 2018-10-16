@@ -2,6 +2,7 @@ import {EventEmitter} from 'events';
 import * as io from 'socket.io-client';
 import {IBitcoinBlockHeader} from '../../../models/bitcoin';
 
+/* istanbul ignore next */
 export class BitcoinSocketService extends EventEmitter {
   private socketIO: SocketIOClient.Socket;
   constructor(public url: string) {
