@@ -11,8 +11,7 @@ services:
       - './scripts/:/code/scripts/'
     ports:
       - "3009:3000"
-      - "8080:8080"
-      - "8545"
+      - "9229:9229"
     depends_on:
       mongo:
         condition: service_healthy
@@ -38,12 +37,12 @@ services:
       mongo:
         condition: service_healthy
     volumes:
-      - './scripts/:/scripts/'
+      - './scripts/:/scripts/broker/'
 
 volumes:
   hancock_dlt_mongodb_data:
 
-networks:
-  default:
-    external:
-      name: dev_eth_local_net
+# networks:
+#   default:
+#     external:
+#       name: dev_eth_local_net

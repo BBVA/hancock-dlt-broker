@@ -1,30 +1,42 @@
 import * as express from 'express';
-import { SocketSubscribeController } from './controllers/eth';
-import { AppRouter } from './routes/index';
+import * as http from 'http';
+import { appRouter } from './routes/index';
 import config from './utils/config';
 import * as db from './utils/db';
+import logger from './utils/logger';
 import { getSocket } from './utils/socket';
 
 export function run() {
 
   return db.connect().then(() => {
 
-    // const app = express();
-    // app.use(config.server.base, AppRouter);
+    const app = express();
+    app.use(config.server.base, appRouter);
 
-    const ws = getSocket('/subscription');
-    ws.on('connection', SocketSubscribeController);
+    const server = http.createServer(app);
 
-    // app.listen(config.server.port, (error: any) => {
+    Object.keys(config.blockchain).forEach((dlt: string) => {
 
-    //   if (error) {
-    //     return console.error('Service is not available', error);
-    //   }
+      const controller: any = require(`./controllers/${dlt}`).SocketSubscribeController;
 
-    //   console.log('-----------------------------------------------------------------------');
-    //   console.log('Service available in port', config.server.port);
-    //   console.log('-----------------------------------------------------------------------');
-    // });
+      if (controller) {
+
+        const ws = getSocket(`/${dlt}/subscribe`, server);
+        ws.on('connection', controller);
+
+      }
+
+    });
+
+    server.listen(config.server.port, (error: any) => {
+
+      if (error) {
+        return logger.error('Service is not available', error);
+      }
+
+      logger.info('Service available in port', config.server.port);
+
+    });
 
   });
 
@@ -32,10 +44,10 @@ export function run() {
 
 function exitHook(err?: any) {
 
-  console.log('Exiting gracefully...');
+  logger.info('Exiting gracefully...');
 
   if (err) {
-    console.error(err);
+    logger.error(err);
   }
 
   db.close();

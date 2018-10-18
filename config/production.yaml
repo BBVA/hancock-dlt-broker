@@ -1,7 +1,0 @@
-env: production
-app:
-  server:
-    port: 80
-  db:
-    host: # TODO: Set that
-    params: # replicaSet=rs0

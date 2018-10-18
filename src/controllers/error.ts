@@ -1,37 +1,31 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import { hancockDefaultError, HancockError, IHancockErrorResponse } from '../models/error';
+import logger from '../utils/logger';
 
-export interface ICustomError {
-  code_internal: string;
-  code_http: number;
-  message: string;
-}
+export const _getErrorResponse = (e: HancockError): IHancockErrorResponse => {
 
-export interface IErrorMap {
-  [k: string]: ICustomError;
-}
+  const response: IHancockErrorResponse = {
+    error: e.httpCode,
+    internalError: e.internalCode,
+    message: e.message,
+  };
 
-export enum Errors {
-  DEFAULT_ERROR = 'DEFAULT_ERROR',
-  NOT_FOUND = 'NOT_FOUND',
-}
+  if (e.extendedMessage) {
+    response.extendedMessage = e.extendedMessage;
+  }
 
-export const ErrorMap: IErrorMap = {
-  DEFAULT_ERROR: { code_internal: 'DC4000', code_http: 400, message: 'Bad request' },
-  NOT_FOUND: { code_internal: 'DC4040', code_http: 404, message: 'Not Found' },
+  return response;
+
 };
 
-export function ErrorController(error: any, req: Request, res: Response, next: NextFunction) {
+export function errorController(err: Error, req: Request, res: Response, next: NextFunction) {
 
-  const customError: ICustomError = ErrorMap[error.message] || ErrorMap[Errors.DEFAULT_ERROR];
-  // const logger = loggerUtils.getLogger(customError.code_internal);
+  const customError: HancockError = err instanceof HancockError ? err : hancockDefaultError;
 
-  console.log('-----------------------------------------------------------------------');
-  console.error(customError.message);
-  console.error(error);
-  console.log('-----------------------------------------------------------------------');
+  logger.error(customError);
 
   return res
-    .status(customError.code_http)
-    .json(customError);
+    .status(customError.httpCode)
+    .json(_getErrorResponse(customError));
 
 }

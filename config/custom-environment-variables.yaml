@@ -1,0 +1,30 @@
+app:
+  hostname: HOSTNAME
+  server:
+    base: HANCOCK_SERVER_BASE
+    host: HANCOCK_SERVER_HOST
+    port: HANCOCK_SERVER_PORT
+    protocol: HANCOCK_SERVER_PROTOCOL
+  blockchain:
+    ethereum:
+      protocol: HANCOCK_BLOCKCHAIN_ETHEREUM_PROTOCOL
+      host: HANCOCK_BLOCKCHAIN_ETHEREUM_HOST
+      port: HANCOCK_BLOCKCHAIN_ETHEREUM_PORT
+  db:
+    protocol: HANCOCK_DB_PROTOCOL
+    hosts: HANCOCK_DB_HOSTS
+    database: HANCOCK_DB_DATABASE
+    params: HANCOCK_DB_PARAMS
+    user: HANCOCK_DB_USER
+    pass: HANCOCK_DB_PASS
+    ethereum:
+      database: HANCOCK_DB_ETHEREUM_DATABASE
+  consumers:
+    cryptvault:
+      api:
+        getByAddressEndpoint: HANCOCK_CRYPTVAULT_GET_BY_ADDRESS_ENDPOINT
+        notifyEndpoint: HANCOCK_CRYPTVAULT_SIGN_ENDPOINT
+      credentials:
+        key: HANCOK_CRYPTVAULT_KEY
+        secret: HANCOCK_CRYPTVAULT_SECRET
+        expires_in: HANCOCK_CRYPTVAULT_EXPIRES_IN

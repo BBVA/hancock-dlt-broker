@@ -1,7 +1,7 @@
 port: 80
 healthcheck:
   type: http
-  http_path: /api/v1/health
+  http_path: /health
 
 resources:
   request:

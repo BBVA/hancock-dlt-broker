@@ -1,20 +1,37 @@
 env:
 app:
+  application: 'hancock:ms-dlt-broker'
+  hostname: 'localhost'
   server:
-    port:
-    base: '/api/v1/'
+    protocol: ws
+    host: localhost
+    port: 3000
+    base: ''
   blockchain:
-    host: ganache
-    port: 8545
+    ethereum:
+      protocol: ws
+      host: ganache
+      port: 8545
   db:
     protocol: mongodb
-    host: ''
-    port: 27017
-    database: ''
+    hosts: mongo:27017
+    database: hancock
     params: ''
     user: ''
     pass: ''
-
-    eth:
-      database: ETH
-      collection: contracts
+    ethereum:
+      database: hancock
+      collections:
+        contractAbis: sc_abi
+        contractInstances: sc_instance
+  consumers:
+    cryptvault:
+      api:
+        getByAddressEndpoint: 'http://kong:8000/v1/wallets/:address'
+        notifyEndpoint: 'http://kong:8000/v1/wallets/:address/notify'
+      credentials:
+        key: 'OiYdLKOblAicxiasy2tJolbc3oBYkiyg'
+        secret: 'umFfDtKwdv9k6uhu7EEA2Hwoe3aWaoTT'
+        expires_in: '1555674519'
+  logger:
+    logLevel: debug

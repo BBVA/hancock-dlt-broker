@@ -21,7 +21,7 @@ WORKDIR /code
 # COPY . .
 # RUN yarn run build:ts
 
-USER node
+# USER node
 
 EXPOSE 3000
 EXPOSE 9229
