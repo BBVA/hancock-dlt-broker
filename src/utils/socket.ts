@@ -1,5 +1,6 @@
 import * as WebSocket from 'ws';
 
+/* istanbul ignore next */
 export function getSocket(path: string, server?: any) {
 
   // const server = new http.Server(app);

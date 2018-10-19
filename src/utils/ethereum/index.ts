@@ -1,4 +1,4 @@
-import config from './config';
+import config from '../config';
 
 // tslint:disable-next-line:no-var-requires
 const web3 = require('web3');
