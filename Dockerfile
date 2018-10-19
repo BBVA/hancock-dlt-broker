@@ -1,5 +1,4 @@
 FROM node:8.9.3
-LABEL maintainer "Angel Manzano Alcaraz <angel.manzano.contractor@bbva.com>"
 
 # Move to build dir
 WORKDIR /usr/src/app
