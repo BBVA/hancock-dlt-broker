@@ -31,7 +31,7 @@
     "dlt",
     "broker"
   ],
-  "author": "Angel Manzano Alcaraz <angel.manzano.contractor@bbva.com>",
+  "author": "BBVA NDB - R&D Team",
   "license": "ISC",
   "devDependencies": {
     "@types/config": "0.0.33",
