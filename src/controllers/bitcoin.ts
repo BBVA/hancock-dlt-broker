@@ -72,10 +72,6 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
       switch (dataObj.kind) {
         case 'watch-transfers':
-          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            _subscribeTransactions(socket, dataObj.body, subscriptions, dataObj.consumer);
-          }
-          break;
         case 'watch-transactions':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
             _subscribeTransactions(socket, dataObj.body, subscriptions, dataObj.consumer);
