@@ -54,6 +54,7 @@ export class CryptvaultConsumer extends Consumer {
 
     switch (event.kind) {
       case 'tx':
+      case 'event':
         return await this.cypherAndSendTransfer(event);
       default:
         return await super.notify(event);
