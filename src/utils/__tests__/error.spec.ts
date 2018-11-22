@@ -1,6 +1,10 @@
 import 'jest';
-import { HancockError } from '../../models/error';
-import { error } from '../error';
+import {__consumerInstance__} from '../../domain/consumers/__mocks__/consumer';
+import {HancockError, hancockGetBlockError} from '../../models/error';
+import {error, onError} from '../error';
+import {logger} from '../logger';
+
+jest.mock('../../utils/logger');
 
 describe('error', () => {
 
@@ -26,4 +30,50 @@ describe('error', () => {
     expect(newError.errorStack[0]).toEqual(testError);
 
   });
+});
+
+describe('onError', () => {
+
+  let socket: any;
+
+  beforeEach(async () => {
+
+    socket = {
+      on: jest.fn(),
+      send: jest.fn(),
+      terminate: jest.fn(),
+    };
+
+  });
+
+  it('should call consumer notify', async () => {
+
+    await onError(socket, hancockGetBlockError, false, __consumerInstance__);
+
+    expect(__consumerInstance__.notify).toHaveBeenCalledWith({ kind: 'error', body: hancockGetBlockError });
+    expect(socket.terminate).not.toHaveBeenCalled();
+
+  });
+
+  it('should call socket send', async () => {
+
+    await onError(socket, hancockGetBlockError, true);
+
+    expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ kind: 'error', body: hancockGetBlockError }));
+    expect(socket.terminate).toHaveBeenCalled();
+
+  });
+
+  it('should call logger.error', async () => {
+
+    socket.send = jest.fn().mockImplementationOnce(() => {
+      throw new Error('Error!');
+    });
+
+    await onError(socket, hancockGetBlockError, true);
+
+    expect(logger.error).toHaveBeenCalled();
+
+  });
+
 });
