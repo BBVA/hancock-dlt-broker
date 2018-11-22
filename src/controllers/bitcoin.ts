@@ -146,14 +146,14 @@ export const _reactToNewTransaction = async (socket: WebSocket,
     return await Promise.all(blockBody.txs.map(async (txBody: IBitcoinTransaction) => {
 
       if (!txBody.isCoinBase) {
-        txBody.vin.map(async (vin: IBitcoinTransactionVin) => {
+        txBody.vin.forEach(async (vin: IBitcoinTransactionVin) => {
           if (vin.addr === address && !onlyTransfers) {
             logger.info(`new tx =>> ${txBody.txid}, from: ${vin.addr}`);
             consumerInstance.notify({kind: 'tx', body: txBody, matchedAddress: vin.addr});
           }
         });
 
-        txBody.vout.map(async (vout: IBitcoinTransactionVout) => {
+        txBody.vout.forEach(async (vout: IBitcoinTransactionVout) => {
           if (vout.scriptPubKey.addresses.length && vout.scriptPubKey.addresses[0] === address) {
             logger.info(`new tx =>> ${txBody.txid}, to: ${vout.scriptPubKey.addresses[0]}`);
             consumerInstance.notify({kind: 'tx', body: txBody, matchedAddress: vout.scriptPubKey.addresses[0]});
