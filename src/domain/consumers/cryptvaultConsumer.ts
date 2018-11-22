@@ -166,9 +166,17 @@ export class CryptvaultConsumer extends Consumer {
   }
 
   private getTxDirection(event: ISocketEvent): ICryptoVaultEventTxDirection {
-    return (event.body.from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
+    let direction: ICryptoVaultEventTxDirection;
+    if (event.kind === 'tx') {
+      direction = (event.body.from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
       ? ICryptoVaultEventTxDirection.OUT
       : ICryptoVaultEventTxDirection.IN;
+    } else {
+      direction = (event.body.returnValues._from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
+      ? ICryptoVaultEventTxDirection.OUT
+      : ICryptoVaultEventTxDirection.IN;
+    }
+    return direction;
   }
 
 }
