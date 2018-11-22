@@ -54,12 +54,24 @@ export class CryptvaultConsumer extends Consumer {
 
     switch (event.kind) {
       case 'tx':
-      case 'event':
         return await this.cypherAndSendTransfer(event);
+      case 'event':
+        switch (event.body.event) {
+          case 'Transfer':
+            return this.cypherEventAndSend(event);
+        }
       default:
         return await super.notify(event);
     }
 
+  }
+
+  private async cypherEventAndSend(event: ISocketEvent): Promise<boolean> {
+    event.matchedAddress = event.body.returnValues_from;
+    await this.cypherAndSendTransfer(event);
+    event.matchedAddress = event.body.returnValues_to;
+    await this.cypherAndSendTransfer(event);
+    return Promise.resolve(true);
   }
 
   private async cypherAndSendTransfer(event: ISocketEvent): Promise<boolean> {
@@ -154,9 +166,9 @@ export class CryptvaultConsumer extends Consumer {
   }
 
   private getTxDirection(event: ISocketEvent): ICryptoVaultEventTxDirection {
-    return (event.body.to.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
-      ? ICryptoVaultEventTxDirection.IN
-      : ICryptoVaultEventTxDirection.OUT;
+    return (event.body.from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
+      ? ICryptoVaultEventTxDirection.OUT
+      : ICryptoVaultEventTxDirection.IN;
   }
 
 }
