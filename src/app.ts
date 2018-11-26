@@ -80,3 +80,5 @@ process.on('exit', exitHook);
 process.on('SIGINT', exitHook);
 // Catch uncaught exceptions from the program
 process.on('uncaughtException', exitHook);
+// Catch Unhandled promise rejection from the program
+process.on('unhandledRejection', exitHook);
