@@ -97,7 +97,7 @@ nodePipeline{
     // set2rc_shuttle_stage()
 
     stage ('Functional Tests') {
-      build job: '/blockchainhub/kst-hancock-ms-dlt-broker-tests/master'
+      build job: '/hancock/kst-hancock-ms-dlt-broker-tests/master'
     }
 
   }
