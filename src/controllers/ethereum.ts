@@ -127,7 +127,7 @@ export const _subscribeContractsController = async (
 
   const consumerInstance: IConsumer = getConsumer(socket, consumer);
 
-  contracts.map(async (contractAddressOrAlias: string) => {
+  contracts.forEach(async (contractAddressOrAlias: string) => {
 
     try {
 
