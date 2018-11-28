@@ -39,7 +39,6 @@ nodePipeline{
       echo 'Continue with the execution'
     }
 
-    install_dependencies()
 
     lint()
 
@@ -68,7 +67,6 @@ nodePipeline{
       echo 'Continue with the execution'
     }
 
-    install_dependencies()
 
     lint()
 
@@ -79,7 +77,6 @@ nodePipeline{
     
     docs()
 
-    // check_unlocked_in_RC_shuttle_stage()
 
     docker_shuttle_stage()
     
