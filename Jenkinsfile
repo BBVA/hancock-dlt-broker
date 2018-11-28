@@ -17,15 +17,6 @@ def docs() {
   }
 }
 
-def unit_tests() {
-  stage('Unit tests'){
-    container('node'){
-      sh """
-        yarn run coverage
-      """
-    }
-  }
-}
 
 nodePipeline{
 
@@ -40,12 +31,13 @@ nodePipeline{
     }
 
     
-    lint()
+   
 
     node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
                                         yarn install
                                         yarn run coverage
                                     """)
+    lint()
 
     docs()
 
@@ -68,12 +60,13 @@ nodePipeline{
     }
 
 
-    lint()
-
+    
     node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
                                         yarn install
                                         yarn run coverage
                                     """)
+                                    
+    lint()
     
     docs()
 
