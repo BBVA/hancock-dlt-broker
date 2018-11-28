@@ -88,17 +88,27 @@ nodePipeline{
 
     docker_shuttle_stage()
 
-    // qa_data_shuttle_stage()
-
     // logic_label_shuttle_stage()
 
     deploy_shuttle_stage(project: "hancock", environment: "qa", askForConfirmation: false)
 
-    // set2rc_shuttle_stage()
+    qa_data_shuttle_stage()
+
+    set2rc_shuttle_stage()
 
     stage ('Functional Tests') {
-      build job: '/hancock/kst-hancock-ms-dlt-broker-tests/master'
+      try{
+        build job: '/hancock/kst-hancock-ms-dlt-broker-tests/master', parameters: [[$class: 'StringParameterValue', name: 'GIT_COMMIT', value: ${env.GIT_COMMIT}], [$class: 'StringParameterValue', name: 'VERSION', value: ${env.BRANCH_NAME}]]
+      } catch (e) {
+        currentBuild.result = 'UNSTABLE'
+        result = "FAIL" // make sure other exceptions are recorded as failure too
+      }
     }
+    
+    create_release_from_RC()
+    
+    logic_label_shuttle_stage(release: env.BUILD_DISPLAY_NAME)
 
   }
+    
 }

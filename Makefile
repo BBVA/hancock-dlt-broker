@@ -28,7 +28,7 @@ db-shell-dev: build-dev down-dev
 	${COMPOSE_DEV} run --rm --service-ports mongo-shell
 
 db-shell-prod:
-	docker run -it --rm bitnami/mongodb:latest /bin/bash -c "mongo --host mongo.blockchainhub-develop.svc.cluster.local:27017 hancock"
+	docker run -it --rm bitnami/mongodb:latest /bin/bash -c "mongo --host mongo.hancock-develop.svc.cluster.local:27017 hancock"
 
 db-init-dev: build-dev down-dev
 	${COMPOSE_DEV} run --rm --service-ports mongo-shell /scripts/init_db.js
