@@ -39,7 +39,7 @@ nodePipeline{
       echo 'Continue with the execution'
     }
 
-
+    
     lint()
 
     node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
@@ -51,7 +51,7 @@ nodePipeline{
 
     docker_shuttle_stage()
 
-    //qa_data_shuttle_stage()
+    qa_data_shuttle_stage()
 
     deploy_shuttle_stage(project: "hancock", environment: "develop", askForConfirmation: false)
 
@@ -102,4 +102,5 @@ nodePipeline{
     logic_label_shuttle_stage(release: env.BUILD_DISPLAY_NAME)
 
   }
+
 }
