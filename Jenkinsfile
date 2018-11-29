@@ -60,7 +60,6 @@ nodePipeline{
     }
 
 
-    
     node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
                                         yarn install
                                         yarn run coverage
@@ -69,7 +68,6 @@ nodePipeline{
     lint()
     
     docs()
-
 
     docker_shuttle_stage()
     
@@ -80,20 +78,19 @@ nodePipeline{
 
     set2rc_shuttle_stage()
     
-
+    
     stage ('Functional Tests') {
-    try{
-      build job: '/blockchainhub/kst-hancock-ms-dlt-broker-tests/master', parameters: [[$class: 'StringParameterValue', name: 'GIT_COMMIT', value: env.GIT_COMMIT], [$class: 'StringParameterValue', name: 'VERSION', value: env.BRANCH_NAME]] , propagate: true
+      try{
+        build job: '/hancock/kst-hancock-ms-dlt-adapter-tests/master', parameters: [[$class: 'StringParameterValue', name: 'GIT_COMMIT', value: ${env.GIT_COMMIT}], [$class: 'StringParameterValue', name: 'VERSION', value: ${env.BRANCH_NAME}]]
       } catch (e) {
         currentBuild.result = 'UNSTABLE'
         result = "FAIL" // make sure other exceptions are recorded as failure too
-    }
+      }
     }
     
     create_release_from_RC()
     
     logic_label_shuttle_stage(release: env.BUILD_DISPLAY_NAME)
-
   }
 
 }
