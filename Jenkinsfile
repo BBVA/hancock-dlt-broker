@@ -23,21 +23,18 @@ nodePipeline{
   // ---- DEVELOP ----
   if (env.BRANCH_NAME == 'develop') {
 
+  node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
+                                        yarn install
+                                        yarn run coverage
+                                    """)
+    lint()
+    
     try {
       sonar_shuttle_stage()
     } catch (exc) {
       echo 'Sonar shuttle stage crashed!'
       echo 'Continue with the execution'
     }
-
-    
-   
-
-    node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
-                                        yarn install
-                                        yarn run coverage
-                                    """)
-    lint()
 
     docs()
 
