@@ -48,6 +48,11 @@ nodePipeline{
 
   // ---- RELEASE ----
   if (env.BRANCH_NAME =~ 'release/*') {
+   
+    node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
+                                        yarn install
+                                        yarn run coverage
+                                    """)
 
     try {
       sonar_shuttle_stage()
@@ -57,10 +62,7 @@ nodePipeline{
     }
 
 
-    node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
-                                        yarn install
-                                        yarn run coverage
-                                    """)
+   
                                     
     lint()
     
