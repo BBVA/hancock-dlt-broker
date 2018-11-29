@@ -22,5 +22,7 @@ export const __client__ = {
 
 export const connect = jest.fn();
 export const close = jest.fn();
-export const getClient = jest.fn();
+export const getClient = jest.fn().mockImplementation(() => {
+  return Promise.resolve('Db');
+});
 export const getDb = jest.fn().mockResolvedValue(__client__);
