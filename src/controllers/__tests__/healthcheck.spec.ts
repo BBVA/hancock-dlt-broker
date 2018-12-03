@@ -3,6 +3,8 @@ import 'jest';
 import { healthCheckController } from '../healthcheck';
 
 jest.mock('../../utils/config');
+jest.mock('../../utils/db');
+jest.mock('../../utils/ethereum');
 jest.mock('../../utils/logger');
 
 describe('healthcheckController', async () => {
