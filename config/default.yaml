@@ -10,8 +10,7 @@ app:
   blockchain:
     ethereum:
       protocol: ws
-      host: ganache
-      port: 8545
+      url: ganache:8545
     bitcoin:
       socketUrl: 'http://bitcore:3033'
       apiUrl: 'http://bitcore:3033'

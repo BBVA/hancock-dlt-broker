@@ -8,7 +8,7 @@ let web3Instance: any;
 function initWeb3() {
 
   const cfg: any = config.blockchain.ethereum;
-  web3Instance = new web3(new web3.providers.WebsocketProvider(`${cfg.protocol}://${cfg.host}:${cfg.port}`));
+  web3Instance = new web3(new web3.providers.WebsocketProvider(`${cfg.protocol}://${cfg.url}`));
 
 }
 
