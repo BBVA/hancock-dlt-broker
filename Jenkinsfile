@@ -2,6 +2,7 @@ def lint() {
   stage('Linter'){
     container('node'){
       sh """
+        yarn global add tslint typescript
         yarn run lint
       """
     }
