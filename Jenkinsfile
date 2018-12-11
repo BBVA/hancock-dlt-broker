@@ -32,7 +32,7 @@ nodePipeline{
                                         yarn install
                                         yarn run coverage
                                     """)
-    
+   
     docs()
 
     docker_shuttle_stage()
@@ -73,5 +73,4 @@ nodePipeline{
     
     logic_label_shuttle_stage(release: env.BUILD_DISPLAY_NAME)
   }
-
 }
