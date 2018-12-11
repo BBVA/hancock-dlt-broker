@@ -24,15 +24,20 @@ nodePipeline{
   // ---- DEVELOP ----
   if (env.BRANCH_NAME == 'develop') {
   
-    sonar_shuttle_stage()
-    
-    lint()
+    parallel(
 
-    node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
+                    Static_code_analisys: {
+                            sonar_shuttle_stage()
+                            lint()
+                           },
+                    Unit_tests:{
+                            node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
                                         yarn install
                                         yarn run coverage
                                     """)
-   
+                             }
+                    )
+  
     docs()
 
     docker_shuttle_stage()
@@ -46,15 +51,19 @@ nodePipeline{
   // ---- RELEASE ----
   if (env.BRANCH_NAME =~ 'release/*') {
    
-    node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
+    parallel(
+
+                    Static_code_analisys: {
+                            sonar_shuttle_stage()
+                            lint()
+                           },
+                    Unit_tests:{
+                            node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
                                         yarn install
                                         yarn run coverage
                                     """)
-
-    sonar_shuttle_stage()
-
-                                    
-    lint()
+                             }
+                    )
     
     docs()
 
