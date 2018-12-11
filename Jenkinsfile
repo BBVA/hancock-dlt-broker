@@ -24,19 +24,12 @@ nodePipeline{
   // ---- DEVELOP ----
   if (env.BRANCH_NAME == 'develop') {
   
-    parallel(
-
-                    Static_code_analisys: {
-                            sonar_shuttle_stage()
-                            lint()
-                           },
-                    Unit_tests:{
-                            node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
-                                        yarn install
-                                        yarn run coverage
-                                    """)
-                             }
-                    )
+    sonar_shuttle_stage()
+    lint()
+    node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
+                yarn install
+                yarn run coverage
+            """)
   
     docs()
 
@@ -51,19 +44,13 @@ nodePipeline{
   // ---- RELEASE ----
   if (env.BRANCH_NAME =~ 'release/*') {
    
-    parallel(
 
-                    Static_code_analisys: {
-                            sonar_shuttle_stage()
-                            lint()
-                           },
-                    Unit_tests:{
-                            node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
-                                        yarn install
-                                        yarn run coverage
-                                    """)
-                             }
-                    )
+    sonar_shuttle_stage()
+    lint()
+    node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
+                yarn install
+                yarn run coverage
+            """)
     
     docs()
 
