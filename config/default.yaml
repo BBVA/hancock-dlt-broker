@@ -11,9 +11,6 @@ app:
     ethereum:
       protocol: ws
       url: ganache:8545
-    bitcoin:
-      socketUrl: 'http://bitcore:3033'
-      apiUrl: 'http://bitcore:3033'
   db:
     protocol: mongodb
     hosts: mongo:27017
