@@ -7,7 +7,7 @@ info:
   description: WebSocket API to handler DLT async transactions
 
 servers: 
-  - url: hancock-dlt-broker-hancock-develop.kickstartteam.es/{dlt}/subscribe?address={address}&sender={sender}&consumer={consumer}
+  - url: https://host/{dlt}/subscribe?address={address}&sender={sender}&consumer={consumer}
     scheme: ws
     description: Open a connection to listen for contracts and address transactions
     variables:
