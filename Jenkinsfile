@@ -1,18 +1,8 @@
-def install_dependencies() {
-  stage('Install Dependencies'){
-    container('node'){
-      sh """
-        yarn cache clean --force
-        yarn install
-      """
-    }
-  }
-}
-
 def lint() {
   stage('Linter'){
     container('node'){
       sh """
+        yarn global add tslint typescript
         yarn run lint
       """
     }
@@ -28,39 +18,24 @@ def docs() {
   }
 }
 
-def unit_tests() {
-  stage('Unit tests'){
-    container('node'){
-      sh """
-        yarn run coverage
-      """
-    }
-  }
-}
 
 nodePipeline{
 
   // ---- DEVELOP ----
   if (env.BRANCH_NAME == 'develop') {
-
-    try {
-      sonar_shuttle_stage()
-    } catch (exc) {
-      echo 'Sonar shuttle stage crashed!'
-      echo 'Continue with the execution'
-    }
-
-    install_dependencies()
-
+  
+    sonar_shuttle_stage()
     lint()
-    
-    unit_tests()
-
+    node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
+                yarn install
+                yarn run coverage
+            """)
+  
     docs()
 
     docker_shuttle_stage()
 
-    //qa_data_shuttle_stage()
+    qa_data_shuttle_stage()
 
     deploy_shuttle_stage(project: "hancock", environment: "develop", askForConfirmation: false)
 
@@ -68,37 +43,30 @@ nodePipeline{
 
   // ---- RELEASE ----
   if (env.BRANCH_NAME =~ 'release/*') {
+   
 
-    try {
-      sonar_shuttle_stage()
-    } catch (exc) {
-      echo 'Sonar shuttle stage crashed!'
-      echo 'Continue with the execution'
-    }
-
-    install_dependencies()
-
+    sonar_shuttle_stage()
     lint()
-
-    unit_tests()
-
+    node_unit_tests_shuttle_stage(sh: """yarn cache clean --force
+                yarn install
+                yarn run coverage
+            """)
+    
     docs()
 
-    // check_unlocked_in_RC_shuttle_stage()
-
     docker_shuttle_stage()
-
-    // qa_data_shuttle_stage()
-
-    // logic_label_shuttle_stage()
-
+    
+    
     deploy_shuttle_stage(project: "hancock", environment: "qa", askForConfirmation: false)
 
-    // set2rc_shuttle_stage()
+    qa_data_shuttle_stage()
 
-    stage ('Functional Tests') {
-      build job: '/blockchainhub/kst-hancock-ms-dlt-broker-tests/master'
-    }
-
+    set2rc_shuttle_stage()
+    
+    test_from_rc_shuttle_stage() 
+    
+    create_release_from_RC()
+    
+    logic_label_shuttle_stage(release: env.BUILD_DISPLAY_NAME)
   }
 }

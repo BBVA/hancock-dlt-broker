@@ -72,7 +72,7 @@ ws = new WebSocket(`ws://localhost:3009/ethereum/subscribe?address=${address}&se
 
 ### Async API Docs
 
-Documentation about the async API can be found in this [link](https://docs.kickstartteam.es/blockchainhub/kst-hancock-ms-dlt-broker/docs/api.html)
+Documentation about the async API can be found in this [link](https://docs.kickstartteam.es/hancock/kst-hancock-ms-dlt-broker/docs/api.html)
 
 ### Contribution guidelines
 

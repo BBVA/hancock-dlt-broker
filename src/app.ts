@@ -15,7 +15,6 @@ export function run() {
     app.use(config.server.base, appRouter);
 
     const server = http.createServer(app);
-
     const sockets: Map<string, object> = new Map();
 
     Object.keys(config.blockchain).forEach((dlt: string) => {
@@ -80,3 +79,5 @@ process.on('exit', exitHook);
 process.on('SIGINT', exitHook);
 // Catch uncaught exceptions from the program
 process.on('uncaughtException', exitHook);
+// Catch Unhandled promise rejection from the program
+process.on('unhandledRejection', exitHook);
