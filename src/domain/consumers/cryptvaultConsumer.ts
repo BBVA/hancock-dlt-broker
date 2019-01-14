@@ -67,9 +67,9 @@ export class CryptvaultConsumer extends Consumer {
   }
 
   private async cypherEventAndSend(event: ISocketEvent): Promise<boolean> {
-    event.matchedAddress = event.body.returnValues._from;
+    event.matchedAddress = event.body.returnValues._from || event.body.returnValues.from;
     await this.cypherAndSendTransfer(event);
-    event.matchedAddress = event.body.returnValues._to;
+    event.matchedAddress = event.body.returnValues._to || event.body.returnValues.to;
     await this.cypherAndSendTransfer(event);
     return Promise.resolve(true);
   }
