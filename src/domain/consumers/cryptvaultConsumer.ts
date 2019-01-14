@@ -172,7 +172,8 @@ export class CryptvaultConsumer extends Consumer {
       ? ICryptoVaultEventTxDirection.OUT
       : ICryptoVaultEventTxDirection.IN;
     } else {
-      direction = (event.body.returnValues._from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
+      const from: string = event.body.returnValues._from || event.body.returnValues.from;
+      direction = (from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
       ? ICryptoVaultEventTxDirection.OUT
       : ICryptoVaultEventTxDirection.IN;
     }
