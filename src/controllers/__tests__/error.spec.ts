@@ -79,7 +79,7 @@ describe('errorController', async () => {
       expect(res.status).toHaveBeenCalledWith(error.httpCode);
       expect(_getResponseMock).toHaveBeenCalledWith(error);
       expect(res.json).toHaveBeenCalledWith(mockerErrorResponse);
-      expect(logger.error).toHaveBeenCalledWith(error);
+      expect(logger.error).toHaveBeenCalledWith(JSON.stringify(error, undefined, 2));
 
     });
 
@@ -91,7 +91,7 @@ describe('errorController', async () => {
       expect(res.status).toHaveBeenCalledWith(hancockDefaultError.httpCode);
       expect(_getResponseMock).toHaveBeenCalledWith(hancockDefaultError);
       expect(res.json).toHaveBeenCalledWith(mockerErrorResponse);
-      expect(logger.error).toHaveBeenCalledWith(hancockDefaultError);
+      expect(logger.error).toHaveBeenCalledWith(JSON.stringify(hancockDefaultError, undefined, 2));
 
     });
 

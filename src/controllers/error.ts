@@ -22,7 +22,7 @@ export function errorController(err: Error, req: Request, res: Response, next: N
 
   const customError: HancockError = err instanceof HancockError ? err : hancockDefaultError;
 
-  logger.error(customError);
+  logger.error(JSON.stringify(customError, undefined, 2));
 
   return res
     .status(customError.httpCode)
