@@ -27,10 +27,10 @@ import {
   IEthTransactionBody,
 } from '../models/ethereum';
 import { ISocketMessage } from '../models/models';
-import {error, onError} from '../utils/error';
+import { error, onError } from '../utils/error';
 import * as Ethereum from '../utils/ethereum';
 import logger from '../utils/logger';
-import {validateSchema} from '../utils/schema';
+import { validateSchema } from '../utils/schema';
 
 const schemaPath: string = path.normalize(__dirname + '/../../../raml/schemas');
 const receiveMessageSchema = JSON.parse(fs.readFileSync(`${schemaPath}/requests/receiveMessage.json`, 'utf-8'));
@@ -230,21 +230,12 @@ export const _reactToNewTransaction = async (
 
       if (txBody.from && txBody.from.toUpperCase() === address.toUpperCase()) {
 
-        try {
+        const isSmartContractRelated = isSmartContractTransaction(socket, consumerInstance, web3I, txBody);
+        const sendTx = !(onlyTransfers && isSmartContractRelated);
 
-          const code = await web3I.eth.getCode(txBody.to);
-          const isSmartContractRelated = txBody.to === null ||  (code !== '0x0' && code !== '0x');
-          const sendTx = !onlyTransfers || !isSmartContractRelated;
-
-          if (sendTx) {
-            logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-            consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
-          }
-
-        } catch (err) {
-
-          onError(socket, error(hancockGetCodeError, err), false, consumerInstance);
-
+        if (sendTx) {
+          logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+          consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
         }
 
       }
@@ -264,3 +255,35 @@ export const _reactToNewTransaction = async (
 
   }
 };
+
+async function isSmartContractTransaction(socket: WebSocket, consumerInstance: IConsumer, web3I: any, txBody: IEthTransactionBody): Promise<boolean> {
+
+  if (txBody.to === null) {
+
+    return true;
+
+  } else {
+
+    let code: string;
+
+    try {
+
+      code = await web3I.eth.getCode(txBody.to);
+
+      if (code === '0x0' || code === '0x') {
+
+        return true;
+
+      }
+
+    } catch (err) {
+
+      onError(socket, error(hancockGetCodeError, err), false, consumerInstance);
+
+    }
+
+  }
+
+  return false;
+
+}
