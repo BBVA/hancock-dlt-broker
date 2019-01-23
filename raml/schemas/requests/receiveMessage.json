@@ -11,6 +11,13 @@
         "watch-contracts"
       ]
     },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "mined"
+      ]
+    },
     "body": {
       "description": "array of addresses to be watched",
       "type": "array",

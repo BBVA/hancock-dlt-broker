@@ -9,10 +9,12 @@ export interface IRawTransaction {
 }
 
 export type ISocketMessageKind = 'watch-transfers' | 'watch-transactions' | 'watch-contracts';
+export type ISocketMessageStatus = 'mined' | 'pending';
 export type ISocketMessageBody = any;
 export interface ISocketMessage {
   kind: ISocketMessageKind;
   body: ISocketMessageBody;
+  status: ISocketMessageStatus;
   consumer: CONSUMERS;
 }
 

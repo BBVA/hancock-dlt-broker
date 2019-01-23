@@ -16,6 +16,7 @@ import {
   hancockMessageKindUnknownError,
   hancockNewBlockHeadersError,
   hancockParseError,
+  hancockPendingTransactionsSubscriptionError,
   hancockSubscribeToContractError,
   hancockSubscribeToTransferError,
 } from '../models/error';
@@ -26,7 +27,7 @@ import {
   IEthereumContractModel,
   IEthTransactionBody,
 } from '../models/ethereum';
-import { ISocketMessage } from '../models/models';
+import { ISocketMessage, ISocketMessageStatus } from '../models/models';
 import { error, onError } from '../utils/error';
 import * as Ethereum from '../utils/ethereum';
 import logger from '../utils/logger';
@@ -44,6 +45,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     const addressOrAlias: string = (query.address || query.alias) as string;
     const sender: string = query.sender as string;
+    const status: ISocketMessageStatus = query.status === 'pending' ? query.status : 'mined';
     const consumer: CONSUMERS = query.consumer as CONSUMERS;
 
     logger.info('Incoming socket connection => ', consumer, addressOrAlias || sender);
@@ -82,12 +84,12 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
       switch (dataObj.kind) {
         case 'watch-transfers':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            _subscribeTransactionsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer, true);
+            _subscribeTransactionsController(socket, dataObj.status, dataObj.body, web3I, subscriptions, dataObj.consumer, true);
           }
           break;
         case 'watch-transactions':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            _subscribeTransactionsController(socket, dataObj.body, web3I, subscriptions, dataObj.consumer);
+            _subscribeTransactionsController(socket, dataObj.status, dataObj.body, web3I, subscriptions, dataObj.consumer);
           }
           break;
         case 'watch-contracts':
@@ -107,7 +109,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     } else if (sender) {
 
-      _subscribeTransactionsController(socket, [sender], web3I, subscriptions, consumer, true);
+      _subscribeTransactionsController(socket, status, [sender], web3I, subscriptions, consumer, true);
 
     }
 
@@ -184,22 +186,44 @@ export const _subscribeContractsController = async (
 
 // tslint:disable-next-line:variable-name
 export const _subscribeTransactionsController = (
-  socket: WebSocket, addresses: string[], web3I: any, subscriptions: any[], consumer: CONSUMERS = CONSUMERS.Default, onlyTransfers: boolean = false) => {
+  socket: WebSocket,
+  status: ISocketMessageStatus,
+  addresses: string[],
+  web3I: any,
+  subscriptions: any[],
+  consumer: CONSUMERS = CONSUMERS.Default,
+  onlyTransfers: boolean = false) => {
 
   const consumerInstance: IConsumer = getConsumer(socket, consumer);
 
   try {
 
     addresses.forEach((address: string) => {
-      // Subscribe to pending transactions
-      logger.info('Subscribing to mined transactions...');
 
-      subscriptions.push(
-        web3I.eth
-          .subscribe('newBlockHeaders')
-          .on('error', (err: Error) => onError(socket, error(hancockNewBlockHeadersError, err), false, consumerInstance))
-          .on('data', (blockMined: IEthBlockHeader) => _reactToNewTransaction(socket, address, web3I, blockMined, consumerInstance, onlyTransfers)),
-      );
+      if (status === 'pending') {
+
+        logger.info('Subscribing to pending transactions...');
+
+        subscriptions.push(
+          web3I.eth
+            .subscribe('pendingTransactions')
+            .on('error', (err: Error) => onError(socket, error(hancockPendingTransactionsSubscriptionError, err), false, consumerInstance))
+            .on('data', (pendingTx: IEthTransactionBody) => _reactToTx(socket, address, web3I, pendingTx, consumerInstance, onlyTransfers)),
+        );
+
+        // Default status, mined
+      } else {
+
+        logger.info('Subscribing to mined transactions...');
+
+        subscriptions.push(
+          web3I.eth
+            .subscribe('newBlockHeaders')
+            .on('error', (err: Error) => onError(socket, error(hancockNewBlockHeadersError, err), false, consumerInstance))
+            .on('data', (blockMined: IEthBlockHeader) => _reactToNewBlock(socket, address, web3I, blockMined, consumerInstance, onlyTransfers)),
+        );
+
+      }
 
     });
 
@@ -211,7 +235,7 @@ export const _subscribeTransactionsController = (
 
 };
 
-export const _reactToNewTransaction = async (
+export const _reactToNewBlock = async (
   socket: WebSocket,
   address: string,
   web3I: any,
@@ -226,28 +250,9 @@ export const _reactToNewTransaction = async (
 
     const blockBody = await web3I.eth.getBlock(blockMined.hash, true);
 
-    return await Promise.all(blockBody.transactions.map(async (txBody: IEthTransactionBody) => {
-
-      if (txBody.from && txBody.from.toUpperCase() === address.toUpperCase()) {
-
-        const isSmartContractRelated = isSmartContractTransaction(socket, consumerInstance, web3I, txBody);
-        const sendTx = !(onlyTransfers && isSmartContractRelated);
-
-        if (sendTx) {
-          logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-          consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
-        }
-
-      }
-
-      if (txBody.to && txBody.to.toUpperCase() === address.toUpperCase()) {
-
-        logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-        consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
-
-      }
-
-    }));
+    return await Promise.all(blockBody.transactions.map((txBody: IEthTransactionBody) =>
+      _reactToTx(socket, address, web3I, txBody, consumerInstance, onlyTransfers),
+    ));
 
   } catch (err) {
 
@@ -255,6 +260,36 @@ export const _reactToNewTransaction = async (
 
   }
 };
+
+async function _reactToTx(
+  socket: WebSocket,
+  address: string,
+  web3I: any,
+  txBody: IEthTransactionBody,
+  consumerInstance: IConsumer,
+  onlyTransfers: boolean,
+) {
+
+  if (txBody.from && txBody.from.toUpperCase() === address.toUpperCase()) {
+
+    const isSmartContractRelated = await isSmartContractTransaction(socket, consumerInstance, web3I, txBody);
+    const sendTx = !(onlyTransfers && isSmartContractRelated);
+
+    if (sendTx) {
+      logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+      consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
+    }
+
+  }
+
+  if (txBody.to && txBody.to.toUpperCase() === address.toUpperCase()) {
+
+    logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+    consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
+
+  }
+
+}
 
 async function isSmartContractTransaction(socket: WebSocket, consumerInstance: IConsumer, web3I: any, txBody: IEthTransactionBody): Promise<boolean> {
 
