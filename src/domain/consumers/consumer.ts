@@ -16,7 +16,9 @@ export class Consumer implements IConsumer {
       throw new Error('DEFAULT_ERROR');
     }
 
-    this.socket.send(JSON.stringify(event));
+    if (this.socket.readyState === this.socket.OPEN) {
+      this.socket.send(JSON.stringify(event));
+    }
 
     return Promise.resolve(true);
 
