@@ -19,6 +19,7 @@ import {
   hancockPendingTransactionsSubscriptionError,
   hancockSubscribeToContractError,
   hancockSubscribeToTransferError,
+  hancockTransactionError,
 } from '../models/error';
 import {
   IEthBlockHeader,
@@ -187,7 +188,7 @@ export const _subscribeContractsController = async (
 // tslint:disable-next-line:variable-name
 export const _subscribeTransactionsController = (
   socket: WebSocket,
-  status: ISocketMessageStatus,
+  status: ISocketMessageStatus = 'mined',
   addresses: string[],
   web3I: any,
   subscriptions: any[],
@@ -208,7 +209,7 @@ export const _subscribeTransactionsController = (
           web3I.eth
             .subscribe('pendingTransactions')
             .on('error', (err: Error) => onError(socket, error(hancockPendingTransactionsSubscriptionError, err), false, consumerInstance))
-            .on('data', (pendingTx: IEthTransactionBody) => _reactToTx(socket, address, web3I, pendingTx, consumerInstance, onlyTransfers)),
+            .on('data', (txHash: string) => _reactToNewPendingTransaction(socket, address, web3I, txHash, consumerInstance, onlyTransfers)),
         );
 
         // Default status, mined
@@ -233,6 +234,29 @@ export const _subscribeTransactionsController = (
 
   }
 
+};
+
+export const _reactToNewPendingTransaction = async (
+  socket: WebSocket,
+  address: string,
+  web3I: any,
+  txHash: string,
+  consumerInstance: IConsumer,
+  onlyTransfers: boolean,
+) => {
+
+  try {
+
+    logger.debug('new pending transaction', txHash);
+    const txBody: IEthTransactionBody = await web3I.eth.getTransaction(txHash, true);
+
+    await _reactToTx(socket, address, web3I, txBody, consumerInstance, onlyTransfers);
+
+  } catch (err) {
+
+    onError(socket, error(hancockTransactionError, err), false, consumerInstance);
+
+  }
 };
 
 export const _reactToNewBlock = async (
@@ -270,6 +294,9 @@ async function _reactToTx(
   onlyTransfers: boolean,
 ) {
 
+  logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
+  logger.debug(`new transaction check hash[${txBody.hash}], from[${txBody.from}], to[${txBody.to}], address[${address}]`);
+
   if (txBody.from && txBody.from.toUpperCase() === address.toUpperCase()) {
 
     const isSmartContractRelated = await isSmartContractTransaction(socket, consumerInstance, web3I, txBody);
@@ -283,10 +310,8 @@ async function _reactToTx(
   }
 
   if (txBody.to && txBody.to.toUpperCase() === address.toUpperCase()) {
-
     logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
     consumerInstance.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
-
   }
 
 }

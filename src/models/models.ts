@@ -14,8 +14,8 @@ export type ISocketMessageBody = any;
 export interface ISocketMessage {
   kind: ISocketMessageKind;
   body: ISocketMessageBody;
-  status: ISocketMessageStatus;
-  consumer: CONSUMERS;
+  status?: ISocketMessageStatus;
+  consumer?: CONSUMERS;
 }
 
 export type ISocketEventKind = 'tx' | 'log' | 'event' | 'error';
