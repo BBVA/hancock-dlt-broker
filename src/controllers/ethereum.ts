@@ -114,7 +114,9 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     }
 
-    socket.send(JSON.stringify({ kind: 'ready' }));
+    if (socket.readyState === socket.OPEN) {
+      socket.send(JSON.stringify({ kind: 'ready' }));
+    }
 
   } catch (e) {
 
