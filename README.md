@@ -72,7 +72,7 @@ ws = new WebSocket(`ws://localhost:3009/ethereum/subscribe?address=${address}&se
 
 ### Async API Docs
 
-Documentation about the async API can be found in this [link](https://BBVA.github.io/hancock-dlt-broker/docs/api.html)
+Documentation about the async API can be found in this [link](https://BBVA.github.io/hancock-dlt-broker/api.html)
 
 ### Contribution guidelines
 
