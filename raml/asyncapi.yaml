@@ -7,7 +7,7 @@ info:
   description: WebSocket API to handler DLT async transactions
 
 servers: 
-  - url: https://host/{dlt}/subscribe?address={address}&sender={sender}&consumer={consumer}
+  - url: https://host/{dlt}/subscribe?address={address}&sender={sender}&consumer={consumer}&status={status}
     scheme: ws
     description: Open a connection to listen for contracts and address transactions
     variables:
@@ -21,6 +21,12 @@ servers:
       sender:
         default: ""
         description: Address to listen
+      status:
+        enum:
+            - pending
+            - mined
+        default: mined
+        description: Status of tx to subscribe
       consumer:
         enum:
             - Cryptvault
@@ -106,6 +112,12 @@ components:
           minItems: 1
           items:
             type: string
+        status:
+          description: The subscription will vary depending on this param (pending transactions, or mined transactionss)
+          type: string
+          enum:
+            - pending
+            - mined
         consumer:
           description: The response will be customized depending on the consumer type
           type: string
@@ -117,6 +129,7 @@ components:
         body:
           - "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
           - "0xd452cb5c4ba4c71ef7c14db0d930dc35c4c97ac7"
+        status: mined
         consumer: custom-consumer
 
     receiveMessage:
