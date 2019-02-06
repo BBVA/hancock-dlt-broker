@@ -19,7 +19,6 @@ import {
 } from '../../models/ethereum';
 import { ISocketMessageStatus } from '../../models/models';
 import { error, onError } from '../../utils/error';
-import * as Ethereum from '../../utils/ethereum';
 import logger from '../../utils/logger';
 
 let transactionEventEmitterMined: EventEmitter | undefined;
@@ -33,7 +32,6 @@ export const _subscribeTransactionsController = (
   status: ISocketMessageStatus = 'mined',
   addresses: string[],
   web3I: any,
-  eventEmitter: any,
   consumer: CONSUMERS = CONSUMERS.Default,
   onlyTransfers: boolean = false) => {
 
@@ -42,7 +40,7 @@ export const _subscribeTransactionsController = (
 
     addresses.forEach((address: string) => {
 
-      if (!isSubscribed(transactionSubscriptionList, address)) {
+      if (!isSubscribed(transactionSubscriptionList, address, uuid)) {
 
         transactionSubscriptionList.push({
           address,
@@ -50,18 +48,19 @@ export const _subscribeTransactionsController = (
           socket,
           consumer: consumerInstance,
           onlyTransfers,
+          status,
         });
 
         if (status === 'pending' && !transactionEventEmitterPending) {
 
           logger.info('Subscribing to pending transactions...');
-          createTransactionEventEmitterPending();
+          createTransactionEventEmitterPending(web3I);
 
           // Default status, mined
         } else if (status === 'mined' && !transactionEventEmitterMined) {
 
           logger.info('Subscribing to mined transactions...');
-          createTransactionEventEmitterMined();
+          createTransactionEventEmitterMined(web3I);
 
         }
       }
@@ -72,8 +71,6 @@ export const _subscribeTransactionsController = (
     onError(socket, error(hancockSubscribeToTransferError, err), false, consumerInstance);
 
   }
-
-  return eventEmitter;
 
 };
 
@@ -87,27 +84,25 @@ export const _removeAddressFromSocket = (uuid: string) => {
   transactionSubscriptionList = newArraySub;
 };
 
-const createTransactionEventEmitterMined = async () => {
-  const web3I = await Ethereum.getWeb3();
+const createTransactionEventEmitterMined = async (web3I: any) => {
   transactionEventEmitterMined = web3I.eth
     .subscribe('newBlockHeaders')
     .on('error', (err: Error) => processOnError(error(hancockNewBlockHeadersError, err), false))
     .on('data', (blockMined: IEthBlockHeader) => _reactToNewBlock(web3I, blockMined));
 };
 
-const createTransactionEventEmitterPending = async () => {
-  const web3I = await Ethereum.getWeb3();
+const createTransactionEventEmitterPending = async (web3I: any) => {
   transactionEventEmitterPending = web3I.eth
     .subscribe('pendingTransactions')
     .on('error', (err: Error) => processOnError(error(hancockPendingTransactionsSubscriptionError, err), false))
     .on('data', (txHash: string) => _reactToNewPendingTransaction(web3I, txHash));
 };
 
-const isSubscribed = (list: any[], address: string) => {
+const isSubscribed = (list: any[], address: string, uuid: string) => {
   // tslint:disable-next-line:no-var-keyword
   var response: boolean = false;
   list.forEach((obj) => {
-    if (obj.address.toUpperCase() === address.toUpperCase()) {
+    if (obj.address.toUpperCase() === address.toUpperCase() && obj.socketId === uuid ) {
       response = true;
     }
   });
@@ -124,7 +119,7 @@ export const _reactToNewPendingTransaction = async (
     logger.debug('new pending transaction', txHash);
     const txBody: IEthTransactionBody = await web3I.eth.getTransaction(txHash, true);
 
-    await _reactToTx(web3I, txBody);
+    await _reactToTx(web3I, txBody, 'pending');
 
   } catch (err) {
 
@@ -145,7 +140,7 @@ export const _reactToNewBlock = async (
     const blockBody = await web3I.eth.getBlock(blockMined.hash, true);
 
     return await Promise.all(blockBody.transactions.map((txBody: IEthTransactionBody) =>
-      _reactToTx(web3I, txBody),
+      _reactToTx(web3I, txBody, 'mined'),
     ));
 
   } catch (err) {
@@ -158,26 +153,31 @@ export const _reactToNewBlock = async (
 async function _reactToTx(
   web3I: any,
   txBody: IEthTransactionBody,
+  status: string,
 ) {
 
   transactionSubscriptionList.forEach(async (obj) => {
     logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
 
-    if (txBody.from && txBody.from.toUpperCase() === obj.address.toUpperCase()) {
+    if (obj.status === status) {
 
-      const isSmartContractRelated = await isSmartContractTransaction(obj.socket, obj.consumer, web3I, txBody);
-      const sendTx = !(obj.onlyTransfers && isSmartContractRelated);
+      if (txBody.from && txBody.from.toUpperCase() === obj.address.toUpperCase()) {
 
-      if (sendTx) {
-        logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-        obj.consumer.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
+        const isSmartContractRelated = await isSmartContractTransaction(obj.socket, obj.consumer, web3I, txBody);
+        const sendTx = !(obj.onlyTransfers && isSmartContractRelated);
+
+        if (sendTx) {
+          logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+          obj.consumer.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
+        }
+
       }
 
-    }
+      if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
+        logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+        obj.consumer.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
+      }
 
-    if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
-      logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-      obj.consumer.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
     }
   });
 }

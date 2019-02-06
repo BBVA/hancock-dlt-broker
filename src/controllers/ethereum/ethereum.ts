@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
 import * as url from 'url';
+import { v4 as uuidv4 } from 'uuid';
 import * as WebSocket from 'ws';
 import { IConsumer } from '../../domain/consumers/consumer';
 import { getConsumer } from '../../domain/consumers/consumerFactory';
@@ -15,7 +16,7 @@ import { error, onError } from '../../utils/error';
 import * as Ethereum from '../../utils/ethereum';
 import logger from '../../utils/logger';
 import { validateSchema } from '../../utils/schema';
-import { _subscribeContractsController } from './contract';
+import { _closeConnectionSocket, _subscribeContractsController } from './contract';
 import { _removeAddressFromSocket, _subscribeTransactionsController } from './transaction';
 
 const schemaPath: string = path.normalize(__dirname + '/../../../../raml/schemas');
@@ -37,13 +38,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     logger.info('Incoming socket connection => ', consumer, addressOrAlias || sender);
 
-    const subscriptionsContracts: any[] = [];
-    const subscriptionsContractsAddress: any[] = [];
-    // tslint:disable-next-line:prefer-const
-    let pendingTransactionEventEmitter: any;
-    // tslint:disable-next-line:prefer-const
-    let pendingTransferEventEmitter: any;
-    const uuid: string = 'id';
+    const uuid: string = uuidv4();
     const web3I = await Ethereum.getWeb3();
 
     socket.on('close', () => {
@@ -56,7 +51,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
       // });
 
       _removeAddressFromSocket(uuid);
-
+      _closeConnectionSocket(uuid);
     });
 
     socket.on('message', (data: any) => {
@@ -80,21 +75,17 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
       switch (dataObj.kind) {
         case 'watch-transfers':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            _subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I,
-              pendingTransferEventEmitter, dataObj.consumer, true);
-            logger.info('watch-transfers... pendingTransferEventEmitter->' + pendingTransferEventEmitter);
+            _subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, true);
           }
           break;
         case 'watch-transactions':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            _subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I,
-              pendingTransactionEventEmitter, dataObj.consumer);
-            logger.info('watch-transactions... pendingTransactionEventEmitter->' + pendingTransactionEventEmitter);
+            _subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer);
           }
           break;
         case 'watch-contracts':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            _subscribeContractsController(socket, dataObj.body, web3I, subscriptionsContracts, subscriptionsContractsAddress, dataObj.consumer);
+            _subscribeContractsController(socket, uuid, dataObj.body, web3I, dataObj.consumer);
           }
           break;
         default:
@@ -105,11 +96,11 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     if (addressOrAlias) {
 
-      _subscribeContractsController(socket, [addressOrAlias], web3I, subscriptionsContracts, subscriptionsContractsAddress, consumer);
+      _subscribeContractsController(socket, uuid, [addressOrAlias], web3I, consumer);
 
     } else if (sender) {
 
-      _subscribeTransactionsController(socket, uuid, status, [sender], web3I, pendingTransactionEventEmitter, consumer, true);
+      _subscribeTransactionsController(socket, uuid, status, [sender], web3I, consumer, true);
 
     }
 
