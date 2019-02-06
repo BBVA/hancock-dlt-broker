@@ -10,19 +10,17 @@ import {
 import {error, onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
 import * as contractController from '../contract';
-import * as ethereumController from '../ethereum';
-import * as transactionController from '../transaction';
 
 jest.mock('url');
 jest.mock('fs');
 jest.mock('path');
-jest.mock('../../utils/config');
-jest.mock('../../domain/consumers/consumerFactory');
-jest.mock('../../domain/consumers/consumer');
-jest.mock('../../utils/ethereum');
-jest.mock('../../utils/logger');
-jest.mock('../../utils/error');
-jest.mock('../../utils/schema');
+jest.mock('../../../utils/config');
+jest.mock('../../../domain/consumers/consumerFactory');
+jest.mock('../../../domain/consumers/consumer');
+jest.mock('../../../utils/ethereum');
+jest.mock('../../../utils/logger');
+jest.mock('../../../utils/error');
+jest.mock('../../../utils/schema');
 
 describe('subscribers', () => {
 
@@ -32,6 +30,7 @@ describe('subscribers', () => {
   let web3: any;
   let newBlock: any;
   let blockBody: any;
+  const uuid: string = 'uuid';
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -76,102 +75,6 @@ describe('subscribers', () => {
         }),
       };
     });
-  });
-
-  describe('_subscribeTransactionsController', () => {
-
-    let reactToNewTransfer: any;
-    const status = 'mined';
-
-    beforeEach(() => {
-
-      jest.clearAllMocks();
-
-      reactToNewTransfer = jest
-        .spyOn((ethereumController as any), '_reactToNewBlock')
-        .mockImplementation(() => Promise.resolve(true));
-
-    });
-
-    afterAll(() => {
-
-      reactToNewTransfer.mockRestore();
-
-    });
-
-    it('should call _subscribeTransactionsController correctly', async () => {
-
-      await ethereumController._subscribeTransactionsController(socket, status, ['from'], web3, []);
-
-      expect(reactToNewTransfer).toHaveBeenCalledWith(socket, 'from', web3, newBlock, __consumerInstance__, false);
-
-    });
-
-    it('should call _subscribeTransactionsController and onError in web3 fail', async () => {
-
-      web3.eth.subscribe = jest.fn().mockImplementationOnce(() => {
-        throw new Error('Error!');
-      });
-      await ethereumController._subscribeTransactionsController(socket, status, ['from'], web3, []);
-
-      expect(onError).toHaveBeenCalledWith(socket, error(hancockSubscribeToTransferError, new Error('Error!')), false, __consumerInstance__);
-
-    });
-
-  });
-
-  describe('_reactToNewBlock', () => {
-
-    it('should call _reactToNewBlock correctly', async () => {
-
-      web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
-
-      web3.eth.getCode = jest.fn().mockResolvedValueOnce('0x0');
-
-      await ethereumController._reactToNewBlock(socket, 'from', web3, newBlock, __consumerInstance__, false);
-
-      expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
-      expect(web3.eth.getCode).toHaveBeenCalledWith('to');
-      expect(__consumerInstance__.notify).toHaveBeenCalledWith({ kind: 'tx', body: blockBody.transactions[0], matchedAddress: blockBody.transactions[0].from });
-
-    });
-
-    it('should call _reactToNewBlock and onError in getCode fail', async () => {
-
-      web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
-
-      web3.eth.getCode = jest.fn().mockRejectedValueOnce(new Error('Error!'));
-
-      await ethereumController._reactToNewBlock(socket, 'from', web3, newBlock, __consumerInstance__, true);
-
-      expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
-      expect(onError).toHaveBeenCalledWith(socket, error(hancockGetCodeError, new Error('Error!')), false, __consumerInstance__);
-
-    });
-
-    it('should call _reactToNewBlock and onError in getBlock fail', async () => {
-
-      web3.eth.getBlock = jest.fn().mockImplementationOnce(() => { throw new Error('Error!'); });
-
-      await ethereumController._reactToNewBlock(socket, 'from', web3, newBlock, __consumerInstance__, true);
-
-      expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
-      expect(onError).toHaveBeenCalledWith(socket, error(hancockGetBlockError, new Error('Error!')), false, __consumerInstance__);
-
-    });
-
-    it('should call _reactToNewBlock correctly 2', async () => {
-
-      web3.eth.getBlock = jest.fn().mockReturnValueOnce(blockBody);
-
-      await ethereumController._reactToNewBlock(socket, 'to', web3, newBlock, __consumerInstance__, true);
-
-      expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
-      expect(web3.eth.getCode).not.toHaveBeenCalled();
-      expect(__consumerInstance__.notify).toHaveBeenCalledWith({ kind: 'tx', body: blockBody.transactions[0], matchedAddress: blockBody.transactions[0].to });
-
-    });
-
   });
 
   describe('_subscribeContractsController', () => {
@@ -219,7 +122,7 @@ describe('subscribers', () => {
         throw new Error('Error!');
       });
 
-      await ethereumController._subscribeContractsController(socket, ['from'], web3, []);
+      await contractController._subscribeContractsController(socket, uuid, ['from'], web3);
 
       expect(onError).toHaveBeenCalled();
 

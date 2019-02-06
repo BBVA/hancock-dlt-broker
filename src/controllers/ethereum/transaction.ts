@@ -40,7 +40,7 @@ export const _subscribeTransactionsController = (
 
     addresses.forEach((address: string) => {
 
-      if (!isSubscribed(transactionSubscriptionList, address, uuid)) {
+      if (!_isSubscribed(transactionSubscriptionList, address, uuid)) {
 
         transactionSubscriptionList.push({
           address,
@@ -54,13 +54,13 @@ export const _subscribeTransactionsController = (
         if (status === 'pending' && !transactionEventEmitterPending) {
 
           logger.info('Subscribing to pending transactions...');
-          createTransactionEventEmitterPending(web3I);
+          _createTransactionEventEmitterPending(web3I);
 
           // Default status, mined
         } else if (status === 'mined' && !transactionEventEmitterMined) {
 
           logger.info('Subscribing to mined transactions...');
-          createTransactionEventEmitterMined(web3I);
+          _createTransactionEventEmitterMined(web3I);
 
         }
       }
@@ -84,21 +84,21 @@ export const _removeAddressFromSocket = (uuid: string) => {
   transactionSubscriptionList = newArraySub;
 };
 
-const createTransactionEventEmitterMined = async (web3I: any) => {
+export const _createTransactionEventEmitterMined = async (web3I: any) => {
   transactionEventEmitterMined = web3I.eth
     .subscribe('newBlockHeaders')
     .on('error', (err: Error) => processOnError(error(hancockNewBlockHeadersError, err), false))
     .on('data', (blockMined: IEthBlockHeader) => _reactToNewBlock(web3I, blockMined));
 };
 
-const createTransactionEventEmitterPending = async (web3I: any) => {
+export const _createTransactionEventEmitterPending = async (web3I: any) => {
   transactionEventEmitterPending = web3I.eth
     .subscribe('pendingTransactions')
     .on('error', (err: Error) => processOnError(error(hancockPendingTransactionsSubscriptionError, err), false))
     .on('data', (txHash: string) => _reactToNewPendingTransaction(web3I, txHash));
 };
 
-const isSubscribed = (list: any[], address: string, uuid: string) => {
+export const _isSubscribed = (list: any[], address: string, uuid: string) => {
   // tslint:disable-next-line:no-var-keyword
   var response: boolean = false;
   list.forEach((obj) => {
@@ -149,12 +149,11 @@ export const _reactToNewBlock = async (
 
   }
 };
-
-async function _reactToTx(
+export const _reactToTx = async (
   web3I: any,
   txBody: IEthTransactionBody,
   status: string,
-) {
+) => {
 
   transactionSubscriptionList.forEach(async (obj) => {
     logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
@@ -180,9 +179,9 @@ async function _reactToTx(
 
     }
   });
-}
+};
 
-async function isSmartContractTransaction(socket: WebSocket, consumerInstance: IConsumer, web3I: any, txBody: IEthTransactionBody): Promise<boolean> {
+export const isSmartContractTransaction = async (socket: WebSocket, consumerInstance: IConsumer, web3I: any, txBody: IEthTransactionBody): Promise<boolean> => {
 
   if (txBody.to === null) {
 
@@ -212,10 +211,10 @@ async function isSmartContractTransaction(socket: WebSocket, consumerInstance: I
 
   return false;
 
-}
+};
 
-function processOnError(err: HancockError, terminate: boolean) {
+export const processOnError = (err: HancockError, terminate: boolean) => {
   transactionSubscriptionList.forEach(async (obj) => {
     onError(obj.socket, err, false, obj.consumer);
   });
-}
+};
