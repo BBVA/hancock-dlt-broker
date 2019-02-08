@@ -16,8 +16,8 @@ import { error, onError } from '../../utils/error';
 import * as Ethereum from '../../utils/ethereum';
 import logger from '../../utils/logger';
 import { validateSchema } from '../../utils/schema';
-import { _closeConnectionSocket, _subscribeContractsController } from './contract';
-import { _removeAddressFromSocket, _subscribeTransactionsController } from './transaction';
+import { _closeConnectionSocket, subscribeContractsController } from './contract';
+import { _removeAddressFromSocket, subscribeTransactionsController } from './transaction';
 
 const schemaPath: string = path.normalize(__dirname + '/../../../../raml/schemas');
 const receiveMessageSchema = JSON.parse(fs.readFileSync(`${schemaPath}/requests/receiveMessage.json`, 'utf-8'));
@@ -75,17 +75,17 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
       switch (dataObj.kind) {
         case 'watch-transfers':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            _subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, true);
+            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, true);
           }
           break;
         case 'watch-transactions':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            _subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer);
+            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer);
           }
           break;
         case 'watch-contracts':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            _subscribeContractsController(socket, uuid, dataObj.body, web3I, dataObj.consumer);
+            subscribeContractsController(socket, uuid, dataObj.body, web3I, dataObj.consumer);
           }
           break;
         default:
@@ -96,11 +96,11 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     if (addressOrAlias) {
 
-      _subscribeContractsController(socket, uuid, [addressOrAlias], web3I, consumer);
+      subscribeContractsController(socket, uuid, [addressOrAlias], web3I, consumer);
 
     } else if (sender) {
 
-      _subscribeTransactionsController(socket, uuid, status, [sender], web3I, consumer, true);
+      subscribeTransactionsController(socket, uuid, status, [sender], web3I, consumer, true);
 
     }
 

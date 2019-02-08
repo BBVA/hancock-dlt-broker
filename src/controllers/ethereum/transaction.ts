@@ -21,12 +21,12 @@ import { ISocketMessageStatus } from '../../models/models';
 import { error, onError } from '../../utils/error';
 import logger from '../../utils/logger';
 
-let transactionEventEmitterMined: EventEmitter | undefined;
-let transactionEventEmitterPending: EventEmitter | undefined;
-let transactionSubscriptionList: any[] = [];
+export let transactionEventEmitterMined: EventEmitter | undefined;
+export let transactionEventEmitterPending: EventEmitter | undefined;
+export let transactionSubscriptionList: any[] = [];
 
 // tslint:disable-next-line:variable-name
-export const _subscribeTransactionsController = (
+export const subscribeTransactionsController = (
   socket: WebSocket,
   uuid: string,
   status: ISocketMessageStatus = 'mined',
@@ -87,14 +87,14 @@ export const _removeAddressFromSocket = (uuid: string) => {
 export const _createTransactionEventEmitterMined = async (web3I: any) => {
   transactionEventEmitterMined = web3I.eth
     .subscribe('newBlockHeaders')
-    .on('error', (err: Error) => processOnError(error(hancockNewBlockHeadersError, err), false))
+    .on('error', (err: Error) => _processOnError(error(hancockNewBlockHeadersError, err), false))
     .on('data', (blockMined: IEthBlockHeader) => _reactToNewBlock(web3I, blockMined));
 };
 
 export const _createTransactionEventEmitterPending = async (web3I: any) => {
   transactionEventEmitterPending = web3I.eth
     .subscribe('pendingTransactions')
-    .on('error', (err: Error) => processOnError(error(hancockPendingTransactionsSubscriptionError, err), false))
+    .on('error', (err: Error) => _processOnError(error(hancockPendingTransactionsSubscriptionError, err), false))
     .on('data', (txHash: string) => _reactToNewPendingTransaction(web3I, txHash));
 };
 
@@ -123,7 +123,7 @@ export const _reactToNewPendingTransaction = async (
 
   } catch (err) {
 
-    processOnError(error(hancockTransactionError, err), false);
+    _processOnError(error(hancockTransactionError, err), false);
 
   }
 };
@@ -145,7 +145,7 @@ export const _reactToNewBlock = async (
 
   } catch (err) {
 
-    processOnError(error(hancockGetBlockError, err), false);
+    _processOnError(error(hancockGetBlockError, err), false);
 
   }
 };
@@ -162,7 +162,7 @@ export const _reactToTx = async (
 
       if (txBody.from && txBody.from.toUpperCase() === obj.address.toUpperCase()) {
 
-        const isSmartContractRelated = await isSmartContractTransaction(obj.socket, obj.consumer, web3I, txBody);
+        const isSmartContractRelated = await _isSmartContractTransaction(obj.socket, obj.consumer, web3I, txBody);
         const sendTx = !(obj.onlyTransfers && isSmartContractRelated);
 
         if (sendTx) {
@@ -181,7 +181,10 @@ export const _reactToTx = async (
   });
 };
 
-export const isSmartContractTransaction = async (socket: WebSocket, consumerInstance: IConsumer, web3I: any, txBody: IEthTransactionBody): Promise<boolean> => {
+export const _isSmartContractTransaction = async (socket: WebSocket,
+                                                  consumerInstance: IConsumer,
+                                                  web3I: any,
+                                                  txBody: IEthTransactionBody): Promise<boolean> => {
 
   if (txBody.to === null) {
 
@@ -213,7 +216,7 @@ export const isSmartContractTransaction = async (socket: WebSocket, consumerInst
 
 };
 
-export const processOnError = (err: HancockError, terminate: boolean) => {
+export const _processOnError = (err: HancockError, terminate: boolean) => {
   transactionSubscriptionList.forEach(async (obj) => {
     onError(obj.socket, err, false, obj.consumer);
   });

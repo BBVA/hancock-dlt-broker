@@ -17,10 +17,10 @@ import {
 import { error, onError } from '../../utils/error';
 import logger from '../../utils/logger';
 
-let contractSubscriptionList: any[] = [];
+export let contractSubscriptionList: any[] = [];
 
 // tslint:disable-next-line:variable-name
-export const _subscribeContractsController = async (
+export const subscribeContractsController = async (
   socket: WebSocket, uuid: string, contracts: string[], web3I: any, consumer: CONSUMERS = CONSUMERS.Default) => {
 
   const consumerInstance: IConsumer = getConsumer(socket, consumer);
@@ -33,14 +33,15 @@ export const _subscribeContractsController = async (
       const ethContractModel: IEthereumContractModel | null = await domain.findOne(contractAddressOrAlias);
       if (ethContractModel) {
 
-        if (socketSubscriptionState(contractSubscriptionList, ethContractModel.address, uuid) === 0) {
+        const state = _socketSubscriptionState(contractSubscriptionList, ethContractModel.address, uuid);
+        if (state === 0) {
 
           const web3Contract: any = new web3I.eth.Contract(ethContractModel.abi, ethContractModel.address);
-          addNewContractSubscription(ethContractModel, web3Contract, web3I, uuid, socket, consumerInstance);
+          _addNewContract(ethContractModel, web3Contract, web3I, uuid, socket, consumerInstance);
 
-        } else if (socketSubscriptionState(contractSubscriptionList, ethContractModel.address, uuid) === 1) {
+        } else if (state === 1) {
 
-          addNewSubscriptionToContract(ethContractModel, uuid, socket, consumerInstance);
+          _addNewSubscriptionToContract(ethContractModel, uuid, socket, consumerInstance);
 
         }
 
@@ -77,7 +78,7 @@ export const _closeConnectionSocket = async (uuid: string) => {
   contractSubscriptionList = newSubscriptionList;
 };
 
-const socketSubscriptionState = (list: any[], address: string, uuid: string) => {
+export const _socketSubscriptionState = (list: any[], address: string, uuid: string) => {
   // tslint:disable-next-line:no-var-keyword
   var response: number = 0;
   list.forEach((obj) => {
@@ -94,8 +95,8 @@ const socketSubscriptionState = (list: any[], address: string, uuid: string) => 
   return response;
 };
 
-const addNewContractSubscription = (ethContractModel: IEthereumContractModel, web3Contract: any, web3I: any,
-                                    uuid: string, socket: WebSocket, consumerInstance: IConsumer) => {
+export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Contract: any, web3I: any,
+                                uuid: string, socket: WebSocket, consumerInstance: IConsumer) => {
 
   const newSubscription = {
     contractAdress: ethContractModel.address,
@@ -141,8 +142,8 @@ const addNewContractSubscription = (ethContractModel: IEthereumContractModel, we
   contractSubscriptionList.push(newSubscription);
 };
 
-const addNewSubscriptionToContract = (ethContractModel: IEthereumContractModel,
-                                      uuid: string, socket: WebSocket, consumerInstance: IConsumer) => {
+export const _addNewSubscriptionToContract = (ethContractModel: IEthereumContractModel,
+                                              uuid: string, socket: WebSocket, consumerInstance: IConsumer) => {
 
   contractSubscriptionList.forEach((obj) => {
     if (obj.contractAdress.toUpperCase() === ethContractModel.address.toUpperCase()) {

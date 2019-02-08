@@ -48,11 +48,11 @@ describe('ethereumController', async () => {
     };
 
     spySubscribeTransferController = jest
-      .spyOn(transactionController, '_subscribeTransactionsController')
+      .spyOn(transactionController, 'subscribeTransactionsController')
       .mockImplementation(() => Promise.resolve(true));
 
     spySubscribeContractsController = jest
-      .spyOn(contractController, '_subscribeContractsController')
+      .spyOn(contractController, 'subscribeContractsController')
       .mockImplementation(() => Promise.resolve(true));
 
   });
