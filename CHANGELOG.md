@@ -1,4 +1,8 @@
 
+## [7.1.0] - 2019-02-08
+### Changed
+- Refactor in ethereum controller for transaction and contract subscriptions. Also added new unit tests.
+
 ## [7.0.2] - 2019-01-28
 ### Fixed
 - Fixed errors in utils db unit tests.
