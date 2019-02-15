@@ -19,7 +19,7 @@ export function run() {
 
     Object.keys(config.blockchain).forEach((dlt: string) => {
 
-      const controller: any = require(`./controllers/${dlt}`).SocketSubscribeController;
+      const controller: any = require(`./controllers/${dlt}/${dlt}`).SocketSubscribeController;
 
       if (controller) {
         const wss: WebSocket.Server = new WebSocket.Server({noServer: true});
