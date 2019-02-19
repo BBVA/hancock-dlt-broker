@@ -1,11 +1,11 @@
-# Hancock Dlt Broker
+# Hancock DLT Broker
 
 Microservice belonging to Hancock's ecosystem which creates a subscription to the blockchain 
 watching for events related with some addresses or smart contracts
 
 ## Overview
 
-Hancock is a research product conceived within NDB IoT Lab that provides convenient services to integrate with different DLT networks. We provide simplicity, adaptability and efficiently to develop in any DLT. Hancock can be divided into four main components:
+Hancock is a research product conceived within BBVA New digital business - R&D that provides convenient services to integrate with different DLT networks. We provide simplicity, adaptability and efficiently to develop in any DLT. Hancock can be divided into three main components:
 
 - [DLT Adapter](https://github.com/BBVA/hancock-dlt-adapter) - Keep it simple
 Interface to abstract interaction with different DLT networks.
@@ -65,8 +65,8 @@ With [docker](https://www.docker.com/):
 
 ### Setting up the service
 
-Once we have built the service, we need to configure a few things before launch it. You can find all environment vars 
-availables to configure the service in `config/custom-environment-variables.yaml`.
+Once we have built the service, we need to configure a few things before launching it. You can find all environment vars 
+available to configure the service in `config/custom-environment-variables.yaml`.
 
 An example of configuration of the most important vars:
 
@@ -101,7 +101,7 @@ Documentation about the async API can be found in this [link](https://BBVA.githu
 
 ### Contribution guidelines
 
-If you are thinking in contribute to the project you should know that:
+If you are thinking about contributing to the project, you should know that:
 
 - The code has been written following the [clean architecture principles](https://8thlight.com/blog/uncle-bob/2012/08/13/the-clean-architecture.html), as well as [SOLID design principles](https://es.wikipedia.org/wiki/SOLID).
 
