@@ -1,3 +1,6 @@
+## [7.1.1] - 2019-02-20
+### Documentation
+- Update docs.
 
 ## [7.1.0] - 2019-02-08
 ### Changed
