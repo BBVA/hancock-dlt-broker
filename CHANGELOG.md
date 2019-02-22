@@ -1,6 +1,6 @@
 
 ## [7.2.0] - 2019-02-22
-### Changed
+### Added
 - Added new message to unsubscribe to the broker. Also added new unit tests.
 
 ## [7.1.0] - 2019-02-08
