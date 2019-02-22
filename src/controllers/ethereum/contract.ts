@@ -98,7 +98,8 @@ export const _socketSubscriptionState = (list: any[], address: string, uuid: str
 export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Contract: any, web3I: any,
                                 uuid: string, socket: WebSocket, consumerInstance: IConsumer) => {
 
-  const newSubscription = {
+  // tslint:disable-next-line:prefer-const
+  let newSubscription = {
     contractAdress: ethContractModel.address,
     eventEmitterEvents: web3Contract.events
       .allEvents({
@@ -154,4 +155,41 @@ export const _addNewSubscriptionToContract = (ethContractModel: IEthereumContrac
       });
     }
   });
+};
+
+// tslint:disable-next-line:variable-name
+export const unsubscribeContractsController = (
+  uuid: string,
+  contracts: string[]) => {
+
+  const newSubscriptionList: any[] = [];
+
+  contractSubscriptionList.forEach((obj) => {
+    // tslint:disable-next-line:no-var-keyword
+    const newList: any[] = [];
+    contracts.forEach((address) => {
+      // tslint:disable-next-line:no-var-keyword
+      var checked = false;
+      if (obj.contractAddress === address) {
+        checked = true;
+        obj.subscriptions.forEach((sub: any) => {
+          if (sub.socketId !== uuid) {
+            newList.push(sub);
+          }
+        });
+        if (newList.length !== 0) {
+          obj.subscriptions = newList;
+          newSubscriptionList.push(obj);
+        } else {
+          obj.eventEmitterEvents.unsubscribe();
+          obj.eventEmitterLogs.unsubscribe();
+        }
+      }
+      if (!checked) {
+        newSubscriptionList.push(obj);
+      }
+    });
+  });
+
+  contractSubscriptionList = newSubscriptionList;
 };

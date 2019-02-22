@@ -8,7 +8,8 @@ export interface IRawTransaction {
   value: string;
 }
 
-export type ISocketMessageKind = 'watch-transfers' | 'watch-transactions' | 'watch-contracts';
+export type ISocketMessageKind = 'watch-transfers' | 'watch-transactions' | 'watch-contracts' |
+  'unwatch-transfers' | 'unwatch-transactions' | 'unwatch-contracts';
 export type ISocketMessageStatus = 'mined' | 'pending';
 export type ISocketMessageBody = any;
 export interface ISocketMessage {

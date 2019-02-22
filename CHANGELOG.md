@@ -1,4 +1,8 @@
 
+## [7.2.0] - 2019-02-22
+### Changed
+- Added new message to unsubscribe to the broker. Also added new unit tests.
+
 ## [7.1.0] - 2019-02-08
 ### Changed
 - Refactor in ethereum controller for transaction and contract subscriptions. Also added new unit tests.
