@@ -161,10 +161,10 @@ export const _reactToTx = async (
 
       if (txBody.from && txBody.from.toUpperCase() === obj.address.toUpperCase()) {
 
-        // const isSmartContractRelated = await _isSmartContractTransaction(obj.socket, obj.consumer, web3I, txBody);
-        // const sendTx = !(obj.onlyTransfers && isSmartContractRelated);
+        const isSmartContractRelated = await _isSmartContractTransaction(obj.socket, obj.consumer, web3I, txBody);
+        const sendTx = !(obj.onlyTransfers && isSmartContractRelated);
 
-        if (true) {
+        if (sendTx || true) {
           logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
           logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
           obj.consumer.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
