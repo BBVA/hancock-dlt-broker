@@ -156,7 +156,6 @@ export const _reactToTx = async (
 ) => {
 
   transactionSubscriptionList.forEach(async (obj) => {
-    logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
 
     if (obj.status === status) {
 
@@ -166,6 +165,7 @@ export const _reactToTx = async (
         const sendTx = !(obj.onlyTransfers && isSmartContractRelated);
 
         if (sendTx) {
+          logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
           logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
           obj.consumer.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
         }
@@ -173,7 +173,8 @@ export const _reactToTx = async (
       }
 
       if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
-        logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
+        logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
+        logger.info(`new tx =>> ${txBody.hash}, to: ${txBody.to} from: ${txBody.from}`);
         obj.consumer.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
       }
 
