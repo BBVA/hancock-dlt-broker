@@ -164,7 +164,7 @@ export const _reactToTx = async (
         const isSmartContractRelated = await _isSmartContractTransaction(obj.socket, obj.consumer, web3I, txBody);
         const sendTx = !(obj.onlyTransfers && isSmartContractRelated);
 
-        if (sendTx || true) {
+        if (sendTx) {
           logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
           logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
           obj.consumer.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
@@ -199,7 +199,7 @@ export const _isSmartContractTransaction = async (socket: WebSocket,
 
       code = await web3I.eth.getCode(txBody.to);
 
-      if (code === '0x0' || code === '0x') {
+      if (code !== '0x0' && code !== '0x') {
 
         return true;
 
