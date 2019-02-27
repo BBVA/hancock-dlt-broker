@@ -474,7 +474,7 @@ describe('transactionController', () => {
       web3.eth.getCode = jest.fn().mockImplementationOnce(() => '0x');
       const response = await transactionController._isSmartContractTransaction(socket, example.consumer, web3, blockBody.transactions[0]);
 
-      expect(response).toBe(true);
+      expect(response).toBe(false);
 
     });
 
@@ -483,7 +483,7 @@ describe('transactionController', () => {
       web3.eth.getCode = jest.fn().mockImplementationOnce(() => '0x1234');
       const response = await transactionController._isSmartContractTransaction(socket, example.consumer, web3, blockBody.transactions[0]);
 
-      expect(response).toBe(false);
+      expect(response).toBe(true);
 
     });
 
