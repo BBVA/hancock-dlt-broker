@@ -222,3 +222,29 @@ export const _processOnError = (err: HancockError, terminate: boolean) => {
     onError(obj.socket, err, false, obj.consumer);
   });
 };
+
+// tslint:disable-next-line:variable-name
+export const unsubscribeTransactionsController = (
+  uuid: string,
+  status: ISocketMessageStatus = 'mined',
+  addresses: string[],
+  onlyTransfers: boolean = false) => {
+
+  const newList: any[] = [];
+
+  transactionSubscriptionList.forEach((obj) => {
+    // tslint:disable-next-line:no-var-keyword
+    var remove = false;
+    addresses.forEach((address) => {
+      if (obj.address === address && obj.socketId === uuid &&
+        obj.status === status && obj.onlyTransfers === onlyTransfers) {
+          remove = true;
+        }
+    });
+    if (!remove) {
+      newList.push(obj);
+    }
+  });
+
+  transactionSubscriptionList = newList;
+};

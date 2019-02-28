@@ -529,4 +529,47 @@ describe('transactionController', () => {
 
   });
 
+  describe('unsubscribeTransactionsController', () => {
+
+    beforeEach(() => {
+
+      jest.clearAllMocks();
+      transactionController._removeAddressFromSocket(socketId);
+
+      transactionController.transactionSubscriptionList.push({
+        socketId,
+        address: 'address',
+        status: 'mined',
+        onlyTransfers: false,
+      },
+      {
+        socketId,
+        address: 'address2',
+        status: 'mined',
+        onlyTransfers: false,
+      });
+    });
+
+    afterAll(() => {
+      transactionController._removeAddressFromSocket(socketId);
+    });
+
+    it('should call unsubscribeTransactionsController correctly', async () => {
+
+      expect(transactionController.transactionSubscriptionList.length).toBe(2);
+      transactionController.unsubscribeTransactionsController(socketId, 'mined', ['address']);
+      expect(transactionController.transactionSubscriptionList.length).toBe(1);
+
+    });
+
+    it('should call unsubscribeTransactionsController and remove nothing', async () => {
+
+      expect(transactionController.transactionSubscriptionList.length).toBe(2);
+      transactionController.unsubscribeTransactionsController(socketId, 'mined', ['address3']);
+      expect(transactionController.transactionSubscriptionList.length).toBe(2);
+
+    });
+
+  });
+
 });
