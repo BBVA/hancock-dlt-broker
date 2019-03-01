@@ -134,11 +134,21 @@ export const _reactToNewBlock = async (
   web3I: any,
   blockMined: IEthBlockHeader,
 ) => {
+  let blockBody;
 
   try {
 
-    const blockBody = await web3I.eth.getBlock(blockMined.hash, true);
+    blockBody = await web3I.eth.getBlock(blockMined.hash, true);
 
+  } catch (err) {
+    logger.debug(`The block ${blockMined.hash} is mined but it is not ready yet`);
+    setTimeout(async () => {
+      logger.debug(`Waiting for block ${blockMined.hash}...`);
+      await _reactToNewBlock(web3I, blockMined);
+    }, 3000);
+  }
+
+  try {
     logger.debug(`Block ${blockMined.hash} recovered`);
 
     return await Promise.all(blockBody.transactions.map((txBody: IEthTransactionBody) =>
@@ -146,15 +156,7 @@ export const _reactToNewBlock = async (
     ));
 
   } catch (err) {
-    if (err.search('Error getting the info of the block') > -1) {
-      logger.debug(`The block ${blockMined.hash} is mined but it is not ready yet`);
-      setTimeout(async () => {
-        logger.debug(`Waiting for block ${blockMined.hash}...`);
-        await _reactToNewBlock(web3I, blockMined);
-      }, 3000);
-    } else {
-      _processOnError(error(hancockGetBlockError, err), false);
-    }
+    _processOnError(error(hancockGetBlockError, err), false);
   }
 };
 export const _reactToTx = async (
@@ -246,8 +248,8 @@ export const unsubscribeTransactionsController = (
     addresses.forEach((address) => {
       if (obj.address === address && obj.socketId === uuid &&
         obj.status === status && obj.onlyTransfers === onlyTransfers) {
-          remove = true;
-        }
+        remove = true;
+      }
     });
     if (!remove) {
       newList.push(obj);
