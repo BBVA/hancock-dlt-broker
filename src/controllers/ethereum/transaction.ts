@@ -1,9 +1,8 @@
-
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import * as WebSocket from 'ws';
-import { IConsumer } from '../../domain/consumers/consumer';
-import { getConsumer } from '../../domain/consumers/consumerFactory';
-import { CONSUMERS } from '../../domain/consumers/types';
+import {IConsumer} from '../../domain/consumers/consumer';
+import {getConsumer} from '../../domain/consumers/consumerFactory';
+import {CONSUMERS} from '../../domain/consumers/types';
 import {
   HancockError,
   hancockGetBlockError,
@@ -17,12 +16,12 @@ import {
   IEthBlockHeader,
   IEthTransactionBody,
 } from '../../models/ethereum';
-import { ISocketMessageStatus } from '../../models/models';
-import { error, onError } from '../../utils/error';
+import {ISocketMessageStatus} from '../../models/models';
+import {error, onError} from '../../utils/error';
 import logger from '../../utils/logger';
 
-export let transactionEventEmitterMined: EventEmitter | undefined;
-export let transactionEventEmitterPending: EventEmitter | undefined;
+export let transactionEventEmitterMined: EventEmitter | undefined;
+export let transactionEventEmitterPending: EventEmitter | undefined;
 export let transactionSubscriptionList: any[] = [];
 
 // tslint:disable-next-line:variable-name
@@ -88,7 +87,10 @@ export const _createTransactionEventEmitterMined = async (web3I: any) => {
   transactionEventEmitterMined = web3I.eth
     .subscribe('newBlockHeaders')
     .on('error', (err: Error) => _processOnError(error(hancockNewBlockHeadersError, err), false))
-    .on('data', (blockMined: IEthBlockHeader) => _reactToNewBlock(web3I, blockMined));
+    .on('data', (blockMined: IEthBlockHeader) => {
+      logger.debug('New block mined', blockMined.hash);
+      _reactToNewBlock(web3I, blockMined);
+    });
 };
 
 export const _createTransactionEventEmitterPending = async (web3I: any) => {
@@ -102,7 +104,7 @@ export const _isSubscribed = (list: any[], address: string, uuid: string) => {
   // tslint:disable-next-line:no-var-keyword
   var response: boolean = false;
   list.forEach((obj) => {
-    if (obj.address.toUpperCase() === address.toUpperCase() && obj.socketId === uuid ) {
+    if (obj.address.toUpperCase() === address.toUpperCase() && obj.socketId === uuid) {
       response = true;
     }
   });
@@ -135,18 +137,24 @@ export const _reactToNewBlock = async (
 
   try {
 
-    logger.debug('newBlock mined', blockMined.hash);
-
     const blockBody = await web3I.eth.getBlock(blockMined.hash, true);
+
+    logger.debug(`Block ${blockMined.hash} recovered`);
 
     return await Promise.all(blockBody.transactions.map((txBody: IEthTransactionBody) =>
       _reactToTx(web3I, txBody, 'mined'),
     ));
 
   } catch (err) {
-
-    _processOnError(error(hancockGetBlockError, err), false);
-
+    if (err.search('Error getting the info of the block') > -1) {
+      logger.debug(`The block ${blockMined.hash} is mined but it is not ready yet`);
+      setTimeout(async () => {
+        logger.debug(`Waiting for block ${blockMined.hash}...`);
+        await _reactToNewBlock(web3I, blockMined);
+      }, 3000);
+    } else {
+      _processOnError(error(hancockGetBlockError, err), false);
+    }
   }
 };
 export const _reactToTx = async (
@@ -167,7 +175,7 @@ export const _reactToTx = async (
         if (sendTx) {
           logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
           logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-          obj.consumer.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.from });
+          obj.consumer.notify({kind: 'tx', body: txBody, matchedAddress: txBody.from});
         }
 
       }
@@ -175,7 +183,7 @@ export const _reactToTx = async (
       if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
         logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
         logger.info(`new tx =>> ${txBody.hash}, to: ${txBody.to} from: ${txBody.from}`);
-        obj.consumer.notify({ kind: 'tx', body: txBody, matchedAddress: txBody.to });
+        obj.consumer.notify({kind: 'tx', body: txBody, matchedAddress: txBody.to});
       }
 
     }
