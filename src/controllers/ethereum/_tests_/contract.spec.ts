@@ -372,4 +372,59 @@ describe('contractController', () => {
 
   });
 
+  describe('unsubscribeContractsController', () => {
+
+    const unsubscribe1 = jest.fn();
+    const unsubscribe2 = jest.fn();
+    const unsubscribe3 = jest.fn();
+    const unsubscribe4 = jest.fn();
+
+    beforeEach(() => {
+
+      contractController.contractSubscriptionList.push({
+        contractAddress: 'address',
+        eventEmitterEvents: {
+          unsubscribe: unsubscribe1,
+        },
+        eventEmitterLogs: {
+          unsubscribe: unsubscribe2,
+        },
+        subscriptions: [{
+          socketId: uuid,
+        }, {
+          socketId: 'randomValue',
+        }],
+      });
+
+      contractController.contractSubscriptionList.push({
+        contractAddress: 'address2',
+        eventEmitterEvents: {
+          unsubscribe: unsubscribe3,
+        },
+        eventEmitterLogs: {
+          unsubscribe: unsubscribe4,
+        },
+        subscriptions: [{
+          socketId: uuid,
+        }],
+      });
+    });
+
+    it('should call unsubscribeContractsController', async () => {
+
+      expect(contractController.contractSubscriptionList.length).toBe(2);
+
+      contractController.unsubscribeContractsController(uuid, ['address2']);
+
+      expect(contractController.contractSubscriptionList.length).toBe(1);
+      expect(unsubscribe1).not.toHaveBeenCalled();
+      expect(unsubscribe2).not.toHaveBeenCalled();
+      expect(unsubscribe3).toHaveBeenCalled();
+      expect(unsubscribe4).toHaveBeenCalled();
+      expect(contractController.contractSubscriptionList[0].subscriptions.length).toBe(2);
+
+    });
+
+  });
+
 });

@@ -31,6 +31,8 @@ describe('ethereumController', async () => {
   let example: any;
   let spySubscribeTransferController: any;
   let spySubscribeContractsController: any;
+  let spyUnSubscribeTransferController: any;
+  let spyUnSubscribeContractsController: any;
 
   beforeEach(() => {
 
@@ -53,6 +55,14 @@ describe('ethereumController', async () => {
 
     spySubscribeContractsController = jest
       .spyOn(contractController, 'subscribeContractsController')
+      .mockImplementation(() => Promise.resolve(true));
+
+    spyUnSubscribeTransferController = jest
+      .spyOn(transactionController, 'unsubscribeTransactionsController')
+      .mockImplementation(() => Promise.resolve(true));
+
+    spyUnSubscribeContractsController = jest
+      .spyOn(contractController, 'unsubscribeContractsController')
       .mockImplementation(() => Promise.resolve(true));
 
   });
@@ -147,6 +157,58 @@ describe('ethereumController', async () => {
     expect(socket.on).toHaveBeenCalledTimes(2);
     expect(spySubscribeTransferController).toHaveBeenCalledTimes(1);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(0);
+    expect(onError).toHaveBeenCalledTimes(0);
+
+  });
+
+  it('should call on message correctly and _unsubscribeTransactionsController', async () => {
+
+    example.kind = 'unwatch-transfers';
+    socket.on = jest.fn().mockImplementationOnce((kind, callbacks) => {
+      callbacks();
+    }).mockImplementationOnce((kind, callbacks) => {
+      callbacks(JSON.stringify(example));
+    });
+
+    (url as any).parse = jest.fn().mockReturnValueOnce({
+      query: {
+        address: undefined,
+        consumer: 'tests',
+        sender: undefined,
+      },
+    });
+
+    await ethereumController.SocketSubscribeController(socket, req);
+
+    expect(socket.on).toHaveBeenCalledTimes(2);
+    expect(spyUnSubscribeTransferController).toHaveBeenCalledTimes(1);
+    expect(spyUnSubscribeContractsController).toHaveBeenCalledTimes(0);
+    expect(onError).toHaveBeenCalledTimes(0);
+
+  });
+
+  it('should call on message correctly and _unsubscribeContractController', async () => {
+
+    example.kind = 'unwatch-contracts';
+    socket.on = jest.fn().mockImplementationOnce((kind, callbacks) => {
+      callbacks();
+    }).mockImplementationOnce((kind, callbacks) => {
+      callbacks(JSON.stringify(example));
+    });
+
+    (url as any).parse = jest.fn().mockReturnValueOnce({
+      query: {
+        address: undefined,
+        consumer: 'tests',
+        sender: undefined,
+      },
+    });
+
+    await ethereumController.SocketSubscribeController(socket, req);
+
+    expect(socket.on).toHaveBeenCalledTimes(2);
+    expect(spyUnSubscribeTransferController).toHaveBeenCalledTimes(0);
+    expect(spyUnSubscribeContractsController).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenCalledTimes(0);
 
   });

@@ -16,8 +16,8 @@ import { error, onError } from '../../utils/error';
 import * as Ethereum from '../../utils/ethereum';
 import logger from '../../utils/logger';
 import { validateSchema } from '../../utils/schema';
-import { _closeConnectionSocket, subscribeContractsController } from './contract';
-import { _removeAddressFromSocket, subscribeTransactionsController } from './transaction';
+import { _closeConnectionSocket, subscribeContractsController, unsubscribeContractsController } from './contract';
+import { _removeAddressFromSocket, subscribeTransactionsController, unsubscribeTransactionsController } from './transaction';
 
 const schemaPath: string = path.normalize(__dirname + '/../../../../raml/schemas');
 const receiveMessageSchema = JSON.parse(fs.readFileSync(`${schemaPath}/requests/receiveMessage.json`, 'utf-8'));
@@ -86,6 +86,20 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
         case 'watch-contracts':
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
             subscribeContractsController(socket, uuid, dataObj.body, web3I, dataObj.consumer);
+          }
+        case 'unwatch-transfers':
+          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, true);
+          }
+          break;
+        case 'unwatch-transactions':
+          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body);
+          }
+          break;
+        case 'unwatch-contracts':
+          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+            unsubscribeContractsController(uuid, dataObj.body);
           }
           break;
         default:
