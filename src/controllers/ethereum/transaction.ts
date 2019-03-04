@@ -130,26 +130,43 @@ export const _reactToNewPendingTransaction = async (
   }
 };
 
+export const _getBlock = async (
+  web3I: any,
+  blockMined: IEthBlockHeader,
+  currentAttempt: number = 1,
+  maxAttempts: number = 3,
+) => {
+  let blockBody;
+  try {
+    blockBody = await web3I.eth.getBlock(blockMined.hash, true);
+
+    if (blockBody && blockBody.transactions) {
+      return blockBody;
+    } else {
+      logger.debug(`The block ${blockMined.hash} is mined but it is not ready yet`);
+      logger.debug('Attempt %s failed for block %s', currentAttempt, blockMined.hash);
+      currentAttempt++;
+      if (currentAttempt <= maxAttempts) {
+        logger.debug(`Waiting for block ${blockMined.hash}...`);
+        setTimeout(async () => {
+          logger.debug('Trying attempt %s for block %s...', currentAttempt, blockMined.hash);
+          return await _getBlock(web3I, blockMined, currentAttempt);
+        }, 3000);
+      } else {
+        throw new Error(hancockGetBlockError.message);
+      }
+    }
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
 export const _reactToNewBlock = async (
   web3I: any,
   blockMined: IEthBlockHeader,
 ) => {
-  let blockBody;
-
   try {
-
-    blockBody = await web3I.eth.getBlock(blockMined.hash, true);
-
-  } catch (err) {
-    logger.debug(`The block ${blockMined.hash} is mined but it is not ready yet`);
-    logger.debug(`Waiting for block ${blockMined.hash}...`);
-    setTimeout(async () => {
-      logger.debug(`Attempting to recover ${blockMined.hash}`);
-      await _reactToNewBlock(web3I, blockMined);
-    }, 3000);
-  }
-
-  try {
+    const blockBody = await _getBlock(web3I, blockMined);
     logger.debug(`Block ${blockMined.hash} recovered`);
 
     return await Promise.all(blockBody.transactions.map((txBody: IEthTransactionBody) =>
@@ -157,7 +174,7 @@ export const _reactToNewBlock = async (
     ));
 
   } catch (err) {
-    _processOnError(error(hancockGetBlockError, err), false);
+    _processOnError(err, false);
   }
 };
 export const _reactToTx = async (

@@ -298,6 +298,7 @@ describe('transactionController', () => {
 
     let processOnError: any;
     let _reactToTx: any;
+    let _getBlock: any;
     beforeEach(() => {
 
       jest.clearAllMocks();
@@ -309,34 +310,33 @@ describe('transactionController', () => {
       _reactToTx = jest
         .spyOn((transactionController as any), '_reactToTx')
         .mockImplementation(() => false);
+
+      _getBlock = jest
+        .spyOn((transactionController as any), '_getBlock')
+        .mockImplementation(() => false);
     });
 
     it('should call _reactToNewBlock correctly', async () => {
 
-      web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
+      _getBlock.mockResolvedValueOnce(blockBody);
 
       await transactionController._reactToNewBlock(web3, newBlock);
 
-      expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
+      expect(_getBlock).toHaveBeenCalledWith(web3, newBlock);
       expect(_reactToTx).toHaveBeenCalledWith(web3, blockBody.transactions[0], 'mined');
 
     });
 
-    // it('should call _reactToNewBlock and onError in getBlock fail', async () => {
-    //   web3.eth.getBlock = jest.fn().mockImplementationOnce(() => { throw new Error('Error!'); });
-    //
-    //   setTimeout(() => {
-    //     web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
-    //   }, 1000);
-    //
-    //   await transactionController._reactToNewBlock(web3, newBlock);
-    //
-    //
-    //   expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
-    //   expect(_reactToTx).toHaveBeenCalledWith(web3, blockBody.transactions[0], 'mined');
-    //   // expect(processOnError).toHaveBeenCalledWith(error(hancockGetBlockError, new Error('Error!')), false);
-    //
-    // });
+    it('should call _reactToNewBlock and onError in getBlock fail', async () => {
+      _getBlock.mockImplementationOnce(() => { throw new Error('Error!'); });
+
+      await transactionController._reactToNewBlock(web3, newBlock);
+
+
+      expect(_getBlock).toHaveBeenCalledWith(web3, newBlock);
+      expect(processOnError).toHaveBeenCalledWith(new Error('Error!'), false);
+
+    });
     //
     // it('should call _reactToNewBlock and onError in _reactToTx fail', async () => {
     //
