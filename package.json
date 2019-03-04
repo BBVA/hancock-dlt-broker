@@ -1,6 +1,6 @@
 {
   "name": "hancock-dlt-broker",
-  "version": "7.2.0",
+  "version": "7.2.1",
   "description": "Hancock DLT Broker",
   "main": "index.js",
   "scripts": {
