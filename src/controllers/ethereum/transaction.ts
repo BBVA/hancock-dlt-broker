@@ -142,8 +142,9 @@ export const _reactToNewBlock = async (
 
   } catch (err) {
     logger.debug(`The block ${blockMined.hash} is mined but it is not ready yet`);
+    logger.debug(`Waiting for block ${blockMined.hash}...`);
     setTimeout(async () => {
-      logger.debug(`Waiting for block ${blockMined.hash}...`);
+      logger.debug(`Attempting to recover ${blockMined.hash}`);
       await _reactToNewBlock(web3I, blockMined);
     }, 3000);
   }
