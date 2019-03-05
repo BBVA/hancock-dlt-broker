@@ -10,9 +10,9 @@
         "log",
         "event",
         "error",         
-        "TRANSFER",
-        "TRANSACTION",
-        "EVENT_SMART_CONTRACT"
+        "transfer",
+        "transaction",
+        "event_smart_contract"
       ]
     },
     "body": {
