@@ -113,6 +113,7 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
             obj.subscriptions.forEach((sub: any) => {
               sub.consumerInstance.notify({ kind: 'event', body: eventBody, matchedAddress: ethContractModel.address });
               sub.consumerInstance.notify({ kind: 'EVENT_SMART_CONTRACT', body: eventBody, matchedAddress: ethContractModel.address });
+              sub.consumerInstance.notify({ kind: 'TRANSACTION', body: eventBody, matchedAddress: ethContractModel.address });
             });
           }
         });
