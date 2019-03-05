@@ -9,7 +9,10 @@
         "tx",
         "log",
         "event",
-        "error"
+        "error",         
+        "TRANSFER",
+        "TRANSACTION",
+        "EVENT_SMART_CONTRACT"
       ]
     },
     "body": {

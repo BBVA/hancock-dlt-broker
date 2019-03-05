@@ -196,6 +196,10 @@ export const _reactToTx = async (
           logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
           logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
           obj.consumer.notify({kind: 'tx', body: txBody, matchedAddress: txBody.from});
+          obj.consumer.notify({kind: 'TRANSACTION', body: txBody, matchedAddress: txBody.from});
+          if (obj.onlyTransfers) {
+            obj.consumer.notify({kind: 'TRANSFER', body: txBody, matchedAddress: txBody.from});
+          }
         }
 
       }
@@ -204,6 +208,10 @@ export const _reactToTx = async (
         logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
         logger.info(`new tx =>> ${txBody.hash}, to: ${txBody.to} from: ${txBody.from}`);
         obj.consumer.notify({kind: 'tx', body: txBody, matchedAddress: txBody.to});
+        obj.consumer.notify({kind: 'TRANSACTION', body: txBody, matchedAddress: txBody.to});
+        if (obj.onlyTransfers) {
+          obj.consumer.notify({kind: 'TRANSFER', body: txBody, matchedAddress: txBody.to});
+        }
       }
 
     }

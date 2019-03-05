@@ -91,7 +91,6 @@ export const _socketSubscriptionState = (list: any[], address: string, uuid: str
       });
     }
   });
-  logger.info('socketSubscriptionState response --> ' + response);
   return response;
 };
 
@@ -113,6 +112,7 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
           if (obj.contractAdress.toUpperCase() === ethContractModel.address.toUpperCase()) {
             obj.subscriptions.forEach((sub: any) => {
               sub.consumerInstance.notify({ kind: 'event', body: eventBody, matchedAddress: ethContractModel.address });
+              sub.consumerInstance.notify({ kind: 'EVENT_SMART_CONTRACT', body: eventBody, matchedAddress: ethContractModel.address });
             });
           }
         });
