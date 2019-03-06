@@ -12,11 +12,8 @@ import {
   hancockSubscribeToTransferError,
   hancockTransactionError,
 } from '../../models/error';
-import {
-  IEthBlockHeader,
-  IEthTransactionBody,
-} from '../../models/ethereum';
-import {ISocketMessageStatus} from '../../models/models';
+import {IEthBlockHeader, IEthTransactionBody} from '../../models/ethereum';
+import {CONSUMER_EVENT_KINDS, ISocketMessageStatus} from '../../models/models';
 import {error, onError} from '../../utils/error';
 import logger from '../../utils/logger';
 
@@ -32,21 +29,21 @@ export const subscribeTransactionsController = (
   addresses: string[],
   web3I: any,
   consumer: CONSUMERS = CONSUMERS.Default,
-  onlyTransfers: boolean = false) => {
+  eventKind: CONSUMER_EVENT_KINDS) => {
 
   const consumerInstance: IConsumer = getConsumer(socket, consumer);
   try {
 
     addresses.forEach((address: string) => {
 
-      if (!_isSubscribed(transactionSubscriptionList, address, uuid)) {
+      if (!_isSubscribed(transactionSubscriptionList, address, uuid, eventKind)) {
 
         transactionSubscriptionList.push({
           address,
           socketId: uuid,
           socket,
           consumer: consumerInstance,
-          onlyTransfers,
+          eventKind,
           status,
         });
 
@@ -100,11 +97,11 @@ export const _createTransactionEventEmitterPending = async (web3I: any) => {
     .on('data', (txHash: string) => _reactToNewPendingTransaction(web3I, txHash));
 };
 
-export const _isSubscribed = (list: any[], address: string, uuid: string) => {
+export const _isSubscribed = (list: any[], address: string, uuid: string, eventKind: CONSUMER_EVENT_KINDS) => {
   // tslint:disable-next-line:no-var-keyword
   var response: boolean = false;
   list.forEach((obj) => {
-    if (obj.address.toUpperCase() === address.toUpperCase() && obj.socketId === uuid) {
+    if (obj.address.toUpperCase() === address.toUpperCase() && obj.socketId === uuid && obj.eventKind === eventKind) {
       response = true;
     }
   });
@@ -190,34 +187,36 @@ export const _reactToTx = async (
     if (obj.status === status) {
 
       if (txBody.from && txBody.from.toUpperCase() === obj.address.toUpperCase()) {
+        logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
+        logger.info(`Transaction ${txBody.hash} match from field with address ${txBody.from}`);
 
-        const isSmartContractRelated = await _isSmartContractTransaction(obj.socket, obj.consumer, web3I, txBody);
-        const sendTx = !(obj.onlyTransfers && isSmartContractRelated);
-
-        if (sendTx) {
-          logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
-          logger.info(`new tx =>> ${txBody.hash}, from: ${txBody.from}`);
-          obj.consumer.notify({kind: 'tx', body: txBody, matchedAddress: txBody.from});
-          obj.consumer.notify({kind: 'transaction', body: txBody, matchedAddress: txBody.from});
-          if (obj.onlyTransfers) {
-            obj.consumer.notify({kind: 'transfer', body: txBody, matchedAddress: txBody.from});
-          }
-        }
-
+        notifyConsumer(txBody.from, txBody, obj, web3I);
       }
 
       if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
-        logger.debug(`-------> ${JSON.stringify(txBody, undefined, 2)}`);
-        logger.info(`new tx =>> ${txBody.hash}, to: ${txBody.to} from: ${txBody.from}`);
-        obj.consumer.notify({kind: 'tx', body: txBody, matchedAddress: txBody.to});
-        obj.consumer.notify({kind: 'transaction', body: txBody, matchedAddress: txBody.to});
-        if (obj.onlyTransfers) {
-          obj.consumer.notify({kind: 'transfer', body: txBody, matchedAddress: txBody.to});
-        }
+        logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
+        logger.info(`Transaction ${txBody.hash} match to field with address ${txBody.to}`);
+
+        notifyConsumer(txBody.to, txBody, obj, web3I);
       }
 
     }
   });
+};
+
+export const notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any) => {
+  const isSmartContractRelated = await _isSmartContractTransaction(subscription.socket, subscription.consumer, web3I, txBody);
+
+  if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransacion && isSmartContractRelated) {
+    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractTransacion, body: txBody, matchedAddress});
+  } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transfer && !isSmartContractRelated) {
+    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transfer, body: txBody, matchedAddress});
+  } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transacion) {
+    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transacion, body: txBody, matchedAddress});
+  }
+
+  // Deprecated
+  subscription.consumer.notify({kind: 'tx', body: txBody, matchedAddress});
 };
 
 export const _isSmartContractTransaction = async (socket: WebSocket,
@@ -261,23 +260,18 @@ export const _processOnError = (err: HancockError, terminate: boolean) => {
   });
 };
 
-// tslint:disable-next-line:variable-name
 export const unsubscribeTransactionsController = (
   uuid: string,
   status: ISocketMessageStatus = 'mined',
   addresses: string[],
-  onlyTransfers: boolean = false) => {
+  eventKind: CONSUMER_EVENT_KINDS) => {
 
   const newList: any[] = [];
 
   transactionSubscriptionList.forEach((obj) => {
-    // tslint:disable-next-line:no-var-keyword
-    var remove = false;
-    addresses.forEach((address) => {
-      if (obj.address === address && obj.socketId === uuid &&
-        obj.status === status && obj.onlyTransfers === onlyTransfers) {
-        remove = true;
-      }
+    const remove = addresses.some((address) => {
+      return (obj.address === address && obj.socketId === uuid &&
+        obj.status === status && obj.eventKind === eventKind);
     });
     if (!remove) {
       newList.push(obj);

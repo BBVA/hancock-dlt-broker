@@ -2,22 +2,19 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
 import * as url from 'url';
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import * as WebSocket from 'ws';
-import { IConsumer } from '../../domain/consumers/consumer';
-import { getConsumer } from '../../domain/consumers/consumerFactory';
-import { CONSUMERS } from '../../domain/consumers/types';
-import {
-  hancockMessageKindUnknownError,
-  hancockParseError,
-} from '../../models/error';
-import { ISocketMessage, ISocketMessageStatus } from '../../models/models';
-import { error, onError } from '../../utils/error';
+import {IConsumer} from '../../domain/consumers/consumer';
+import {getConsumer} from '../../domain/consumers/consumerFactory';
+import {CONSUMERS} from '../../domain/consumers/types';
+import {hancockMessageKindUnknownError, hancockParseError} from '../../models/error';
+import {CONSUMER_EVENT_KINDS, ISocketMessage, ISocketMessageStatus, SOCKET_EVENT_KINDS} from '../../models/models';
+import {error, onError} from '../../utils/error';
 import * as Ethereum from '../../utils/ethereum';
 import logger from '../../utils/logger';
-import { validateSchema } from '../../utils/schema';
-import { _closeConnectionSocket, subscribeContractsController, unsubscribeContractsController } from './contract';
-import { _removeAddressFromSocket, subscribeTransactionsController, unsubscribeTransactionsController } from './transaction';
+import {validateSchema} from '../../utils/schema';
+import {_closeConnectionSocket, subscribeContractsController, unsubscribeContractsController} from './contract';
+import {_removeAddressFromSocket, subscribeTransactionsController, unsubscribeTransactionsController} from './transaction';
 
 const schemaPath: string = path.normalize(__dirname + '/../../../../raml/schemas');
 const receiveMessageSchema = JSON.parse(fs.readFileSync(`${schemaPath}/requests/receiveMessage.json`, 'utf-8'));
@@ -73,31 +70,43 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
       logger.info('Incoming message => ', dataObj);
 
       switch (dataObj.kind) {
-        case 'watch-transfers':
+        case SOCKET_EVENT_KINDS.WatchTransfer:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, true);
+            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, CONSUMER_EVENT_KINDS.Transfer);
           }
           break;
-        case 'watch-transactions':
+        case SOCKET_EVENT_KINDS.WatchTransacion:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer);
+            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, CONSUMER_EVENT_KINDS.Transacion);
           }
           break;
-        case 'watch-contracts':
+        case SOCKET_EVENT_KINDS.WatchSmartContractTransacion:
+          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, CONSUMER_EVENT_KINDS.SmartContractTransacion);
+          }
+          break;
+        case SOCKET_EVENT_KINDS.WatchSmartContractEvent:
+        case SOCKET_EVENT_KINDS.ObsoleteWatchSmartContractEvent:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
             subscribeContractsController(socket, uuid, dataObj.body, web3I, dataObj.consumer);
           }
-        case 'unwatch-transfers':
+        case SOCKET_EVENT_KINDS.UnwatchTransfer:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, true);
+            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, CONSUMER_EVENT_KINDS.Transfer);
           }
           break;
-        case 'unwatch-transactions':
+        case SOCKET_EVENT_KINDS.UnwatchTransacion:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body);
+            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, CONSUMER_EVENT_KINDS.Transacion);
           }
           break;
-        case 'unwatch-contracts':
+        case SOCKET_EVENT_KINDS.UnwatchSmartContractTransacion:
+          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, CONSUMER_EVENT_KINDS.SmartContractTransacion);
+          }
+          break;
+        case SOCKET_EVENT_KINDS.UnwatchSmartContractEvent:
+        case SOCKET_EVENT_KINDS.ObsoleteUnwatchSmartContractEvent:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
             unsubscribeContractsController(uuid, dataObj.body);
           }
@@ -114,7 +123,7 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
 
     } else if (sender) {
 
-      subscribeTransactionsController(socket, uuid, status, [sender], web3I, consumer, true);
+      subscribeTransactionsController(socket, uuid, status, [sender], web3I, consumer, CONSUMER_EVENT_KINDS.Transfer);
 
     }
 

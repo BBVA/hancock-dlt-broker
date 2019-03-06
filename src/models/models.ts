@@ -8,8 +8,21 @@ export interface IRawTransaction {
   value: string;
 }
 
-export type ISocketMessageKind = 'watch-transfers' | 'watch-transactions' | 'watch-contracts' |
-  'unwatch-transfers' | 'unwatch-transactions' | 'unwatch-contracts';
+export type ISocketMessageKind = SOCKET_EVENT_KINDS;
+export enum SOCKET_EVENT_KINDS {
+  WatchTransfer = 'watch-transfers',
+  WatchTransacion = 'watch-transactions',
+  WatchSmartContractTransacion = 'watch-contracts-transactions',
+  WatchSmartContractEvent = 'watch-contracts-events',
+  UnwatchTransfer = 'unwatch-transfers',
+  UnwatchTransacion = 'unwatch-transactions',
+  UnwatchSmartContractTransacion = 'unwatch-contracts-transactions',
+  UnwatchSmartContractEvent = 'unwatch-contracts-events',
+  // Deprecated
+  ObsoleteWatchSmartContractEvent = 'watch-contracts',
+  ObsoleteUnwatchSmartContractEvent = 'unwatch-contracts',
+}
+
 export type ISocketMessageStatus = 'mined' | 'pending';
 export type ISocketMessageBody = any;
 export interface ISocketMessage {
@@ -25,4 +38,11 @@ export interface ISocketEvent {
   kind: ISocketEventKind;
   body: ISocketEventBody;
   matchedAddress?: dltAddress;
+}
+
+export enum CONSUMER_EVENT_KINDS {
+  Transfer = 'transfer',
+  Transacion = 'transacion',
+  SmartContractTransacion = 'contract-transacion',
+  SmartContractEvent = 'contract-event',
 }
