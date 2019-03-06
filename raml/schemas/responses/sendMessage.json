@@ -12,7 +12,8 @@
         "error",         
         "transfer",
         "transaction",
-        "event_smart_contract"
+        "contract-event",
+        "contract-transaction"
       ]
     },
     "body": {

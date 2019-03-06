@@ -207,12 +207,12 @@ export const _reactToTx = async (
 export const notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any) => {
   const isSmartContractRelated = await _isSmartContractTransaction(subscription.socket, subscription.consumer, web3I, txBody);
 
-  if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransacion && isSmartContractRelated) {
-    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractTransacion, body: txBody, matchedAddress});
+  if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransaction && isSmartContractRelated) {
+    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractTransaction, body: txBody, matchedAddress});
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transfer && !isSmartContractRelated) {
     subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transfer, body: txBody, matchedAddress});
-  } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transacion) {
-    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transacion, body: txBody, matchedAddress});
+  } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transaction) {
+    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transaction, body: txBody, matchedAddress});
   }
 
   // Deprecated

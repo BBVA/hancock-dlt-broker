@@ -75,14 +75,14 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
             subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, CONSUMER_EVENT_KINDS.Transfer);
           }
           break;
-        case SOCKET_EVENT_KINDS.WatchTransacion:
+        case SOCKET_EVENT_KINDS.WatchTransaction:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, CONSUMER_EVENT_KINDS.Transacion);
+            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, CONSUMER_EVENT_KINDS.Transaction);
           }
           break;
-        case SOCKET_EVENT_KINDS.WatchSmartContractTransacion:
+        case SOCKET_EVENT_KINDS.WatchSmartContractTransaction:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, CONSUMER_EVENT_KINDS.SmartContractTransacion);
+            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, dataObj.consumer, CONSUMER_EVENT_KINDS.SmartContractTransaction);
           }
           break;
         case SOCKET_EVENT_KINDS.WatchSmartContractEvent:
@@ -95,14 +95,14 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
             unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, CONSUMER_EVENT_KINDS.Transfer);
           }
           break;
-        case SOCKET_EVENT_KINDS.UnwatchTransacion:
+        case SOCKET_EVENT_KINDS.UnwatchTransaction:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, CONSUMER_EVENT_KINDS.Transacion);
+            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, CONSUMER_EVENT_KINDS.Transaction);
           }
           break;
-        case SOCKET_EVENT_KINDS.UnwatchSmartContractTransacion:
+        case SOCKET_EVENT_KINDS.UnwatchSmartContractTransaction:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
-            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, CONSUMER_EVENT_KINDS.SmartContractTransacion);
+            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, CONSUMER_EVENT_KINDS.SmartContractTransaction);
           }
           break;
         case SOCKET_EVENT_KINDS.UnwatchSmartContractEvent:

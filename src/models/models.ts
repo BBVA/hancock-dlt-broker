@@ -11,12 +11,12 @@ export interface IRawTransaction {
 export type ISocketMessageKind = SOCKET_EVENT_KINDS;
 export enum SOCKET_EVENT_KINDS {
   WatchTransfer = 'watch-transfers',
-  WatchTransacion = 'watch-transactions',
-  WatchSmartContractTransacion = 'watch-contracts-transactions',
+  WatchTransaction = 'watch-transactions',
+  WatchSmartContractTransaction = 'watch-contracts-transactions',
   WatchSmartContractEvent = 'watch-contracts-events',
   UnwatchTransfer = 'unwatch-transfers',
-  UnwatchTransacion = 'unwatch-transactions',
-  UnwatchSmartContractTransacion = 'unwatch-contracts-transactions',
+  UnwatchTransaction = 'unwatch-transactions',
+  UnwatchSmartContractTransaction = 'unwatch-contracts-transactions',
   UnwatchSmartContractEvent = 'unwatch-contracts-events',
   // Deprecated
   ObsoleteWatchSmartContractEvent = 'watch-contracts',
@@ -42,7 +42,7 @@ export interface ISocketEvent {
 
 export enum CONSUMER_EVENT_KINDS {
   Transfer = 'transfer',
-  Transacion = 'transacion',
-  SmartContractTransacion = 'contract-transacion',
+  Transaction = 'transaction',
+  SmartContractTransaction = 'contract-transaction',
   SmartContractEvent = 'contract-event',
 }
