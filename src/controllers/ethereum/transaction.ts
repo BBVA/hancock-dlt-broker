@@ -148,10 +148,12 @@ export const _getBlock = async (
       currentAttempt++;
       if (currentAttempt <= maxAttempts) {
         logger.debug(`Waiting for block ${blockMined.hash}...`);
-        setTimeout(async () => {
-          logger.debug('Trying attempt %s for block %s...', currentAttempt, blockMined.hash);
-          return await _getBlock(web3I, blockMined, currentAttempt);
-        }, 3000);
+        return await new Promise(async (resolve, reject) => {
+          setTimeout(async () => {
+            logger.debug('Trying attempt %s for block %s...', currentAttempt, blockMined.hash);
+            resolve(await _getBlock(web3I, blockMined, currentAttempt));
+          }, 3000);
+        });
       } else {
         throw new Error(hancockGetBlockError.message);
       }
@@ -167,7 +169,7 @@ export const _reactToNewBlock = async (
 ) => {
   try {
     const blockBody = await _getBlock(web3I, blockMined);
-    logger.debug(`Block ${blockMined.hash} recovered`);
+    logger.debug(`Block ${blockMined.hash} recovered, transactionsRoot: ${JSON.stringify(blockBody.transactionsRoot)}`);
 
     return await Promise.all(blockBody.transactions.map((txBody: IEthTransactionBody) =>
       _reactToTx(web3I, txBody, 'mined'),
