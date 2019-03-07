@@ -11,7 +11,6 @@ import { dltAddress } from './../../models/models';
 import { Consumer } from './consumer';
 import {
   hancockEncryptError,
-  hancockGetConsumerPKError,
   hancockGetConsumerTokenError,
   hancockGetWalletError,
 } from './models/error';
