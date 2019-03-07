@@ -98,8 +98,9 @@ export class CryptvaultConsumer extends Consumer {
     } catch (err) {
 
       logger.error(err);
-      throw error(hancockGetConsumerPKError, err);
-
+      // throw error(hancockGetConsumerPKError, err);
+      // TODO change this after refactor
+      return Promise.resolve(true);
     }
 
     if (walletResponse.result && walletResponse.result.status_code === 200) {
