@@ -1,7 +1,7 @@
 import * as WebSocket from 'ws';
 import { IConsumer } from '../../domain/consumers/consumer';
 import { getConsumer } from '../../domain/consumers/consumerFactory';
-import { CONSUMERS } from '../../domain/consumers/types';
+import {CONSUMERS} from '../../domain/consumers/types';
 import * as domain from '../../domain/ethereum';
 import {
   hancockContractNotFoundError,
@@ -14,6 +14,7 @@ import {
   IEthContractLogBody,
   IEthereumContractModel,
 } from '../../models/ethereum';
+import {CONSUMER_EVENT_KINDS} from '../../models/models';
 import { error, onError } from '../../utils/error';
 import logger from '../../utils/logger';
 
@@ -91,7 +92,6 @@ export const _socketSubscriptionState = (list: any[], address: string, uuid: str
       });
     }
   });
-  logger.info('socketSubscriptionState response --> ' + response);
   return response;
 };
 
@@ -113,6 +113,7 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
           if (obj.contractAdress.toUpperCase() === ethContractModel.address.toUpperCase()) {
             obj.subscriptions.forEach((sub: any) => {
               sub.consumerInstance.notify({ kind: 'event', body: eventBody, matchedAddress: ethContractModel.address });
+              sub.consumerInstance.notify({ kind: CONSUMER_EVENT_KINDS.SmartContractEvent, body: eventBody, matchedAddress: ethContractModel.address });
             });
           }
         });
@@ -165,7 +166,6 @@ export const unsubscribeContractsController = (
   const newSubscriptionList: any[] = [];
 
   contractSubscriptionList.forEach((obj) => {
-    // tslint:disable-next-line:no-var-keyword
     const newList: any[] = [];
     contracts.forEach((address) => {
       // tslint:disable-next-line:no-var-keyword
