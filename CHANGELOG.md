@@ -1,10 +1,15 @@
-## [7.1.1] - 2019-02-20
-### Documentation
+## [8.0.0] - 2019-03-08
+### Added
+- Add new states to subscribe.
 - Update docs.
 
 ## [7.2.0] - 2019-02-22
 ### Added
 - Added new message to unsubscribe to the broker. Also added new unit tests.
+
+## [7.1.1] - 2019-02-20
+### Documentation
+- Update docs.
 
 ## [7.1.0] - 2019-02-08
 ### Changed

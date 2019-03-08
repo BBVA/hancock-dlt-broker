@@ -3,7 +3,7 @@ asyncapi: 1.2.0
 
 info:
   title: Hancock broker API
-  version: "7.1.1"
+  version: "8.0.0"
   description: "The service will connect to the blockchain when a client connects to the websocket exposed by the service. \n \n The blockchain will be specified in the request by query-param. The fields allowed for the filter are a sender address and/or a contract address. If a sender address is specified, all pending transaction events related to the sender will be captured. If a contract address is specified, all the events programmed in it will be captured. It is mandatory specify at least one filter. \n \n When an event is triggered in the blockchain that meets the requirements of the filter, the service will capture and launch it to the connected client that started the connection through websocket.
   	\n \n <strong>Current blockchains supported {dlt}</strong> `ethereum`    "
 
@@ -39,16 +39,25 @@ events:
   send:
     - $ref: '#/components/send/watch-transfers'
     - $ref: '#/components/send/watch-transactions'
-    - $ref: '#/components/send/watch-contracts'
+    - $ref: '#/components/send/watch-contracts-transactions'
+    - $ref: '#/components/send/watch-contracts-events'
+    - $ref: '#/components/send/unwatch-transfers'
+    - $ref: '#/components/send/unwatch-transactions'
+    - $ref: '#/components/send/unwatch-contracts-transactions'
+    - $ref: '#/components/send/unwatch-contracts-events'
   receive:
     - $ref: '#/components/receive/tx'
     - $ref: '#/components/receive/event'
     - $ref: '#/components/receive/error'
     - $ref: '#/components/receive/logs'
+    - $ref: '#/components/receive/transfer'
+    - $ref: '#/components/receive/transacion'
+    - $ref: '#/components/receive/contract-transacion'
+    - $ref: '#/components/receive/contract-event'            
 
 components:
   send:
-    description: Orders to pay attention a different kinds of events in a set of addresses.
+    description: Orders to pay attention a different kinds of events in a set of addresses, and orders to stop the subscription to this events.
     watch-transfers:
       summary: Add an address to transfers watch list
       description: Each time that the given address appears in a block transaction of kind "transfers",
@@ -63,13 +72,44 @@ components:
       payload:
         type: object
         $ref: '#/components/schemas/sendMessage'
-    watch-contracts:
+    watch-contracts-transactions:
+      summary: Add an address or an alias of a smart contract to events watch list
+      description: Each time that the contract identified by the given address or alias participate on a transaction,
+        a transaction event will be dispatched back through this channel
+      payload:
+        type: object
+        $ref: '#/components/schemas/sendMessage'
+    watch-contracts-events:
       summary: Add an address or an alias of a smart contract to events watch list
       description: Each time that the contract identified by the given address or alias dispatch an event,
         two events of kind "event" and "logs" will be dispatched back through this channel
       payload:
         type: object
-        $ref: '#/components/schemas/sendMessage'
+        $ref: '#/components/schemas/sendMessage'        
+    unwatch-transfers:
+      summary: Delete an address of transfers watch list
+      description: Stops the "transfers" alerts of the address.
+      payload:
+        type: object
+        $ref: '#/components/schemas/sendMessageUnwatch'
+    unwatch-transactions:
+      summary: Delete an address of transaction watch list
+      description: Stops all transactions alerts of the address. 
+      payload:
+        type: object
+        $ref: '#/components/schemas/sendMessageUnwatch'
+    unwatch-contracts-transactions:
+      summary: Delete an address or an alias of a smart contract to transactions watch list
+      description: Stops all transactions contracts alerts of the address. 
+      payload:
+        type: object
+        $ref: '#/components/schemas/sendMessageUnwatch'        
+    unwatch-contracts-events:
+      summary: Delete an address or an alias of a smart contract to events watch list
+      description: Stops all contracts alerts of the address. 
+      payload:
+        type: object
+        $ref: '#/components/schemas/sendMessageUnwatch'                
   receive:
     description: Different kinds of events taked in from the blockchain dlt.
     tx:
@@ -96,6 +136,30 @@ components:
       payload:
         type: object
         $ref: '#/components/schemas/genericError'
+    transfer:
+      summary: New transfer mined
+      description: Event dispatched every time a watched address is related with a transaction of kind "transfer"
+      payload:
+        type: object
+        $ref: '#/components/schemas/receiveTxMessage'
+    transacion:
+      summary: New transaction or transfer mined
+      description: Event dispatched every time a watched address is related with a transaction
+      payload:
+        type: object
+        $ref: '#/components/schemas/receiveTxMessage'
+    contract-transacion:
+      summary: New transaction of a samrtcontract mined
+      description: Event dispatched every time a watched address is related with a transaction of a smartcontract
+      payload:
+        type: object
+        $ref: '#/components/schemas/receiveTxMessage'
+    contract-event:
+      summary: New event of a smartcontract
+      description: Event dispatched every time a watched contract fires an event
+      payload:
+        type: object
+        $ref: '#/components/schemas/receiveTxMessage'                                
 
   schemas:
     sendMessage:
@@ -134,6 +198,31 @@ components:
           - "0xd452cb5c4ba4c71ef7c14db0d930dc35c4c97ac7"
         status: mined
         consumer: consumer        
+    sendMessageUnwatch:
+      type: object
+      description: Commands to stop messages for an address, thus deletes the address to the watch list for receiving events related with them
+      properties:
+        kind:
+          description: The kind of the sent event
+          type: string
+          enum:
+            - unwatch-transfers
+            - unwatch-transactions
+            - unwatch-contracts
+        body:
+          description: Array of addresses to be unwatched
+          type: array
+          minItems: 1
+          items:
+            type: string
+      required:
+        - kind
+        - body
+      example: 
+        kind: unwatch-transfers
+        body:
+          - "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
+          - "0xd452cb5c4ba4c71ef7c14db0d930dc35c4c97ac7"            
     receiveTxMessage:
       type: object
       description: Events transaction received from the broker each time there is a match between the
