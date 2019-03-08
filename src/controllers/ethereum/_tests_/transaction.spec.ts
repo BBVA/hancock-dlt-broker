@@ -11,6 +11,7 @@ import {
 } from '../../../models/error';
 import {error, onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
+import {_reactToTx} from '../transaction';
 import * as transactionController from '../transaction';
 
 jest.mock('url');
@@ -297,6 +298,7 @@ describe('transactionController', () => {
 
     let processOnError: any;
     let _reactToTx: any;
+    let _getBlock: any;
     beforeEach(() => {
 
       jest.clearAllMocks();
@@ -308,29 +310,45 @@ describe('transactionController', () => {
       _reactToTx = jest
         .spyOn((transactionController as any), '_reactToTx')
         .mockImplementation(() => false);
+
+      _getBlock = jest
+        .spyOn((transactionController as any), '_getBlock')
+        .mockImplementation(() => false);
     });
 
     it('should call _reactToNewBlock correctly', async () => {
 
-      web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
+      _getBlock.mockResolvedValueOnce(blockBody);
 
       await transactionController._reactToNewBlock(web3, newBlock);
 
-      expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
+      expect(_getBlock).toHaveBeenCalledWith(web3, newBlock);
       expect(_reactToTx).toHaveBeenCalledWith(web3, blockBody.transactions[0], 'mined');
 
     });
 
     it('should call _reactToNewBlock and onError in getBlock fail', async () => {
-
-      web3.eth.getBlock = jest.fn().mockImplementationOnce(() => { throw new Error('Error!'); });
+      _getBlock.mockImplementationOnce(() => { throw new Error('Error!'); });
 
       await transactionController._reactToNewBlock(web3, newBlock);
 
-      expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
-      expect(processOnError).toHaveBeenCalledWith(error(hancockGetBlockError, new Error('Error!')), false);
+
+      expect(_getBlock).toHaveBeenCalledWith(web3, newBlock);
+      expect(processOnError).toHaveBeenCalledWith(new Error('Error!'), false);
 
     });
+    //
+    // it('should call _reactToNewBlock and onError in _reactToTx fail', async () => {
+    //
+    //   web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
+    //   _reactToTx = jest.fn().mockImplementationOnce(() => { throw new Error('Error!'); });
+    //
+    //   await transactionController._reactToNewBlock(web3, newBlock);
+    //
+    //   expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
+    //   expect(processOnError).toHaveBeenCalledWith(error(hancockGetBlockError, new Error('Error!')), false);
+    //
+    // });
 
   });
 
@@ -474,7 +492,7 @@ describe('transactionController', () => {
       web3.eth.getCode = jest.fn().mockImplementationOnce(() => '0x');
       const response = await transactionController._isSmartContractTransaction(socket, example.consumer, web3, blockBody.transactions[0]);
 
-      expect(response).toBe(true);
+      expect(response).toBe(false);
 
     });
 
@@ -483,7 +501,7 @@ describe('transactionController', () => {
       web3.eth.getCode = jest.fn().mockImplementationOnce(() => '0x1234');
       const response = await transactionController._isSmartContractTransaction(socket, example.consumer, web3, blockBody.transactions[0]);
 
-      expect(response).toBe(false);
+      expect(response).toBe(true);
 
     });
 
@@ -524,6 +542,49 @@ describe('transactionController', () => {
       transactionController._processOnError(hancockGetCodeError, false);
 
       expect(onError).toHaveBeenCalledWith(obj.socket, hancockGetCodeError, false, obj.consumer);
+
+    });
+
+  });
+
+  describe('unsubscribeTransactionsController', () => {
+
+    beforeEach(() => {
+
+      jest.clearAllMocks();
+      transactionController._removeAddressFromSocket(socketId);
+
+      transactionController.transactionSubscriptionList.push({
+        socketId,
+        address: 'address',
+        status: 'mined',
+        onlyTransfers: false,
+      },
+      {
+        socketId,
+        address: 'address2',
+        status: 'mined',
+        onlyTransfers: false,
+      });
+    });
+
+    afterAll(() => {
+      transactionController._removeAddressFromSocket(socketId);
+    });
+
+    it('should call unsubscribeTransactionsController correctly', async () => {
+
+      expect(transactionController.transactionSubscriptionList.length).toBe(2);
+      transactionController.unsubscribeTransactionsController(socketId, 'mined', ['address']);
+      expect(transactionController.transactionSubscriptionList.length).toBe(1);
+
+    });
+
+    it('should call unsubscribeTransactionsController and remove nothing', async () => {
+
+      expect(transactionController.transactionSubscriptionList.length).toBe(2);
+      transactionController.unsubscribeTransactionsController(socketId, 'mined', ['address3']);
+      expect(transactionController.transactionSubscriptionList.length).toBe(2);
 
     });
 

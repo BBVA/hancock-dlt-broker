@@ -9,7 +9,11 @@
         "tx",
         "log",
         "event",
-        "error"
+        "error",         
+        "transfer",
+        "transaction",
+        "contract-event",
+        "contract-transaction"
       ]
     },
     "body": {
