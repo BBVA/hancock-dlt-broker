@@ -425,6 +425,21 @@ describe('contractController', () => {
 
     });
 
+    it('should call unsubscribeContractsController2', async () => {
+
+      expect(contractController.contractSubscriptionList.length).toBe(2);
+
+      contractController.unsubscribeContractsController(uuid, ['addreSs']);
+
+      expect(contractController.contractSubscriptionList.length).toBe(2);
+      expect(unsubscribe1).not.toHaveBeenCalled();
+      expect(unsubscribe2).not.toHaveBeenCalled();
+      expect(unsubscribe3).not.toHaveBeenCalled();
+      expect(unsubscribe4).not.toHaveBeenCalled();
+      expect(contractController.contractSubscriptionList[0].subscriptions.length).toBe(1);
+
+    });
+
   });
 
 });

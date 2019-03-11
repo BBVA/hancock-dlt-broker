@@ -1,6 +1,6 @@
 {
   "name": "hancock-dlt-broker",
-  "version": "8.0.0",
+  "version": "8.0.1",
   "description": "Hancock DLT Broker",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://git@bitbucket.kickstartteam.es:7999/BH/kst-hancock-ms-dlt-broker.git"
+    "url": "https://github.com/BBVA/hancock-dlt-broker.git"
   },
   "keywords": [
     "hancock",
