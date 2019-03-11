@@ -12,7 +12,7 @@ watching for events related with some addresses or smart contracts
 Clone the project:
 ```bash
   # Clone the project 
-  git clone ssh://git@bitbucket.kickstartteam.es:7999/bh/kst-hancock-ms-dlt-broker.git
+  git clone https://github.com/BBVA/hancock-dlt-broker.git
   cd kst-hancock-ms-dlt-broker
 ```
 
@@ -72,7 +72,7 @@ ws = new WebSocket(`ws://localhost:3009/ethereum/subscribe?address=${address}&se
 
 ### Async API Docs
 
-Documentation about the async API can be found in this [link](https://docs.kickstartteam.es/hancock/kst-hancock-ms-dlt-broker/docs/api.html)
+Documentation about the async API can be found in this [link](https://BBVA.github.io/hancock-dlt-broker/docs/api.html)
 
 ### Contribution guidelines
 
