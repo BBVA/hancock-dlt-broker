@@ -1,3 +1,8 @@
+
+## [8.0.1] - 2019-03-11
+### Fixed
+- Fixed the problem with the unsubscription of contracts.
+
 ## [8.0.0] - 2019-03-08
 ### Added
 - Add new states to subscribe.

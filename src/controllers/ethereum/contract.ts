@@ -170,7 +170,7 @@ export const unsubscribeContractsController = (
     contracts.forEach((address) => {
       // tslint:disable-next-line:no-var-keyword
       var checked = false;
-      if (obj.contractAddress === address) {
+      if (obj.contractAddress.toUpperCase() === address.toUpperCase()) {
         checked = true;
         obj.subscriptions.forEach((sub: any) => {
           if (sub.socketId !== uuid) {
