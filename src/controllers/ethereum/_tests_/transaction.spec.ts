@@ -1,17 +1,9 @@
 import 'jest';
-import * as url from 'url';
-import { __consumerInstance__ } from '../../../domain/consumers/__mocks__/consumer';
-import { findOne } from '../../../domain/ethereum';
-import {
-  HancockError,
-  hancockGetBlockError,
-  hancockGetCodeError,
-  hancockSubscribeToTransferError,
-  hancockTransactionError,
-} from '../../../models/error';
+import {__consumerInstance__} from '../../../domain/consumers/__mocks__/consumer';
+import {hancockGetCodeError, hancockSubscribeToTransferError, hancockTransactionError} from '../../../models/error';
+import {CONSUMER_EVENT_KINDS, ISocketMessageStatus, MESSAGE_STATUS} from '../../../models/models';
 import {error, onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
-import {_reactToTx} from '../transaction';
 import * as transactionController from '../transaction';
 
 jest.mock('url');
@@ -28,7 +20,6 @@ jest.mock('../../../utils/schema');
 describe('transactionController', () => {
 
   let socket: any;
-  let req: any;
   let example: any;
   let web3: any;
   let newBlock: any;
@@ -47,8 +38,6 @@ describe('transactionController', () => {
       send: jest.fn(),
       terminate: jest.fn(),
     };
-
-    req = {};
 
     example = {
       body: {},
@@ -89,7 +78,7 @@ describe('transactionController', () => {
     let isSubscribed: any;
     let createTransactionEventEmitterPending: any;
     let createTransactionEventEmitterMined: any;
-    const status = 'mined';
+    const status = MESSAGE_STATUS.Mined;
     const uuid = 'uuid';
 
     beforeEach(() => {
@@ -115,24 +104,23 @@ describe('transactionController', () => {
       isSubscribed.mockRestore();
       createTransactionEventEmitterPending.mockRestore();
       createTransactionEventEmitterMined.mockRestore();
-      transactionController._removeAddressFromSocket(uuid);
 
     });
 
     it('should call _subscribeTransactionsController correctly and call createTransactionEventEmitterMined', async () => {
 
-      await transactionController.subscribeTransactionsController(socket, uuid, status, ['from'], web3);
+      await transactionController.subscribeTransactionsController(socket, uuid, status, ['from'], web3, CONSUMER_EVENT_KINDS.Transaction);
 
-      expect(createTransactionEventEmitterMined).toHaveBeenCalledWith( web3);
+      expect(createTransactionEventEmitterMined).toHaveBeenCalledWith(web3);
       expect(createTransactionEventEmitterPending).not.toHaveBeenCalled();
 
     });
 
     it('should call _subscribeTransactionsController correctly and call createTransactionEventEmitterPending', async () => {
 
-      await transactionController.subscribeTransactionsController(socket, uuid, 'pending', ['from'], web3);
+      await transactionController.subscribeTransactionsController(socket, uuid, MESSAGE_STATUS.Pending, ['from'], web3, CONSUMER_EVENT_KINDS.Transaction);
 
-      expect(createTransactionEventEmitterPending).toHaveBeenCalledWith( web3);
+      expect(createTransactionEventEmitterPending).toHaveBeenCalledWith(web3);
       expect(createTransactionEventEmitterMined).not.toHaveBeenCalled();
 
     });
@@ -141,44 +129,13 @@ describe('transactionController', () => {
 
       createTransactionEventEmitterMined = jest
         .spyOn((transactionController as any), '_createTransactionEventEmitterMined')
-        .mockImplementationOnce(() => { throw new Error('Error!'); });
+        .mockImplementationOnce(() => {
+          throw new Error('Error!');
+        });
 
-      await transactionController.subscribeTransactionsController(socket, uuid, status, ['from'], web3);
+      await transactionController.subscribeTransactionsController(socket, uuid, status, ['from'], web3, CONSUMER_EVENT_KINDS.Transaction);
 
       expect(onError).toHaveBeenCalledWith(socket, error(hancockSubscribeToTransferError, new Error('Error!')), false, __consumerInstance__);
-
-    });
-
-  });
-
-  describe('_removeAddressFromSocket', () => {
-
-    beforeEach(() => {
-
-      jest.clearAllMocks();
-
-      transactionController.transactionSubscriptionList.push({
-        socketId,
-      });
-    });
-
-    afterAll(() => {
-      transactionController._removeAddressFromSocket(socketId);
-    });
-
-    it('should call _removeAddressFromSocket correctly', async () => {
-
-      expect(transactionController.transactionSubscriptionList.length).toBe(1);
-      transactionController._removeAddressFromSocket(socketId);
-      expect(transactionController.transactionSubscriptionList.length).toBe(0);
-
-    });
-
-    it('should call _removeAddressFromSocket and remove nothing', async () => {
-
-      expect(transactionController.transactionSubscriptionList.length).toBe(1);
-      transactionController._removeAddressFromSocket('randomValue');
-      expect(transactionController.transactionSubscriptionList.length).toBe(1);
 
     });
 
@@ -207,25 +164,32 @@ describe('transactionController', () => {
   });
 
   describe('_isSubscribed', () => {
+    let status: ISocketMessageStatus;
+
     beforeEach(() => {
 
       jest.clearAllMocks();
 
+      status = MESSAGE_STATUS.Mined;
       transactionController.transactionSubscriptionList.push({
         socketId,
         address,
+        eventKind: CONSUMER_EVENT_KINDS.Transaction,
+        status,
       });
-    });
-
-    afterAll(() => {
-      transactionController._removeAddressFromSocket(socketId);
     });
 
     it('should call _isSubscribed correctly and return true', async () => {
 
       web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
 
-      const response = transactionController._isSubscribed(transactionController.transactionSubscriptionList, address, socketId);
+      const response = transactionController._isSubscribed(
+        transactionController.transactionSubscriptionList,
+        address,
+        socketId,
+        CONSUMER_EVENT_KINDS.Transaction,
+        status,
+      );
 
       expect(response).toBe(true);
 
@@ -235,17 +199,13 @@ describe('transactionController', () => {
 
       web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
 
-      const response = transactionController._isSubscribed(transactionController.transactionSubscriptionList, 'randomValue', socketId);
-
-      expect(response).toBe(false);
-
-    });
-
-    it('should call _isSubscribed correctly and return false 2', async () => {
-
-      web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
-
-      const response = transactionController._isSubscribed(transactionController.transactionSubscriptionList, address, 'randomValue');
+      const response = transactionController._isSubscribed(
+        transactionController.transactionSubscriptionList,
+        address,
+        socketId,
+        CONSUMER_EVENT_KINDS.Transfer,
+        status,
+      );
 
       expect(response).toBe(false);
 
@@ -277,13 +237,15 @@ describe('transactionController', () => {
       await transactionController._reactToNewPendingTransaction(web3, hash);
 
       expect(web3.eth.getTransaction).toHaveBeenCalledWith(hash, true);
-      expect(_reactToTx).toHaveBeenCalledWith(web3, blockBody.transactions[0], 'pending');
+      expect(_reactToTx).toHaveBeenCalledWith(web3, blockBody.transactions[0], MESSAGE_STATUS.Pending);
 
     });
 
     it('should call _reactToNewPendingTransaction and onError in getTransaction fail', async () => {
 
-      web3.eth.getTransaction = jest.fn().mockImplementationOnce(() => { throw new Error('Error!'); });
+      web3.eth.getTransaction = jest.fn().mockImplementationOnce(() => {
+        throw new Error('Error!');
+      });
 
       await transactionController._reactToNewPendingTransaction(web3, hash);
 
@@ -323,158 +285,108 @@ describe('transactionController', () => {
       await transactionController._reactToNewBlock(web3, newBlock);
 
       expect(_getBlock).toHaveBeenCalledWith(web3, newBlock);
-      expect(_reactToTx).toHaveBeenCalledWith(web3, blockBody.transactions[0], 'mined');
+      expect(_reactToTx).toHaveBeenCalledWith(web3, blockBody.transactions[0]);
 
     });
 
     it('should call _reactToNewBlock and onError in getBlock fail', async () => {
-      _getBlock.mockImplementationOnce(() => { throw new Error('Error!'); });
+      _getBlock.mockImplementationOnce(() => {
+        throw new Error('Error!');
+      });
 
       await transactionController._reactToNewBlock(web3, newBlock);
-
 
       expect(_getBlock).toHaveBeenCalledWith(web3, newBlock);
       expect(processOnError).toHaveBeenCalledWith(new Error('Error!'), false);
 
     });
-    //
-    // it('should call _reactToNewBlock and onError in _reactToTx fail', async () => {
-    //
-    //   web3.eth.getBlock = jest.fn().mockResolvedValueOnce(blockBody);
-    //   _reactToTx = jest.fn().mockImplementationOnce(() => { throw new Error('Error!'); });
-    //
-    //   await transactionController._reactToNewBlock(web3, newBlock);
-    //
-    //   expect(web3.eth.getBlock).toHaveBeenCalledWith(newBlock.hash, true);
-    //   expect(processOnError).toHaveBeenCalledWith(error(hancockGetBlockError, new Error('Error!')), false);
-    //
-    // });
 
   });
 
   describe('_reactToTx', () => {
+    let _notifyConsumer: any;
+    let status: ISocketMessageStatus;
+    let matchedAddress: string;
 
-    let isSmartContractTransaction: any;
+    beforeEach(() => {
+      status = MESSAGE_STATUS.Mined;
 
-    beforeAll(() => {
-      transactionController._removeAddressFromSocket(socketId);
+      jest.clearAllMocks();
+      transactionController._cleantransactionSubscriptionList();
+
+      _notifyConsumer = jest
+        .spyOn((transactionController as any), '_notifyConsumer')
+        .mockImplementation(() => false);
     });
 
-    afterEach(() => {
-      transactionController._removeAddressFromSocket(socketId);
-    });
-
-    it('should call _reactToTx correctly', async () => {
+    it('should call _reactToTx correctly and notify 1 times when from address match', async () => {
+      matchedAddress = 'from';
 
       const obj = {
-        socketId,
-        address: blockBody.transactions[0].from,
-        consumer: {
-          notify: jest.fn().mockImplementationOnce(() => true),
-        },
-        socket: 'socket',
-        status: 'mined',
-        onlyTransfers: false,
+        address: matchedAddress,
+        status,
       };
       transactionController.transactionSubscriptionList.push(obj);
 
-      isSmartContractTransaction = jest
-        .spyOn((transactionController as any), '_isSmartContractTransaction')
-        .mockImplementation(() => false);
+      await transactionController._reactToTx(web3, blockBody.transactions[0], status);
 
-      await transactionController._reactToTx(web3, blockBody.transactions[0], 'mined');
-
-      expect(isSmartContractTransaction).toHaveBeenCalledWith(obj.socket, obj.consumer, web3, blockBody.transactions[0]);
-      expect(obj.consumer.notify).toHaveBeenCalledWith({ kind: 'tx', body: blockBody.transactions[0], matchedAddress: blockBody.transactions[0].from });
+      expect(_notifyConsumer).toHaveBeenCalledWith(obj.address, blockBody.transactions[0], obj, web3);
 
     });
 
-    it('should call _reactToTx correctly with matching to', async () => {
+    it('should call _reactToTx correctly and notify 1 times when to address match', async () => {
+      matchedAddress = 'to';
 
       const obj = {
-        socketId,
-        address: blockBody.transactions[0].to,
-        consumer: {
-          notify: jest.fn().mockImplementationOnce(() => true),
-        },
-        socket: 'socket',
-        status: 'mined',
-        onlyTransfers: false,
+        address: matchedAddress,
+        status,
       };
-
-      isSmartContractTransaction = jest
-        .spyOn((transactionController as any), '_isSmartContractTransaction')
-        .mockImplementation(() => false);
-
       transactionController.transactionSubscriptionList.push(obj);
 
-      await transactionController._reactToTx(web3, blockBody.transactions[0], 'mined');
+      await transactionController._reactToTx(web3, blockBody.transactions[0], status);
 
-      expect(obj.consumer.notify).toHaveBeenCalledWith({ kind: 'tx', body: blockBody.transactions[0], matchedAddress: blockBody.transactions[0].to });
+      expect(_notifyConsumer).toHaveBeenCalledWith(obj.address, blockBody.transactions[0], obj, web3);
 
     });
 
-    it('should call _reactToTx correctly and not notify', async () => {
+    it('should call _reactToTx correctly but it does not notify when address does not match', async () => {
+      matchedAddress = 'do not match';
 
       const obj = {
-        socketId,
-        address: blockBody.transactions[0].to,
-        consumer: {
-          notify: jest.fn().mockImplementationOnce(() => true),
-        },
-        socket: 'socket',
-        status: 'mined',
-        onlyTransfers: false,
+        address: matchedAddress,
+        status,
       };
-
-      isSmartContractTransaction = jest
-        .spyOn((transactionController as any), '_isSmartContractTransaction')
-        .mockImplementation(() => false);
-
       transactionController.transactionSubscriptionList.push(obj);
 
-      await transactionController._reactToTx(web3, blockBody.transactions[0], 'pending');
+      await transactionController._reactToTx(web3, blockBody.transactions[0], status);
 
-      expect(obj.consumer.notify).not.toHaveBeenCalled();
+      expect(_notifyConsumer).not.toHaveBeenCalled();
 
     });
 
-    it('should call _reactToTx correctly with pending and notify', async () => {
+    it('should call _reactToTx correctly but it does not notify when status is not in any transaction', async () => {
+      matchedAddress = 'from';
+      const otherStatus = MESSAGE_STATUS.Pending;
 
       const obj = {
-        socketId,
-        address: blockBody.transactions[0].to,
-        consumer: {
-          notify: jest.fn().mockImplementationOnce(() => true),
-        },
-        socket: 'socket',
-        status: 'pending',
-        onlyTransfers: false,
+        address: matchedAddress,
+        status,
       };
-
-      isSmartContractTransaction = jest
-        .spyOn((transactionController as any), '_isSmartContractTransaction')
-        .mockImplementation(() => false);
-
       transactionController.transactionSubscriptionList.push(obj);
 
-      await transactionController._reactToTx(web3, blockBody.transactions[0], 'pending');
+      await transactionController._reactToTx(web3, blockBody.transactions[0], otherStatus);
 
-      expect(obj.consumer.notify).toHaveBeenCalledWith({ kind: 'tx', body: blockBody.transactions[0], matchedAddress: blockBody.transactions[0].to });
+      expect(_notifyConsumer).not.toHaveBeenCalled();
+
     });
 
   });
 
   describe('_isSmartContractTransaction', () => {
 
-    let processOnError: any;
     beforeEach(() => {
 
       jest.clearAllMocks();
-
-      processOnError = jest
-        .spyOn((transactionController as any), '_processOnError')
-        .mockImplementation(() => false);
 
     });
 
@@ -507,8 +419,10 @@ describe('transactionController', () => {
 
     it('should call _isSmartContractTransaction with error', async () => {
 
-      web3.eth.getCode = jest.fn().mockImplementationOnce(() => { throw new Error('Error!'); });
-      const response = await transactionController._isSmartContractTransaction(socket, example.consumer, web3, blockBody.transactions[0]);
+      web3.eth.getCode = jest.fn().mockImplementationOnce(() => {
+        throw new Error('Error!');
+      });
+      await transactionController._isSmartContractTransaction(socket, example.consumer, web3, blockBody.transactions[0]);
 
       expect(onError).toHaveBeenCalledWith(socket, error(hancockGetCodeError, new Error('Error!')), false, example.consumer);
 
@@ -533,7 +447,7 @@ describe('transactionController', () => {
           notify: jest.fn().mockImplementationOnce(() => true),
         },
         socket: 'socket',
-        status: 'mined',
+        status: MESSAGE_STATUS.Mined,
         onlyTransfers: false,
       };
 
@@ -552,42 +466,238 @@ describe('transactionController', () => {
     beforeEach(() => {
 
       jest.clearAllMocks();
-      transactionController._removeAddressFromSocket(socketId);
+      transactionController._cleantransactionSubscriptionList();
 
+      transactionController.transactionEventEmitter.pending.event = {
+        unsubscribe: jest.fn().mockImplementationOnce((callback) => callback(undefined, true)),
+      };
+
+      transactionController.transactionEventEmitter.mined.event = {
+        unsubscribe: jest.fn().mockImplementationOnce((callback) => callback(undefined, true)),
+      };
+
+    });
+
+    it('should unsubscribe for pending transfers', async () => {
+      transactionController.transactionEventEmitter.pending.isSubscribed = true;
       transactionController.transactionSubscriptionList.push({
         socketId,
         address: 'address',
-        status: 'mined',
-        onlyTransfers: false,
-      },
-      {
-        socketId,
-        address: 'address2',
-        status: 'mined',
-        onlyTransfers: false,
+        status: MESSAGE_STATUS.Pending,
+        eventKind: CONSUMER_EVENT_KINDS.Transfer,
       });
-    });
 
-    afterAll(() => {
-      transactionController._removeAddressFromSocket(socketId);
-    });
-
-    it('should call unsubscribeTransactionsController correctly', async () => {
-
-      expect(transactionController.transactionSubscriptionList.length).toBe(2);
-      transactionController.unsubscribeTransactionsController(socketId, 'mined', ['address']);
       expect(transactionController.transactionSubscriptionList.length).toBe(1);
+      transactionController.unsubscribeTransactionsController(socketId, MESSAGE_STATUS.Pending, ['address'], CONSUMER_EVENT_KINDS.Transfer);
+      expect(transactionController.transactionSubscriptionList.length).toBe(0);
+      expect(transactionController.transactionEventEmitter.pending.isSubscribed).toBe(false);
+      expect(transactionController.transactionEventEmitter.pending.event.unsubscribe).toHaveBeenCalledTimes(1);
 
     });
 
-    it('should call unsubscribeTransactionsController and remove nothing', async () => {
+    it('should not unsubscribe for pending transfers', async () => {
+      transactionController.transactionEventEmitter.pending.event.unsubscribe = jest.fn().mockImplementationOnce((callback) => callback('error', false));
+      transactionController.transactionEventEmitter.pending.isSubscribed = true;
+      transactionController.transactionSubscriptionList.push({
+        socketId,
+        address: 'address',
+        status: MESSAGE_STATUS.Pending,
+        eventKind: CONSUMER_EVENT_KINDS.Transfer,
+      });
 
-      expect(transactionController.transactionSubscriptionList.length).toBe(2);
-      transactionController.unsubscribeTransactionsController(socketId, 'mined', ['address3']);
-      expect(transactionController.transactionSubscriptionList.length).toBe(2);
+      expect(transactionController.transactionSubscriptionList.length).toBe(1);
+      transactionController.unsubscribeTransactionsController(socketId, MESSAGE_STATUS.Pending, ['address'], CONSUMER_EVENT_KINDS.Transfer);
+      expect(transactionController.transactionSubscriptionList.length).toBe(0);
+      expect(transactionController.transactionEventEmitter.pending.isSubscribed).toBe(false);
+      expect(transactionController.transactionEventEmitter.pending.event.unsubscribe).toHaveBeenCalledTimes(1);
 
     });
 
+    it('should unsubscribe for mined transfers', async () => {
+      transactionController.transactionEventEmitter.mined.isSubscribed = true;
+      transactionController.transactionSubscriptionList.push({
+        socketId,
+        address: 'address',
+        status: MESSAGE_STATUS.Mined,
+        eventKind: CONSUMER_EVENT_KINDS.Transfer,
+      });
+
+      expect(transactionController.transactionSubscriptionList.length).toBe(1);
+      transactionController.unsubscribeTransactionsController(socketId, MESSAGE_STATUS.Mined, ['address'], CONSUMER_EVENT_KINDS.Transfer);
+      expect(transactionController.transactionSubscriptionList.length).toBe(0);
+      expect(transactionController.transactionEventEmitter.mined.isSubscribed).toBe(false);
+      expect(transactionController.transactionEventEmitter.mined.event.unsubscribe).toHaveBeenCalledTimes(1);
+
+    });
+
+    it('should not unsubscribe for mined transfers', async () => {
+      transactionController.transactionEventEmitter.mined.event.unsubscribe = jest.fn().mockImplementationOnce((callback) => callback('error', false));
+      transactionController.transactionEventEmitter.mined.isSubscribed = true;
+      transactionController.transactionSubscriptionList.push({
+        socketId,
+        address: 'address',
+        status: MESSAGE_STATUS.Mined,
+        eventKind: CONSUMER_EVENT_KINDS.Transfer,
+      });
+
+      expect(transactionController.transactionSubscriptionList.length).toBe(1);
+      transactionController.unsubscribeTransactionsController(socketId, MESSAGE_STATUS.Mined, ['address'], CONSUMER_EVENT_KINDS.Transfer);
+      expect(transactionController.transactionSubscriptionList.length).toBe(0);
+      expect(transactionController.transactionEventEmitter.mined.isSubscribed).toBe(false);
+      expect(transactionController.transactionEventEmitter.mined.event.unsubscribe).toHaveBeenCalledTimes(1);
+
+    });
+
+    it('should unsubscribe for entry consumer', async () => {
+      transactionController.transactionEventEmitter.mined.isSubscribed = true;
+      transactionController.transactionEventEmitter.pending.isSubscribed = true;
+      transactionController.transactionSubscriptionList.push(
+        {
+          socketId,
+          address: 'address',
+          status: MESSAGE_STATUS.Mined,
+          eventKind: CONSUMER_EVENT_KINDS.Transfer,
+        },
+        {
+          socketId: 'otherSocket',
+          address: 'address',
+          status: MESSAGE_STATUS.Mined,
+          eventKind: CONSUMER_EVENT_KINDS.Transfer,
+        },
+        {
+          socketId: 'otherSocket',
+          address: 'address',
+          status: MESSAGE_STATUS.Pending,
+          eventKind: CONSUMER_EVENT_KINDS.Transfer,
+        },
+      );
+
+      expect(transactionController.transactionSubscriptionList.length).toBe(3);
+      transactionController.unsubscribeTransactionsController(socketId);
+      expect(transactionController.transactionSubscriptionList.length).toBe(2);
+      expect(transactionController.transactionEventEmitter.mined.event.unsubscribe).not.toHaveBeenCalled();
+      expect(transactionController.transactionEventEmitter.mined.isSubscribed).toBe(true);
+      expect(transactionController.transactionEventEmitter.pending.event.unsubscribe).not.toHaveBeenCalled();
+      expect(transactionController.transactionEventEmitter.pending.isSubscribed).toBe(true);
+
+    });
+
+    it('should unsubscribe nothing', async () => {
+      transactionController.transactionEventEmitter.mined.isSubscribed = false;
+      transactionController.transactionEventEmitter.pending.isSubscribed = false;
+      transactionController.transactionSubscriptionList.push({
+        socketId,
+        address: 'address',
+        status: MESSAGE_STATUS.Mined,
+        eventKind: CONSUMER_EVENT_KINDS.Transfer,
+      });
+
+      expect(transactionController.transactionSubscriptionList.length).toBe(1);
+      transactionController.unsubscribeTransactionsController(socketId, MESSAGE_STATUS.Mined, ['address3'], CONSUMER_EVENT_KINDS.Transfer);
+      expect(transactionController.transactionSubscriptionList.length).toBe(1);
+      expect(transactionController.transactionEventEmitter.mined.event.unsubscribe).not.toHaveBeenCalled();
+      expect(transactionController.transactionEventEmitter.pending.event.unsubscribe).not.toHaveBeenCalled();
+
+    });
+
+  });
+
+  describe('_notifyConsumer', () => {
+    let matchedAddress: string;
+    let subscription: any;
+    let _isSmartContractTransaction: any;
+
+    beforeEach(() => {
+      matchedAddress = 'address';
+
+      jest.clearAllMocks();
+
+      _isSmartContractTransaction = jest
+        .spyOn((transactionController as any), '_isSmartContractTransaction').mockResolvedValue(false);
+
+      subscription = {
+        socket: 'socket',
+        socketId,
+        address: matchedAddress,
+        status: MESSAGE_STATUS.Mined,
+        consumer: {
+          notify: jest.fn().mockImplementationOnce(() => true),
+        },
+      };
+
+    });
+
+    it('should call _notifyConsumer and it notify to consumer that there is a new smart contract transaction', async () => {
+      _isSmartContractTransaction.mockResolvedValue(true);
+      subscription.eventKind = CONSUMER_EVENT_KINDS.SmartContractTransaction;
+
+      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3);
+
+      expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
+      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
+        kind: CONSUMER_EVENT_KINDS.SmartContractTransaction,
+        body: blockBody.transactions[0],
+        matchedAddress,
+      });
+      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
+        kind: 'tx',
+        body: blockBody.transactions[0],
+        matchedAddress,
+      });
+
+    });
+
+    it('should call _notifyConsumer and it notify to consumer that there is a new transfer', async () => {
+      subscription.eventKind = CONSUMER_EVENT_KINDS.Transfer;
+
+      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3);
+
+      expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
+      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
+        kind: CONSUMER_EVENT_KINDS.Transfer,
+        body: blockBody.transactions[0],
+        matchedAddress,
+      });
+      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
+        kind: 'tx',
+        body: blockBody.transactions[0],
+        matchedAddress,
+      });
+
+    });
+
+    it('should call _notifyConsumer and it notify to consumer that there is a new transaction', async () => {
+      subscription.eventKind = CONSUMER_EVENT_KINDS.Transaction;
+
+      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3);
+
+      expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
+      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
+        kind: CONSUMER_EVENT_KINDS.Transaction,
+        body: blockBody.transactions[0],
+        matchedAddress,
+      });
+      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
+        kind: 'tx',
+        body: blockBody.transactions[0],
+        matchedAddress,
+      });
+
+    });
+
+    it('should call _notifyConsumer and it notify to consumer that there is a obsolete new transaction', async () => {
+      subscription.eventKind = 'tx';
+
+      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3);
+
+      expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
+      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
+        kind: 'tx',
+        body: blockBody.transactions[0],
+        matchedAddress,
+      });
+
+    });
   });
 
 });

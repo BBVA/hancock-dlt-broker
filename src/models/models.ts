@@ -23,7 +23,11 @@ export enum SOCKET_EVENT_KINDS {
   ObsoleteUnwatchSmartContractEvent = 'unwatch-contracts',
 }
 
-export type ISocketMessageStatus = 'mined' | 'pending';
+export type ISocketMessageStatus = MESSAGE_STATUS;
+export enum MESSAGE_STATUS {
+  Mined = 'mined',
+  Pending = 'pending',
+}
 export type ISocketMessageBody = any;
 export interface ISocketMessage {
   kind: ISocketMessageKind;

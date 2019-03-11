@@ -1,14 +1,7 @@
 import 'jest';
 import * as url from 'url';
-import { __consumerInstance__ } from '../../../domain/consumers/__mocks__/consumer';
-import { findOne } from '../../../domain/ethereum';
-import {
-  hancockGetBlockError,
-  hancockGetCodeError,
-  hancockSubscribeToTransferError,
-} from '../../../models/error';
-import {error, onError} from '../../../utils/error';
-import * as Ethereum from '../../../utils/ethereum';
+import {SOCKET_EVENT_KINDS} from '../../../models/models';
+import {onError} from '../../../utils/error';
 import * as contractController from '../contract';
 import * as ethereumController from '../ethereum';
 import * as transactionController from '../transaction';
@@ -29,10 +22,10 @@ describe('ethereumController', async () => {
   let socket: any;
   let req: any;
   let example: any;
-  let spySubscribeTransferController: any;
+  let spySubscribeTransactionsController: any;
   let spySubscribeContractsController: any;
-  let spyUnSubscribeTransferController: any;
-  let spyUnSubscribeContractsController: any;
+  let spyUnsubscribeTransactionsController: any;
+  let spyUnsubscribeContractsController: any;
 
   beforeEach(() => {
 
@@ -49,7 +42,7 @@ describe('ethereumController', async () => {
       kind: 'watch-contracts',
     };
 
-    spySubscribeTransferController = jest
+    spySubscribeTransactionsController = jest
       .spyOn(transactionController, 'subscribeTransactionsController')
       .mockImplementation(() => Promise.resolve(true));
 
@@ -57,11 +50,11 @@ describe('ethereumController', async () => {
       .spyOn(contractController, 'subscribeContractsController')
       .mockImplementation(() => Promise.resolve(true));
 
-    spyUnSubscribeTransferController = jest
+    spyUnsubscribeTransactionsController = jest
       .spyOn(transactionController, 'unsubscribeTransactionsController')
       .mockImplementation(() => Promise.resolve(true));
 
-    spyUnSubscribeContractsController = jest
+    spyUnsubscribeContractsController = jest
       .spyOn(contractController, 'unsubscribeContractsController')
       .mockImplementation(() => Promise.resolve(true));
 
@@ -69,7 +62,7 @@ describe('ethereumController', async () => {
 
   afterAll(() => {
 
-    spySubscribeTransferController.mockRestore();
+    spySubscribeTransactionsController.mockRestore();
     spySubscribeContractsController.mockRestore();
 
   });
@@ -89,10 +82,10 @@ describe('ethereumController', async () => {
     expect(socket.on).toHaveBeenCalledTimes(2);
     expect(socket.send).toHaveBeenCalledTimes(1);
     expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ kind: 'ready' }));
-    expect(spySubscribeTransferController).toHaveBeenCalledTimes(0);
+    expect(spySubscribeTransactionsController).toHaveBeenCalledTimes(0);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(0);
 
-    spySubscribeTransferController.mockRestore();
+    spySubscribeTransactionsController.mockRestore();
     spySubscribeContractsController.mockRestore();
   });
 
@@ -111,7 +104,7 @@ describe('ethereumController', async () => {
     expect(socket.on).toHaveBeenCalledTimes(2);
     expect(socket.send).toHaveBeenCalledTimes(1);
     expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ kind: 'ready' }));
-    expect(spySubscribeTransferController).toHaveBeenCalledTimes(1);
+    expect(spySubscribeTransactionsController).toHaveBeenCalledTimes(1);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(0);
   });
 
@@ -130,14 +123,14 @@ describe('ethereumController', async () => {
     expect(socket.on).toHaveBeenCalledTimes(2);
     expect(socket.send).toHaveBeenCalledTimes(1);
     expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ kind: 'ready' }));
-    expect(spySubscribeTransferController).toHaveBeenCalledTimes(0);
+    expect(spySubscribeTransactionsController).toHaveBeenCalledTimes(0);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenCalledTimes(0);
   });
 
   it('should call on message correctly and _subscribeTransactionsController', async () => {
 
-    example.kind = 'watch-transfers';
+    example.kind = SOCKET_EVENT_KINDS.WatchTransfer;
     socket.on = jest.fn().mockImplementationOnce((kind, callbacks) => {
       callbacks();
     }).mockImplementationOnce((kind, callbacks) => {
@@ -155,7 +148,7 @@ describe('ethereumController', async () => {
     await ethereumController.SocketSubscribeController(socket, req);
 
     expect(socket.on).toHaveBeenCalledTimes(2);
-    expect(spySubscribeTransferController).toHaveBeenCalledTimes(1);
+    expect(spySubscribeTransactionsController).toHaveBeenCalledTimes(1);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(0);
     expect(onError).toHaveBeenCalledTimes(0);
 
@@ -163,7 +156,7 @@ describe('ethereumController', async () => {
 
   it('should call on message correctly and _unsubscribeTransactionsController', async () => {
 
-    example.kind = 'unwatch-transfers';
+    example.kind = SOCKET_EVENT_KINDS.UnwatchTransfer;
     socket.on = jest.fn().mockImplementationOnce((kind, callbacks) => {
       callbacks();
     }).mockImplementationOnce((kind, callbacks) => {
@@ -181,15 +174,15 @@ describe('ethereumController', async () => {
     await ethereumController.SocketSubscribeController(socket, req);
 
     expect(socket.on).toHaveBeenCalledTimes(2);
-    expect(spyUnSubscribeTransferController).toHaveBeenCalledTimes(1);
-    expect(spyUnSubscribeContractsController).toHaveBeenCalledTimes(0);
+    expect(spyUnsubscribeTransactionsController).toHaveBeenCalledTimes(2);
+    expect(spyUnsubscribeContractsController).toHaveBeenCalledTimes(0);
     expect(onError).toHaveBeenCalledTimes(0);
 
   });
 
   it('should call on message correctly and _unsubscribeContractController', async () => {
 
-    example.kind = 'unwatch-contracts';
+    example.kind = SOCKET_EVENT_KINDS.ObsoleteUnwatchSmartContractEvent;
     socket.on = jest.fn().mockImplementationOnce((kind, callbacks) => {
       callbacks();
     }).mockImplementationOnce((kind, callbacks) => {
@@ -207,8 +200,8 @@ describe('ethereumController', async () => {
     await ethereumController.SocketSubscribeController(socket, req);
 
     expect(socket.on).toHaveBeenCalledTimes(2);
-    expect(spyUnSubscribeTransferController).toHaveBeenCalledTimes(0);
-    expect(spyUnSubscribeContractsController).toHaveBeenCalledTimes(1);
+    expect(spyUnsubscribeTransactionsController).toHaveBeenCalledTimes(1);
+    expect(spyUnsubscribeContractsController).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenCalledTimes(0);
 
   });
@@ -233,7 +226,7 @@ describe('ethereumController', async () => {
     await ethereumController.SocketSubscribeController(socket, req);
 
     expect(socket.on).toHaveBeenCalledTimes(2);
-    expect(spySubscribeTransferController).toHaveBeenCalledTimes(0);
+    expect(spySubscribeTransactionsController).toHaveBeenCalledTimes(0);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(0);
     expect(onError).toHaveBeenCalledTimes(1);
 
@@ -241,7 +234,7 @@ describe('ethereumController', async () => {
 
   it('should call on message correctly and onError with parseError', async () => {
 
-    example.kind = 'watch-transfers';
+    example.kind = SOCKET_EVENT_KINDS.WatchTransfer;
     socket.on = jest.fn().mockImplementationOnce((kind, callbacks) => {
       callbacks();
     }).mockImplementationOnce((kind, callbacks) => {
@@ -259,7 +252,7 @@ describe('ethereumController', async () => {
     await ethereumController.SocketSubscribeController(socket, req);
 
     expect(socket.on).toHaveBeenCalledTimes(2);
-    expect(spySubscribeTransferController).toHaveBeenCalledTimes(0);
+    expect(spySubscribeTransactionsController).toHaveBeenCalledTimes(0);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(0);
     expect(onError).toHaveBeenCalledTimes(1);
 
@@ -284,7 +277,7 @@ describe('ethereumController', async () => {
     await ethereumController.SocketSubscribeController(socket, req);
 
     expect(socket.on).toHaveBeenCalledTimes(2);
-    expect(spySubscribeTransferController).toHaveBeenCalledTimes(0);
+    expect(spySubscribeTransactionsController).toHaveBeenCalledTimes(0);
     expect(spySubscribeContractsController).toHaveBeenCalledTimes(1);
 
   });
