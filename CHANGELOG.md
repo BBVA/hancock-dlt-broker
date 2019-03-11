@@ -1,3 +1,6 @@
+## [8.0.2] - 2019-03-11
+### Fixed
+- Mined and pending transaction should be received in the same socket for the same address.
 
 ## [8.0.1] - 2019-03-11
 ### Fixed
