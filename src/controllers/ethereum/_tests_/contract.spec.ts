@@ -2,12 +2,7 @@ import 'jest';
 import * as url from 'url';
 import { __consumerInstance__ } from '../../../domain/consumers/__mocks__/consumer';
 import { findOne } from '../../../domain/ethereum';
-import {
-  hancockGetBlockError,
-  hancockGetCodeError,
-  hancockSubscribeToTransferError,
-} from '../../../models/error';
-import {error, onError} from '../../../utils/error';
+import {onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
 import * as contractController from '../contract';
 

@@ -1,4 +1,3 @@
-import {EventEmitter} from 'events';
 import * as WebSocket from 'ws';
 import {IConsumer} from '../../domain/consumers/consumer';
 import {getConsumer} from '../../domain/consumers/consumerFactory';
@@ -13,30 +12,37 @@ import {
   hancockTransactionError,
 } from '../../models/error';
 import {IEthBlockHeader, IEthTransactionBody} from '../../models/ethereum';
-import {CONSUMER_EVENT_KINDS, ISocketMessageStatus} from '../../models/models';
+import {CONSUMER_EVENT_KINDS, ISocketMessageStatus, MESSAGE_STATUS} from '../../models/models';
 import {error, onError} from '../../utils/error';
 import logger from '../../utils/logger';
 
-export let transactionEventEmitterMined: EventEmitter | undefined;
-export let transactionEventEmitterPending: EventEmitter | undefined;
+export const transactionEventEmitter: any = {
+  mined: {
+    isSubscribed: false,
+    event: undefined,
+  },
+  pending: {
+    isSubscribed: false,
+    event: undefined,
+  },
+};
 export let transactionSubscriptionList: any[] = [];
 
-// tslint:disable-next-line:variable-name
 export const subscribeTransactionsController = (
   socket: WebSocket,
   uuid: string,
-  status: ISocketMessageStatus = 'mined',
+  status: ISocketMessageStatus = MESSAGE_STATUS.Mined,
   addresses: string[],
   web3I: any,
-  consumer: CONSUMERS = CONSUMERS.Default,
-  eventKind: CONSUMER_EVENT_KINDS) => {
+  eventKind: CONSUMER_EVENT_KINDS,
+  consumer: CONSUMERS = CONSUMERS.Default) => {
 
   const consumerInstance: IConsumer = getConsumer(socket, consumer);
   try {
 
     addresses.forEach((address: string) => {
 
-      if (!_isSubscribed(transactionSubscriptionList, address, uuid, eventKind)) {
+      if (!_isSubscribed(transactionSubscriptionList, address, uuid, eventKind, status)) {
 
         transactionSubscriptionList.push({
           address,
@@ -47,13 +53,13 @@ export const subscribeTransactionsController = (
           status,
         });
 
-        if (status === 'pending' && !transactionEventEmitterPending) {
+        if (status === MESSAGE_STATUS.Pending && !transactionEventEmitter.pending.isSubscribed) {
 
           logger.info('Subscribing to pending transactions...');
           _createTransactionEventEmitterPending(web3I);
 
           // Default status, mined
-        } else if (status === 'mined' && !transactionEventEmitterMined) {
+        } else if (status === MESSAGE_STATUS.Mined && !transactionEventEmitter.mined.isSubscribed) {
 
           logger.info('Subscribing to mined transactions...');
           _createTransactionEventEmitterMined(web3I);
@@ -70,42 +76,35 @@ export const subscribeTransactionsController = (
 
 };
 
-export const _removeAddressFromSocket = (uuid: string) => {
-  const newArraySub: any[] = [];
-  for (const iterator of transactionSubscriptionList) {
-    if (iterator.socketId !== uuid) {
-      newArraySub.push(iterator);
-    }
-  }
-  transactionSubscriptionList = newArraySub;
-};
-
 export const _createTransactionEventEmitterMined = async (web3I: any) => {
-  transactionEventEmitterMined = web3I.eth
+  transactionEventEmitter.mined.event = web3I.eth
     .subscribe('newBlockHeaders')
     .on('error', (err: Error) => _processOnError(error(hancockNewBlockHeadersError, err), false))
     .on('data', (blockMined: IEthBlockHeader) => {
       logger.debug('New block mined', blockMined.hash);
       _reactToNewBlock(web3I, blockMined);
     });
+  transactionEventEmitter.mined.isSubscribed = true;
 };
 
 export const _createTransactionEventEmitterPending = async (web3I: any) => {
-  transactionEventEmitterPending = web3I.eth
+  transactionEventEmitter.pending.event = web3I.eth
     .subscribe('pendingTransactions')
     .on('error', (err: Error) => _processOnError(error(hancockPendingTransactionsSubscriptionError, err), false))
     .on('data', (txHash: string) => _reactToNewPendingTransaction(web3I, txHash));
+  transactionEventEmitter.pending.isSubscribed = true;
 };
 
-export const _isSubscribed = (list: any[], address: string, uuid: string, eventKind: CONSUMER_EVENT_KINDS) => {
-  // tslint:disable-next-line:no-var-keyword
-  var response: boolean = false;
-  list.forEach((obj) => {
-    if (obj.address.toUpperCase() === address.toUpperCase() && obj.socketId === uuid && obj.eventKind === eventKind) {
-      response = true;
-    }
+export const _isSubscribed = (
+  list: any[],
+  address: string,
+  uuid: string,
+  eventKind: CONSUMER_EVENT_KINDS,
+  status: ISocketMessageStatus = MESSAGE_STATUS.Mined,
+) => {
+  return list.some((obj) => {
+    return (obj.address.toUpperCase() === address.toUpperCase() && obj.socketId === uuid && obj.eventKind === eventKind && obj.status === status);
   });
-  return response;
 };
 
 export const _reactToNewPendingTransaction = async (
@@ -118,7 +117,7 @@ export const _reactToNewPendingTransaction = async (
     logger.debug('new pending transaction', txHash);
     const txBody: IEthTransactionBody = await web3I.eth.getTransaction(txHash, true);
 
-    await _reactToTx(web3I, txBody, 'pending');
+    await _reactToTx(web3I, txBody, MESSAGE_STATUS.Pending);
 
   } catch (err) {
 
@@ -169,7 +168,7 @@ export const _reactToNewBlock = async (
     logger.debug(`Block ${blockMined.hash} recovered, transactionsRoot: ${JSON.stringify(blockBody.transactionsRoot)}`);
 
     return await Promise.all(blockBody.transactions.map((txBody: IEthTransactionBody) =>
-      _reactToTx(web3I, txBody, 'mined'),
+      _reactToTx(web3I, txBody),
     ));
 
   } catch (err) {
@@ -179,7 +178,7 @@ export const _reactToNewBlock = async (
 export const _reactToTx = async (
   web3I: any,
   txBody: IEthTransactionBody,
-  status: string,
+  status: ISocketMessageStatus = MESSAGE_STATUS.Mined,
 ) => {
 
   transactionSubscriptionList.forEach(async (obj) => {
@@ -190,21 +189,20 @@ export const _reactToTx = async (
         logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
         logger.info(`Transaction ${txBody.hash} match from field with address ${txBody.from}`);
 
-        notifyConsumer(txBody.from, txBody, obj, web3I);
-      }
+        _notifyConsumer(txBody.from, txBody, obj, web3I);
 
-      if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
+      } else if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
         logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
         logger.info(`Transaction ${txBody.hash} match to field with address ${txBody.to}`);
 
-        notifyConsumer(txBody.to, txBody, obj, web3I);
+        _notifyConsumer(txBody.to, txBody, obj, web3I);
       }
 
     }
   });
 };
 
-export const notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any) => {
+export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any) => {
   const isSmartContractRelated = await _isSmartContractTransaction(subscription.socket, subscription.consumer, web3I, txBody);
 
   if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransaction && isSmartContractRelated) {
@@ -262,21 +260,56 @@ export const _processOnError = (err: HancockError, terminate: boolean) => {
 
 export const unsubscribeTransactionsController = (
   uuid: string,
-  status: ISocketMessageStatus = 'mined',
-  addresses: string[],
-  eventKind: CONSUMER_EVENT_KINDS) => {
+  status: ISocketMessageStatus = MESSAGE_STATUS.Mined,
+  addresses: string[] = [],
+  eventKind: CONSUMER_EVENT_KINDS | undefined = undefined) => {
 
   const newList: any[] = [];
 
-  transactionSubscriptionList.forEach((obj) => {
-    const remove = addresses.some((address) => {
-      return (obj.address === address && obj.socketId === uuid &&
-        obj.status === status && obj.eventKind === eventKind);
+  if (addresses.length && eventKind) {
+    transactionSubscriptionList.forEach((obj) => {
+      const remove = addresses.some((address) => {
+        return (obj.address === address && obj.socketId === uuid &&
+          obj.status === status && obj.eventKind === eventKind);
+      });
+      if (!remove) {
+        newList.push(obj);
+      }
     });
-    if (!remove) {
-      newList.push(obj);
+  } else {
+    for (const iterator of transactionSubscriptionList) {
+      if (iterator.socketId !== uuid) {
+        newList.push(iterator);
+      }
     }
-  });
+  }
+
+  if (transactionEventEmitter.mined.isSubscribed &&
+    (newList.length === 0 || !newList.some((subscription) => subscription.status === MESSAGE_STATUS.Mined))) {
+    transactionEventEmitter.mined.event.unsubscribe((err: any, success: boolean) => {
+      if (success) {
+        logger.info('Successfully unsubscribed!');
+      } else {
+        logger.debug('Unsubscription failed: ', err);
+      }
+    });
+    transactionEventEmitter.mined.isSubscribed = false;
+  }
+  if (transactionEventEmitter.pending.isSubscribed &&
+    (newList.length === 0 || !newList.some((subscription) => subscription.status === MESSAGE_STATUS.Pending))) {
+    transactionEventEmitter.pending.event.unsubscribe((err: any, success: boolean) => {
+      if (success) {
+        logger.info('Successfully unsubscribed!');
+      } else {
+        logger.debug('Unsubscription failed: ', err);
+      }
+    });
+    transactionEventEmitter.pending.isSubscribed = false;
+  }
 
   transactionSubscriptionList = newList;
+};
+
+export const _cleantransactionSubscriptionList = () => {
+  transactionSubscriptionList = [];
 };
