@@ -243,14 +243,14 @@ describe('contractController', () => {
     beforeEach(() => {
 
       contractController.contractSubscriptionList.push({
-        contractAdress: 'address',
+        contractAddress: 'address',
         subscriptions: [{
           socketId: 'randomValue',
         }],
       });
 
       contractController.contractSubscriptionList.push({
-        contractAdress: 'address2',
+        contractAddress: 'address2',
         subscriptions: [{
           socketId: uuid,
         }],
@@ -288,7 +288,7 @@ describe('contractController', () => {
     beforeEach(() => {
 
       contractController.contractSubscriptionList.push({
-        contractAdress: 'mockedAddress',
+        contractAddress: 'mockedAddress',
         subscriptions: [{
           socketId: 'randomValue',
         }],
@@ -358,7 +358,7 @@ describe('contractController', () => {
 
       expect(contractController.contractSubscriptionList.length).toBe(1);
       expect(contractController.contractSubscriptionList[0].subscriptions.length).toBe(1);
-      expect(contractController.contractSubscriptionList[0].contractAdress).toBe(contract.address);
+      expect(contractController.contractSubscriptionList[0].contractAddress).toBe(contract.address);
       expect(contractController.contractSubscriptionList[0].subscriptions[0].socketId).toBe(uuid);
       expect(contractController.contractSubscriptionList[0].subscriptions[0].socket).toBe(socket);
       expect(contractController.contractSubscriptionList[0].subscriptions[0].consumerInstance).toBe(__consumerInstance__);

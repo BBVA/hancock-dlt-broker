@@ -83,7 +83,7 @@ export const _socketSubscriptionState = (list: any[], address: string, uuid: str
   // tslint:disable-next-line:no-var-keyword
   var response: number = 0;
   list.forEach((obj) => {
-    if (obj.contractAdress.toUpperCase() === address.toUpperCase()) {
+    if (obj.contractAddress.toUpperCase() === address.toUpperCase()) {
       response = 1;
       obj.subscriptions.forEach((sub: any) => {
         if (sub.socketId === uuid) {
@@ -100,7 +100,7 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
 
   // tslint:disable-next-line:prefer-const
   let newSubscription = {
-    contractAdress: ethContractModel.address,
+    contractAddress: ethContractModel.address,
     eventEmitterEvents: web3Contract.events
       .allEvents({
         address: ethContractModel.address,
@@ -110,7 +110,7 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
         // tslint:disable-next-line:max-line-length
         logger.info(`new event from contract ${ethContractModel.alias} =>> ${eventBody.id} (${eventBody.event}) `);
         contractSubscriptionList.forEach((obj) => {
-          if (obj.contractAdress.toUpperCase() === ethContractModel.address.toUpperCase()) {
+          if (obj.contractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
             obj.subscriptions.forEach((sub: any) => {
               logger.info(`new event from contract ${ethContractModel.alias} is going to be sent to the socket with uuid ==> ${obj.socketId} `);
               sub.consumerInstance.notify({ kind: 'event', body: eventBody, matchedAddress: ethContractModel.address });
@@ -129,7 +129,7 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
         logger.info(`new log from contract ${ethContractModel.alias} =>> ${logBody.id}`);
         // socket.send(JSON.stringify({ kind: 'log', body: logBody }));
         contractSubscriptionList.forEach((obj) => {
-          if (obj.contractAdress.toUpperCase() === ethContractModel.address.toUpperCase()) {
+          if (obj.contractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
             obj.subscriptions.forEach((sub: any) => {
               sub.consumerInstance.notify({ kind: 'log', body: logBody, matchedAddress: ethContractModel.address });
             });
@@ -149,7 +149,7 @@ export const _addNewSubscriptionToContract = (ethContractModel: IEthereumContrac
                                               uuid: string, socket: WebSocket, consumerInstance: IConsumer) => {
 
   contractSubscriptionList.forEach((obj) => {
-    if (obj.contractAdress.toUpperCase() === ethContractModel.address.toUpperCase()) {
+    if (obj.contractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
       obj.subscriptions.push({
         socketId: uuid,
         socket,
