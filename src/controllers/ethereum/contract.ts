@@ -131,7 +131,6 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
         contractSubscriptionList.forEach((obj) => {
           if (obj.contractAdress.toUpperCase() === ethContractModel.address.toUpperCase()) {
             obj.subscriptions.forEach((sub: any) => {
-              logger.info(`new log from contract ${ethContractModel.alias} is going to be sent to the socket with uuid ==> ${obj.socketId} `);
               sub.consumerInstance.notify({ kind: 'log', body: logBody, matchedAddress: ethContractModel.address });
             });
           }
