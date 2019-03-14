@@ -112,6 +112,7 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
         contractSubscriptionList.forEach((obj) => {
           if (obj.contractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
             obj.subscriptions.forEach((sub: any) => {
+              logger.info(`new event from contract ${ethContractModel.alias} sent to the socket with uuid =>> ${sub.socketId}  `);
               sub.consumerInstance.notify({ kind: 'event', body: eventBody, matchedAddress: ethContractModel.address });
               sub.consumerInstance.notify({ kind: CONSUMER_EVENT_KINDS.SmartContractEvent, body: eventBody, matchedAddress: ethContractModel.address });
             });
