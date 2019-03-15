@@ -128,26 +128,26 @@ export const _reactToNewPendingTransaction = async (
 
 export const _getBlock = async (
   web3I: any,
-  blockMined: IEthBlockHeader,
+  blockHash: string,
   currentAttempt: number = 1,
   maxAttempts: number = 3,
 ) => {
   let blockBody;
   try {
-    blockBody = await web3I.eth.getBlock(blockMined.hash, true);
+    blockBody = await web3I.eth.getBlock(blockHash, true);
 
     if (blockBody && blockBody.transactions) {
       return blockBody;
     } else {
-      logger.debug(`The block ${blockMined.hash} is mined but it is not ready yet`);
-      logger.debug('Attempt %s failed for block %s', currentAttempt, blockMined.hash);
+      logger.debug(`The block ${blockHash} is mined but it is not ready yet`);
+      logger.debug('Attempt %s failed for block %s', currentAttempt, blockHash);
       currentAttempt++;
       if (currentAttempt <= maxAttempts) {
-        logger.debug(`Waiting for block ${blockMined.hash}...`);
+        logger.debug(`Waiting for block ${blockHash}...`);
         return await new Promise(async (resolve, reject) => {
           setTimeout(async () => {
-            logger.debug('Trying attempt %s for block %s...', currentAttempt, blockMined.hash);
-            resolve(await _getBlock(web3I, blockMined, currentAttempt));
+            logger.debug('Trying attempt %s for block %s...', currentAttempt, blockHash);
+            resolve(await _getBlock(web3I, blockHash, currentAttempt));
           }, 3000);
         });
       } else {
@@ -164,21 +164,23 @@ export const _reactToNewBlock = async (
   blockMined: IEthBlockHeader,
 ) => {
   try {
-    const blockBody = await _getBlock(web3I, blockMined);
+    const blockBody = await _getBlock(web3I, blockMined.hash);
     logger.debug(`Block ${blockMined.hash} recovered, transactionsRoot: ${JSON.stringify(blockBody.transactionsRoot)}`);
 
     return await Promise.all(blockBody.transactions.map((txBody: IEthTransactionBody) =>
-      _reactToTx(web3I, txBody),
+      _reactToTx(web3I, txBody, MESSAGE_STATUS.Mined, blockMined.timestamp),
     ));
 
   } catch (err) {
     _processOnError(err, false);
   }
 };
+
 export const _reactToTx = async (
   web3I: any,
   txBody: IEthTransactionBody,
   status: ISocketMessageStatus = MESSAGE_STATUS.Mined,
+  timestamp: number = 0,
 ) => {
 
   transactionSubscriptionList.forEach(async (obj) => {
@@ -189,32 +191,60 @@ export const _reactToTx = async (
         logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
         logger.info(`Transaction ${txBody.hash} match from field with address ${txBody.from}`);
 
-        _notifyConsumer(txBody.from, txBody, obj, web3I);
+        _notifyConsumer(txBody.from, txBody, obj, web3I, timestamp);
 
       } else if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
         logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
         logger.info(`Transaction ${txBody.hash} match to field with address ${txBody.to}`);
 
-        _notifyConsumer(txBody.to, txBody, obj, web3I);
+        _notifyConsumer(txBody.to, txBody, obj, web3I, timestamp);
       }
 
     }
   });
 };
 
-export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any) => {
+export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any, timestamp: number = 0) => {
   const isSmartContractRelated = await _isSmartContractTransaction(subscription.socket, subscription.consumer, web3I, txBody);
 
   if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransaction && isSmartContractRelated) {
-    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractTransaction, body: txBody, matchedAddress});
+    subscription.consumer.notify({
+      kind: CONSUMER_EVENT_KINDS.SmartContractTransaction,
+      body: txBody,
+      matchedAddress,
+      gas: txBody.gas,
+      gasPrice: txBody.gasPrice,
+      timestamp,
+    });
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transfer && !isSmartContractRelated) {
-    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transfer, body: txBody, matchedAddress});
+    subscription.consumer.notify({
+      kind: CONSUMER_EVENT_KINDS.Transfer,
+      body: txBody,
+      matchedAddress,
+      gas: txBody.gas,
+      gasPrice: txBody.gasPrice,
+      timestamp,
+    });
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transaction) {
-    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transaction, body: txBody, matchedAddress});
+    subscription.consumer.notify({
+      kind: CONSUMER_EVENT_KINDS.Transaction,
+      body: txBody,
+      matchedAddress,
+      gas: txBody.gas,
+      gasPrice: txBody.gasPrice,
+      timestamp,
+    });
   }
 
   // Deprecated
-  subscription.consumer.notify({kind: 'tx', body: txBody, matchedAddress});
+  subscription.consumer.notify({
+    kind: 'tx',
+    body: txBody,
+    matchedAddress,
+    gas: txBody.gas,
+    gasPrice: txBody.gasPrice,
+    timestamp,
+  });
 };
 
 export const _isSmartContractTransaction = async (socket: WebSocket,
