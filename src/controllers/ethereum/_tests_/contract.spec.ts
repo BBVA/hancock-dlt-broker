@@ -441,7 +441,13 @@ describe('contractController', () => {
 
   describe('_processEvent', () => {
 
-    let sub;
+    const notify = jest.fn();
+    const sub = {
+      consumerInstance: {
+        notify,
+      },
+      socketId: 'uuid',
+    };
     const web3I = {};
     const eventBody: IEthContractEventBody = {
       blockHash: 'blockHash',
@@ -464,6 +470,8 @@ describe('contractController', () => {
       transactions: [
         {
           hash: 'hash',
+          gas: 'gas',
+          gasPrice: 'hash',
         },
       ],
     };
@@ -473,12 +481,6 @@ describe('contractController', () => {
 
       jest.clearAllMocks();
       jest.restoreAllMocks();
-      sub = {
-        consumerInstance: {
-          notify: jest.fn(),
-        },
-        socketId: 'uuid',
-      };
       _getBlock = jest
         .spyOn((transactionController as any), '_getBlock')
         .mockImplementation(() => blockHeader);
@@ -487,9 +489,9 @@ describe('contractController', () => {
 
     it('should call _processEvent', async () => {
 
-      contractController._processEvent(sub, web3I, eventBody);
+      await contractController._processEvent(sub, web3I, eventBody);
 
-      expect(sub.consumerInstance.notify).toHaveBeenCalled();
+      expect(notify).toHaveBeenCalled();
     });
 
   });

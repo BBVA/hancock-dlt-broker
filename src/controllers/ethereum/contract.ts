@@ -200,7 +200,6 @@ export const _processEvent = async (
   eventBody: IEthContractEventBody,
 ) => {
   const blockHeader = await _getBlock(web3I, eventBody.blockHash);
-  console.log(blockHeader);
   // tslint:disable-next-line:no-var-keyword
   var transaction: any = {};
   blockHeader.transactions.forEach((tx: any) => {
@@ -208,7 +207,6 @@ export const _processEvent = async (
       transaction = tx;
     }
   });
-  console.log(sub.consumerInstance.notify);
   logger.info(`new event from contract ${eventBody.address} sent to the socket with uuid =>> ${sub.socketId}  `);
   sub.consumerInstance.notify({
     kind: 'event',
