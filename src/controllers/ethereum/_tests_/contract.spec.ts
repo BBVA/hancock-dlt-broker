@@ -491,7 +491,7 @@ describe('contractController', () => {
 
       await contractController._processEvent(sub, web3I, eventBody);
 
-      expect(notify).toHaveBeenCalled();
+      expect(notify).toHaveBeenCalledTimes(2);
     });
 
   });
