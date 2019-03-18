@@ -212,8 +212,6 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
       kind: CONSUMER_EVENT_KINDS.SmartContractTransaction,
       body: txBody,
       matchedAddress,
-      gas: txBody.gas,
-      gasPrice: txBody.gasPrice,
       timestamp,
     });
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transfer && !isSmartContractRelated) {
@@ -221,8 +219,6 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
       kind: CONSUMER_EVENT_KINDS.Transfer,
       body: txBody,
       matchedAddress,
-      gas: txBody.gas,
-      gasPrice: txBody.gasPrice,
       timestamp,
     });
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transaction) {
@@ -230,8 +226,6 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
       kind: CONSUMER_EVENT_KINDS.Transaction,
       body: txBody,
       matchedAddress,
-      gas: txBody.gas,
-      gasPrice: txBody.gasPrice,
       timestamp,
     });
   }
@@ -241,8 +235,6 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
     kind: 'tx',
     body: txBody,
     matchedAddress,
-    gas: txBody.gas,
-    gasPrice: txBody.gasPrice,
     timestamp,
   });
 };

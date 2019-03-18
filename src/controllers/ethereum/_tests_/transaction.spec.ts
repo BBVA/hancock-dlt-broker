@@ -642,16 +642,12 @@ describe('transactionController', () => {
         kind: CONSUMER_EVENT_KINDS.SmartContractTransaction,
         body: blockBody.transactions[0],
         matchedAddress,
-        gas: blockBody.transactions[0].gas,
-        gasPrice: blockBody.transactions[0].gasPrice,
         timestamp: blockBody.timestamp,
       });
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
         kind: 'tx',
         body: blockBody.transactions[0],
         matchedAddress,
-        gas: blockBody.transactions[0].gas,
-        gasPrice: blockBody.transactions[0].gasPrice,
         timestamp: blockBody.timestamp,
       });
 
@@ -667,16 +663,12 @@ describe('transactionController', () => {
         kind: CONSUMER_EVENT_KINDS.Transfer,
         body: blockBody.transactions[0],
         matchedAddress,
-        gas: blockBody.transactions[0].gas,
-        gasPrice: blockBody.transactions[0].gasPrice,
         timestamp: blockBody.timestamp,
       });
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
         kind: 'tx',
         body: blockBody.transactions[0],
         matchedAddress,
-        gas: blockBody.transactions[0].gas,
-        gasPrice: blockBody.transactions[0].gasPrice,
         timestamp: blockBody.timestamp,
       });
 
@@ -692,16 +684,12 @@ describe('transactionController', () => {
         kind: CONSUMER_EVENT_KINDS.Transaction,
         body: blockBody.transactions[0],
         matchedAddress,
-        gas: blockBody.transactions[0].gas,
-        gasPrice: blockBody.transactions[0].gasPrice,
         timestamp: blockBody.timestamp,
       });
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
         kind: 'tx',
         body: blockBody.transactions[0],
         matchedAddress,
-        gas: blockBody.transactions[0].gas,
-        gasPrice: blockBody.transactions[0].gasPrice,
         timestamp: blockBody.timestamp,
       });
 
@@ -717,8 +705,6 @@ describe('transactionController', () => {
         kind: 'tx',
         body: blockBody.transactions[0],
         matchedAddress,
-        gas: blockBody.transactions[0].gas,
-        gasPrice: blockBody.transactions[0].gasPrice,
         timestamp: blockBody.timestamp,
       });
 
