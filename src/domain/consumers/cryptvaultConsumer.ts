@@ -11,7 +11,6 @@ import { dltAddress } from './../../models/models';
 import { Consumer } from './consumer';
 import {
   hancockEncryptError,
-  hancockGetConsumerPKError,
   hancockGetConsumerTokenError,
   hancockGetWalletError,
 } from './models/error';
@@ -67,9 +66,9 @@ export class CryptvaultConsumer extends Consumer {
   }
 
   private async cypherEventAndSend(event: ISocketEvent): Promise<boolean> {
-    event.matchedAddress = event.body.returnValues._from;
+    event.matchedAddress = event.body.returnValues._from || event.body.returnValues.from;
     await this.cypherAndSendTransfer(event);
-    event.matchedAddress = event.body.returnValues._to;
+    event.matchedAddress = event.body.returnValues._to || event.body.returnValues.to;
     await this.cypherAndSendTransfer(event);
     return Promise.resolve(true);
   }
@@ -98,8 +97,9 @@ export class CryptvaultConsumer extends Consumer {
     } catch (err) {
 
       logger.error(err);
-      throw error(hancockGetConsumerPKError, err);
-
+      // throw error(hancockGetConsumerPKError, err);
+      // TODO change this after refactor
+      return Promise.resolve(true);
     }
 
     if (walletResponse.result && walletResponse.result.status_code === 200) {
@@ -172,7 +172,8 @@ export class CryptvaultConsumer extends Consumer {
       ? ICryptoVaultEventTxDirection.OUT
       : ICryptoVaultEventTxDirection.IN;
     } else {
-      direction = (event.body.returnValues._from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
+      const from: string = event.body.returnValues._from || event.body.returnValues.from;
+      direction = (from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
       ? ICryptoVaultEventTxDirection.OUT
       : ICryptoVaultEventTxDirection.IN;
     }

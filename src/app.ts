@@ -19,7 +19,7 @@ export function run() {
 
     Object.keys(config.blockchain).forEach((dlt: string) => {
 
-      const controller: any = require(`./controllers/${dlt}`).SocketSubscribeController;
+      const controller: any = require(`./controllers/${dlt}/${dlt}`).SocketSubscribeController;
 
       if (controller) {
         const wss: WebSocket.Server = new WebSocket.Server({noServer: true});
@@ -46,11 +46,7 @@ export function run() {
       }
     });
 
-    server.listen(config.server.port, (error: any) => {
-
-      if (error) {
-        return logger.error('Service is not available', error);
-      }
+    server.listen(config.server.port, () => {
 
       logger.info('Service available in port', config.server.port);
 

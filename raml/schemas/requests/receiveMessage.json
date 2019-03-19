@@ -8,11 +8,25 @@
       "enum": [
         "watch-transfers",
         "watch-transactions",
-        "watch-contracts"
+        "watch-contracts-transactions",
+        "watch-contracts-events",
+        "watch-contracts",
+        "unwatch-transfers",
+        "unwatch-transactions",
+        "unwatch-contracts-transactions",
+        "unwatch-contracts-events",
+        "unwatch-contracts"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "mined"
       ]
     },
     "body": {
-      "description": "array of addresses to be watched",
+      "description": "array of addresses to be watched/unwatched",
       "type": "array",
       "minItems": 1,
       "items": {

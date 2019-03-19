@@ -2,6 +2,7 @@
 export const __dbClient__ = {
   close: jest.fn().mockReturnThis(),
   db: jest.fn().mockReturnThis(),
+  on: jest.fn().mockReturnThis(),
 };
 
 export const MongoClient = {
