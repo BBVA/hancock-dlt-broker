@@ -437,4 +437,73 @@ describe('contractController', () => {
 
   });
 
+  describe('_restartSubscriptionsContracts', () => {
+
+    const subscribe1 = jest.fn();
+    const subscribe2 = jest.fn();
+    const subscribe3 = jest.fn();
+    const subscribe4 = jest.fn();
+    const on1 = jest.fn();
+    const on2 = jest.fn();
+    const allEventsMethod = jest.fn().mockReturnValueOnce({ on: on1 });
+    const allEventsMethod2 = jest.fn().mockReturnValueOnce({ on: on2 });
+
+    beforeEach(() => {
+
+      contractController.contractSubscriptionList.push({
+        contractAddress: 'address',
+        contractInstance: {
+          events: {
+            allEvents: allEventsMethod,
+          },
+        },
+        eventEmitterEvents: {
+          subscribe: subscribe1,
+        },
+        eventEmitterLogs: {
+          subscribe: subscribe2,
+        },
+        subscriptions: [{
+          socketId: uuid,
+        }, {
+          socketId: 'randomValue',
+        }],
+      });
+
+      contractController.contractSubscriptionList.push({
+        contractAddress: 'address2',
+        contractInstance: {
+          events: {
+            allEvents: allEventsMethod2,
+          },
+        },
+        eventEmitterEvents: {
+          subscribe: subscribe3,
+        },
+        eventEmitterLogs: {
+          subscribe: subscribe4,
+        },
+        subscriptions: [{
+          socketId: uuid,
+        }],
+      });
+    });
+
+    it('should call _restartSubscriptionsContracts correctly', async () => {
+
+      contractController._restartSubscriptionsContracts();
+
+      expect(subscribe1).not.toHaveBeenCalled();
+      expect(subscribe3).not.toHaveBeenCalled();
+      expect(subscribe2).toHaveBeenCalled();
+      expect(subscribe4).toHaveBeenCalled();
+      expect(allEventsMethod).toHaveBeenCalled();
+      expect(allEventsMethod2).toHaveBeenCalled();
+      expect(on1).toHaveBeenCalled();
+      expect(on2).toHaveBeenCalled();
+
+    });
+
+  });
+
 });

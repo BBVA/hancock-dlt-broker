@@ -214,7 +214,9 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
   }
 
   // Deprecated
-  subscription.consumer.notify({kind: 'tx', body: txBody, matchedAddress});
+  if (subscription.eventKind !== CONSUMER_EVENT_KINDS.Transfer || !isSmartContractRelated ) {
+    subscription.consumer.notify({kind: 'tx', body: txBody, matchedAddress});
+  }
 };
 
 export const _isSmartContractTransaction = async (socket: WebSocket,
@@ -312,4 +314,15 @@ export const unsubscribeTransactionsController = (
 
 export const _cleantransactionSubscriptionList = () => {
   transactionSubscriptionList = [];
+};
+
+export const _restartSubscriptionsTransactions = (web3I: any) => {
+  if (transactionEventEmitter.mined.isSubscribed) {
+    logger.info('Resubscribing to mined transaction');
+    _createTransactionEventEmitterMined(web3I);
+  }
+  if (transactionEventEmitter.pending.isSubscribed) {
+    logger.info('Resubscribing to pending transaction');
+    _createTransactionEventEmitterPending(web3I);
+  }
 };
