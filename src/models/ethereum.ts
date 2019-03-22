@@ -50,13 +50,13 @@ export interface IEthTransactionBody extends ISocketEventBody {
   blockNumber: number;
   from: ethAddress;
   gas: number;
-  gasPrice: '100000000000';
+  gasPrice: string;
   hash: ethTxHash;
   input: string;
   nonce: number;
   to: ethContractAddress;
   transactionIndex: number;
-  value: '0';
+  value: string;
 }
 
 export interface IEthBlockHeader {
