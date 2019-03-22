@@ -17,6 +17,7 @@ import {
 import {CONSUMER_EVENT_KINDS} from '../../models/models';
 import { error, onError } from '../../utils/error';
 import logger from '../../utils/logger';
+import { _getBlock } from './transaction';
 
 export let contractSubscriptionList: any[] = [];
 
@@ -112,9 +113,7 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
         contractSubscriptionList.forEach((obj) => {
           if (obj.contractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
             obj.subscriptions.forEach((sub: any) => {
-              logger.info(`new event from contract ${ethContractModel.alias} sent to the socket with uuid =>> ${sub.socketId}  `);
-              sub.consumerInstance.notify({ kind: 'event', body: eventBody, matchedAddress: ethContractModel.address });
-              sub.consumerInstance.notify({ kind: CONSUMER_EVENT_KINDS.SmartContractEvent, body: eventBody, matchedAddress: ethContractModel.address });
+              _processEvent(sub, web3I, eventBody);
             });
           }
         });
@@ -193,4 +192,36 @@ export const unsubscribeContractsController = (
   });
 
   contractSubscriptionList = newSubscriptionList;
+};
+
+export const _processEvent = async (
+  sub: any,
+  web3I: any,
+  eventBody: IEthContractEventBody,
+) => {
+  const blockHeader = await _getBlock(web3I, eventBody.blockHash);
+  // tslint:disable-next-line:no-var-keyword
+  var transaction: any = {};
+  blockHeader.transactions.forEach((tx: any) => {
+    if (tx.hash === eventBody.transactionHash) {
+      transaction = tx;
+    }
+  });
+  logger.info(`new event from contract ${eventBody.address} sent to the socket with uuid =>> ${sub.socketId}  `);
+  sub.consumerInstance.notify({
+    kind: 'event',
+    body: eventBody,
+    matchedAddress: eventBody.address,
+    gas: transaction.gas,
+    gasPrice: transaction.gasPrice,
+    timestamp: blockHeader.timestamp,
+  });
+  sub.consumerInstance.notify({
+    kind: CONSUMER_EVENT_KINDS.SmartContractEvent,
+    body: eventBody,
+    matchedAddress: eventBody.address,
+    gas: transaction.gas,
+    gasPrice: transaction.gasPrice,
+    timestamp: blockHeader.timestamp,
+  });
 };
