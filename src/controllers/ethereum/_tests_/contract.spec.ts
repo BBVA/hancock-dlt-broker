@@ -2,9 +2,11 @@ import 'jest';
 import * as url from 'url';
 import { __consumerInstance__ } from '../../../domain/consumers/__mocks__/consumer';
 import { findOne } from '../../../domain/ethereum';
+import { IEthContractEventBody } from '../../../models/ethereum';
 import {onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
 import * as contractController from '../contract';
+import * as transactionController from '../transaction';
 
 jest.mock('url');
 jest.mock('fs');
@@ -501,7 +503,63 @@ describe('contractController', () => {
       expect(allEventsMethod2).toHaveBeenCalled();
       expect(on1).toHaveBeenCalled();
       expect(on2).toHaveBeenCalled();
+    });
 
+  });
+
+  describe('_processEvent', () => {
+
+    const notify = jest.fn();
+    const sub = {
+      consumerInstance: {
+        notify,
+      },
+      socketId: 'uuid',
+    };
+    const web3I = {};
+    const eventBody: IEthContractEventBody = {
+      blockHash: 'blockHash',
+      transactionHash: 'hash',
+      address: 'scAddress',
+      blockNumber: 0,
+      event: undefined,
+      id: 'log_5daf9707',
+      logIndex: 0,
+      raw: {
+        data: 'data',
+        topics: [],
+      },
+      returnValues: [],
+      signature: null,
+      transactionIndex: 0,
+      type: 'mined',
+    };
+    const blockHeader = {
+      transactions: [
+        {
+          hash: 'hash',
+          gas: 'gas',
+          gasPrice: 'hash',
+        },
+      ],
+    };
+    let _getBlock: any;
+
+    beforeEach(() => {
+
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
+      _getBlock = jest
+        .spyOn((transactionController as any), '_getBlock')
+        .mockImplementation(() => blockHeader);
+
+    });
+
+    it('should call _processEvent', async () => {
+
+      await contractController._processEvent(sub, web3I, eventBody);
+
+      expect(notify).toHaveBeenCalledTimes(2);
     });
 
   });

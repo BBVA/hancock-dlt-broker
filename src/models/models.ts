@@ -61,6 +61,7 @@ export interface IHancockSocketTransactionBody extends ISocketEventBody {
   value: IHancockSocketCurrency;
   data: string;
   fee: IHancockSocketCurrency;
+  timestamp: number;
 }
 
 export interface IHancockSocketCurrency {
