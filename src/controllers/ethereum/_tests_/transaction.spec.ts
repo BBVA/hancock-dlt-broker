@@ -48,6 +48,7 @@ describe('transactionController', () => {
     web3 = await Ethereum.getWeb3();
     newBlock = {
       hash,
+      timestamp: 12342345234,
     };
 
     blockBody = {
@@ -56,8 +57,11 @@ describe('transactionController', () => {
           from: 'from',
           hash: 'hash',
           to: 'to',
+          gas: 21000,
+          gasPrice: 100000000,
         },
       ],
+      timestamp: 12342345234,
     };
 
     web3.eth.subscribe = jest.fn().mockImplementation(() => {
@@ -284,8 +288,8 @@ describe('transactionController', () => {
 
       await transactionController._reactToNewBlock(web3, newBlock);
 
-      expect(_getBlock).toHaveBeenCalledWith(web3, newBlock);
-      expect(_reactToTx).toHaveBeenCalledWith(web3, blockBody.transactions[0]);
+      expect(_getBlock).toHaveBeenCalledWith(web3, newBlock.hash);
+      expect(_reactToTx).toHaveBeenCalledWith(web3, blockBody.transactions[0], MESSAGE_STATUS.Mined, blockBody.timestamp);
 
     });
 
@@ -296,7 +300,7 @@ describe('transactionController', () => {
 
       await transactionController._reactToNewBlock(web3, newBlock);
 
-      expect(_getBlock).toHaveBeenCalledWith(web3, newBlock);
+      expect(_getBlock).toHaveBeenCalledWith(web3, newBlock.hash);
       expect(processOnError).toHaveBeenCalledWith(new Error('Error!'), false);
 
     });
@@ -328,9 +332,9 @@ describe('transactionController', () => {
       };
       transactionController.transactionSubscriptionList.push(obj);
 
-      await transactionController._reactToTx(web3, blockBody.transactions[0], status);
+      await transactionController._reactToTx(web3, blockBody.transactions[0], status, blockBody.timestamp);
 
-      expect(_notifyConsumer).toHaveBeenCalledWith(obj.address, blockBody.transactions[0], obj, web3);
+      expect(_notifyConsumer).toHaveBeenCalledWith(obj.address, blockBody.transactions[0], obj, web3, blockBody.timestamp);
 
     });
 
@@ -343,9 +347,9 @@ describe('transactionController', () => {
       };
       transactionController.transactionSubscriptionList.push(obj);
 
-      await transactionController._reactToTx(web3, blockBody.transactions[0], status);
+      await transactionController._reactToTx(web3, blockBody.transactions[0], status, blockBody.timestamp);
 
-      expect(_notifyConsumer).toHaveBeenCalledWith(obj.address, blockBody.transactions[0], obj, web3);
+      expect(_notifyConsumer).toHaveBeenCalledWith(obj.address, blockBody.transactions[0], obj, web3, blockBody.timestamp);
 
     });
 
@@ -631,18 +635,20 @@ describe('transactionController', () => {
       _isSmartContractTransaction.mockResolvedValue(true);
       subscription.eventKind = CONSUMER_EVENT_KINDS.SmartContractTransaction;
 
-      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3);
+      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3, blockBody.timestamp);
 
       expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: CONSUMER_EVENT_KINDS.SmartContractTransaction,
         body: blockBody.transactions[0],
         matchedAddress,
+        timestamp: blockBody.timestamp,
       });
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
         kind: 'tx',
         body: blockBody.transactions[0],
         matchedAddress,
+        timestamp: blockBody.timestamp,
       });
 
     });
@@ -650,18 +656,20 @@ describe('transactionController', () => {
     it('should call _notifyConsumer and it notify to consumer that there is a new transfer', async () => {
       subscription.eventKind = CONSUMER_EVENT_KINDS.Transfer;
 
-      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3);
+      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3, blockBody.timestamp);
 
       expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: CONSUMER_EVENT_KINDS.Transfer,
         body: blockBody.transactions[0],
         matchedAddress,
+        timestamp: blockBody.timestamp,
       });
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
         kind: 'tx',
         body: blockBody.transactions[0],
         matchedAddress,
+        timestamp: blockBody.timestamp,
       });
 
     });
@@ -669,18 +677,20 @@ describe('transactionController', () => {
     it('should call _notifyConsumer and it notify to consumer that there is a new transaction', async () => {
       subscription.eventKind = CONSUMER_EVENT_KINDS.Transaction;
 
-      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3);
+      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3, blockBody.timestamp);
 
       expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: CONSUMER_EVENT_KINDS.Transaction,
         body: blockBody.transactions[0],
         matchedAddress,
+        timestamp: blockBody.timestamp,
       });
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
         kind: 'tx',
         body: blockBody.transactions[0],
         matchedAddress,
+        timestamp: blockBody.timestamp,
       });
 
     });
@@ -688,13 +698,14 @@ describe('transactionController', () => {
     it('should call _notifyConsumer and it notify to consumer that there is a obsolete new transaction', async () => {
       subscription.eventKind = 'tx';
 
-      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3);
+      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3, blockBody.timestamp);
 
       expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: 'tx',
         body: blockBody.transactions[0],
         matchedAddress,
+        timestamp: blockBody.timestamp,
       });
 
     });
