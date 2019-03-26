@@ -18,7 +18,7 @@ export interface IEthContractEventBody extends ISocketEventBody {
   address: ethContractAddress;
   blockHash: ethBlockHash;
   blockNumber: number;
-  event: undefined;
+  event: string;
   id: 'log_5daf9707';
   logIndex: number;
   raw: {

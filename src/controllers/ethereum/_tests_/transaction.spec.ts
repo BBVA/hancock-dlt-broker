@@ -653,12 +653,6 @@ describe('transactionController', () => {
         matchedAddress,
         raw: blockBody.transactions[0],
       });
-      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
-        kind: 'tx',
-        body: hslResponseMocked,
-        matchedAddress,
-        raw: blockBody.transactions[0],
-      });
 
     });
 
@@ -674,12 +668,6 @@ describe('transactionController', () => {
         matchedAddress,
         raw: blockBody.transactions[0],
       });
-      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
-        kind: 'tx',
-        body: hslResponseMocked,
-        matchedAddress,
-        raw: blockBody.transactions[0],
-      });
 
     });
 
@@ -691,27 +679,6 @@ describe('transactionController', () => {
       expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: CONSUMER_EVENT_KINDS.Transaction,
-        body: hslResponseMocked,
-        matchedAddress,
-        raw: blockBody.transactions[0],
-      });
-      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
-        kind: 'tx',
-        body: hslResponseMocked,
-        matchedAddress,
-        raw: blockBody.transactions[0],
-      });
-
-    });
-
-    it('should call _notifyConsumer and it notify to consumer that there is a obsolete new transaction', async () => {
-      subscription.eventKind = 'tx';
-
-      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3, blockBody.timestamp);
-
-      expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
-      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
-        kind: 'tx',
         body: hslResponseMocked,
         matchedAddress,
         raw: blockBody.transactions[0],

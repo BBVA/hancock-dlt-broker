@@ -73,3 +73,14 @@ export interface IHancockSocketCurrency {
 export enum CURRENCY {
   Ethereum = 'Ethereum',
 }
+
+export interface IHancockSocketContractEventBody extends ISocketEventBody {
+  blockNumber: number;
+  blockHash: string;
+  transactionId: string;
+  smartContractAddress: string;
+  eventName: string;
+  returnValues: string[];
+  fee: IHancockSocketCurrency;
+  timestamp: number;
+}

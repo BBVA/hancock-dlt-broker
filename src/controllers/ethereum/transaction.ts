@@ -215,11 +215,6 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transaction) {
     subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transaction, body: hsl, raw: txBody, matchedAddress});
   }
-
-  // Deprecated
-  if (subscription.eventKind !== CONSUMER_EVENT_KINDS.Transfer || !isSmartContractRelated ) {
-    subscription.consumer.notify({kind: 'tx', body: hsl, raw: txBody, matchedAddress});
-  }
 };
 
 export const _generateHancockSLbody = (txBody: IEthTransactionBody, timestamp: number) => {

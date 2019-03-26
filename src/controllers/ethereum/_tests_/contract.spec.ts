@@ -3,6 +3,7 @@ import * as url from 'url';
 import { __consumerInstance__ } from '../../../domain/consumers/__mocks__/consumer';
 import { findOne } from '../../../domain/ethereum';
 import { IEthContractEventBody } from '../../../models/ethereum';
+import { CONSUMER_EVENT_KINDS, CURRENCY } from '../../../models/models';
 import {onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
 import * as contractController from '../contract';
@@ -191,17 +192,12 @@ describe('contractController', () => {
 
     const unsubscribe1 = jest.fn();
     const unsubscribe2 = jest.fn();
-    const unsubscribe3 = jest.fn();
-    const unsubscribe4 = jest.fn();
 
     beforeEach(() => {
 
       contractController.contractSubscriptionList.push({
         eventEmitterEvents: {
           unsubscribe: unsubscribe1,
-        },
-        eventEmitterLogs: {
-          unsubscribe: unsubscribe2,
         },
         subscriptions: [{
           socketId: uuid,
@@ -212,10 +208,7 @@ describe('contractController', () => {
 
       contractController.contractSubscriptionList.push({
         eventEmitterEvents: {
-          unsubscribe: unsubscribe3,
-        },
-        eventEmitterLogs: {
-          unsubscribe: unsubscribe4,
+          unsubscribe: unsubscribe2,
         },
         subscriptions: [{
           socketId: uuid,
@@ -231,9 +224,7 @@ describe('contractController', () => {
 
       expect(contractController.contractSubscriptionList.length).toBe(1);
       expect(unsubscribe1).not.toHaveBeenCalled();
-      expect(unsubscribe2).not.toHaveBeenCalled();
-      expect(unsubscribe3).toHaveBeenCalled();
-      expect(unsubscribe4).toHaveBeenCalled();
+      expect(unsubscribe2).toHaveBeenCalled();
       expect(contractController.contractSubscriptionList[0].subscriptions.length).toBe(1);
 
     });
@@ -373,8 +364,6 @@ describe('contractController', () => {
 
     const unsubscribe1 = jest.fn();
     const unsubscribe2 = jest.fn();
-    const unsubscribe3 = jest.fn();
-    const unsubscribe4 = jest.fn();
 
     beforeEach(() => {
 
@@ -382,9 +371,6 @@ describe('contractController', () => {
         contractAddress: 'address',
         eventEmitterEvents: {
           unsubscribe: unsubscribe1,
-        },
-        eventEmitterLogs: {
-          unsubscribe: unsubscribe2,
         },
         subscriptions: [{
           socketId: uuid,
@@ -396,10 +382,7 @@ describe('contractController', () => {
       contractController.contractSubscriptionList.push({
         contractAddress: 'address2',
         eventEmitterEvents: {
-          unsubscribe: unsubscribe3,
-        },
-        eventEmitterLogs: {
-          unsubscribe: unsubscribe4,
+          unsubscribe: unsubscribe2,
         },
         subscriptions: [{
           socketId: uuid,
@@ -415,9 +398,7 @@ describe('contractController', () => {
 
       expect(contractController.contractSubscriptionList.length).toBe(1);
       expect(unsubscribe1).not.toHaveBeenCalled();
-      expect(unsubscribe2).not.toHaveBeenCalled();
-      expect(unsubscribe3).toHaveBeenCalled();
-      expect(unsubscribe4).toHaveBeenCalled();
+      expect(unsubscribe2).toHaveBeenCalled();
       expect(contractController.contractSubscriptionList[0].subscriptions.length).toBe(2);
 
     });
@@ -431,8 +412,6 @@ describe('contractController', () => {
       expect(contractController.contractSubscriptionList.length).toBe(2);
       expect(unsubscribe1).not.toHaveBeenCalled();
       expect(unsubscribe2).not.toHaveBeenCalled();
-      expect(unsubscribe3).not.toHaveBeenCalled();
-      expect(unsubscribe4).not.toHaveBeenCalled();
       expect(contractController.contractSubscriptionList[0].subscriptions.length).toBe(1);
 
     });
@@ -443,8 +422,6 @@ describe('contractController', () => {
 
     const subscribe1 = jest.fn();
     const subscribe2 = jest.fn();
-    const subscribe3 = jest.fn();
-    const subscribe4 = jest.fn();
     const on1 = jest.fn();
     const on2 = jest.fn();
     const allEventsMethod = jest.fn().mockReturnValueOnce({ on: on1 });
@@ -462,9 +439,6 @@ describe('contractController', () => {
         eventEmitterEvents: {
           subscribe: subscribe1,
         },
-        eventEmitterLogs: {
-          subscribe: subscribe2,
-        },
         subscriptions: [{
           socketId: uuid,
         }, {
@@ -480,10 +454,7 @@ describe('contractController', () => {
           },
         },
         eventEmitterEvents: {
-          subscribe: subscribe3,
-        },
-        eventEmitterLogs: {
-          subscribe: subscribe4,
+          subscribe: subscribe2,
         },
         subscriptions: [{
           socketId: uuid,
@@ -493,12 +464,10 @@ describe('contractController', () => {
 
     it('should call _restartSubscriptionsContracts correctly', async () => {
 
-      contractController._restartSubscriptionsContracts();
+      contractController._restartSubscriptionsContracts({});
 
       expect(subscribe1).not.toHaveBeenCalled();
-      expect(subscribe3).not.toHaveBeenCalled();
-      expect(subscribe2).toHaveBeenCalled();
-      expect(subscribe4).toHaveBeenCalled();
+      expect(subscribe2).not.toHaveBeenCalled();
       expect(allEventsMethod).toHaveBeenCalled();
       expect(allEventsMethod2).toHaveBeenCalled();
       expect(on1).toHaveBeenCalled();
@@ -535,13 +504,28 @@ describe('contractController', () => {
       type: 'mined',
     };
     const blockHeader = {
+      timestamp: 100,
       transactions: [
         {
           hash: 'hash',
-          gas: 'gas',
-          gasPrice: 'hash',
+          gas: 100,
+          gasPrice: '20',
         },
       ],
+    };
+    const generatedBody = {
+      blockNumber: eventBody.blockNumber,
+      blockHash: eventBody.blockHash,
+      transactionId: eventBody.transactionHash,
+      smartContractAddress: eventBody.address,
+      eventName: eventBody.event,
+      returnValues: eventBody.returnValues,
+      fee: {
+        amount: '2000',
+        decimals: 18,
+        currency: CURRENCY.Ethereum,
+      },
+      timestamp: 100,
     };
     let _getBlock: any;
 
@@ -559,7 +543,13 @@ describe('contractController', () => {
 
       await contractController._processEvent(sub, web3I, eventBody);
 
-      expect(notify).toHaveBeenCalledTimes(2);
+      const response = {
+        kind: CONSUMER_EVENT_KINDS.SmartContractEvent,
+        body: generatedBody,
+        raw: eventBody,
+        matchedAddress: eventBody.address,
+      };
+      expect(notify).toHaveBeenNthCalledWith(1, response);
     });
 
   });

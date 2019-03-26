@@ -6,15 +6,13 @@ import * as domain from '../../domain/ethereum';
 import {
   hancockContractNotFoundError,
   hancockEventError,
-  hancockLogsError,
   hancockSubscribeToContractError,
 } from '../../models/error';
 import {
   IEthContractEventBody,
-  IEthContractLogBody,
   IEthereumContractModel,
 } from '../../models/ethereum';
-import {CONSUMER_EVENT_KINDS} from '../../models/models';
+import {CONSUMER_EVENT_KINDS, CURRENCY, IHancockSocketContractEventBody} from '../../models/models';
 import { error, onError } from '../../utils/error';
 import logger from '../../utils/logger';
 import { _getBlock } from './transaction';
@@ -74,7 +72,6 @@ export const _closeConnectionSocket = async (uuid: string) => {
       newSubscriptionList.push(obj);
     } else {
       obj.eventEmitterEvents.unsubscribe();
-      obj.eventEmitterLogs.unsubscribe();
     }
   });
   contractSubscriptionList = newSubscriptionList;
@@ -121,22 +118,6 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
         });
 
       }),
-    eventEmitterLogs: web3I.eth
-      .subscribe('logs', {
-        address: ethContractModel.address,
-      })
-      .on('error', (err: Error) => onError(socket, error(hancockLogsError, err), false, consumerInstance))
-      .on('data', (logBody: IEthContractLogBody) => {
-        logger.info(`new log from contract ${ethContractModel.alias} =>> ${logBody.id}`);
-        // socket.send(JSON.stringify({ kind: 'log', body: logBody }));
-        contractSubscriptionList.forEach((obj) => {
-          if (obj.contractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
-            obj.subscriptions.forEach((sub: any) => {
-              sub.consumerInstance.notify({ kind: 'log', body: logBody, matchedAddress: ethContractModel.address });
-            });
-          }
-        });
-    }),
     subscriptions: [{
       socketId: uuid,
       socket,
@@ -184,7 +165,6 @@ export const unsubscribeContractsController = (
           newSubscriptionList.push(obj);
         } else {
           obj.eventEmitterEvents.unsubscribe();
-          obj.eventEmitterLogs.unsubscribe();
         }
       }
       if (!checked) {
@@ -196,7 +176,7 @@ export const unsubscribeContractsController = (
   contractSubscriptionList = newSubscriptionList;
 };
 
-export const _restartSubscriptionsContracts = () => {
+export const _restartSubscriptionsContracts = (web3Instance: any) => {
   contractSubscriptionList.forEach((contract) => {
     logger.info('Resubscribing to contracts events and logs for contract => ', contract.contractAddress);
     contract.eventEmitterEvents = contract.contractInstance.events
@@ -207,17 +187,13 @@ export const _restartSubscriptionsContracts = () => {
       // tslint:disable-next-line:max-line-length
       logger.info(`new event from contract ${contract.contractInfo.alias} =>> ${eventBody.id} (${eventBody.event}) `);
       contractSubscriptionList.forEach((obj) => {
-        if (obj.contractAddress.toUpperCase() === contract.contractAddress.toUpperCase()) {
+        if (obj.contractAddress.toUpperCase() === contract.contractInfo.address.toUpperCase()) {
           obj.subscriptions.forEach((sub: any) => {
-            logger.info(`new event from contract ${contract.contractInfo.alias} sent to the socket with uuid =>> ${sub.socketId}  `);
-            sub.consumerInstance.notify({ kind: 'event', body: eventBody, matchedAddress: contract.contractAddress });
-            sub.consumerInstance.notify({ kind: CONSUMER_EVENT_KINDS.SmartContractEvent, body: eventBody, matchedAddress: contract.contractAddress });
+            _processEvent(sub, web3Instance, eventBody);
           });
         }
       });
-
     });
-    contract.eventEmitterLogs.subscribe();
   });
 };
 
@@ -236,19 +212,27 @@ export const _processEvent = async (
   });
   logger.info(`new event from contract ${eventBody.address} sent to the socket with uuid =>> ${sub.socketId}  `);
   sub.consumerInstance.notify({
-    kind: 'event',
-    body: eventBody,
-    matchedAddress: eventBody.address,
-    gas: transaction.gas,
-    gasPrice: transaction.gasPrice,
-    timestamp: blockHeader.timestamp,
-  });
-  sub.consumerInstance.notify({
     kind: CONSUMER_EVENT_KINDS.SmartContractEvent,
-    body: eventBody,
+    body: _generateBody(eventBody, (transaction.gas * Number(transaction.gasPrice)).toString(), blockHeader.timestamp),
+    raw: eventBody,
     matchedAddress: eventBody.address,
-    gas: transaction.gas,
-    gasPrice: transaction.gasPrice,
-    timestamp: blockHeader.timestamp,
   });
+};
+
+export const _generateBody = (eventBody: IEthContractEventBody, fee: string, timestamp: number) => {
+  const body: IHancockSocketContractEventBody = {
+    blockNumber: eventBody.blockNumber,
+    blockHash: eventBody.blockHash,
+    transactionId: eventBody.transactionHash,
+    smartContractAddress: eventBody.address,
+    eventName: eventBody.event,
+    returnValues: eventBody.returnValues,
+    fee: {
+      amount: fee,
+      decimals: 18,
+      currency: CURRENCY.Ethereum,
+    },
+    timestamp,
+  };
+  return body;
 };
