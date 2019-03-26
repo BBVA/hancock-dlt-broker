@@ -102,6 +102,8 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
   // tslint:disable-next-line:prefer-const
   let newSubscription = {
     contractAddress: ethContractModel.address,
+    contractInstance: web3Contract,
+    contractInfo: ethContractModel,
     eventEmitterEvents: web3Contract.events
       .allEvents({
         address: ethContractModel.address,
@@ -192,6 +194,31 @@ export const unsubscribeContractsController = (
   });
 
   contractSubscriptionList = newSubscriptionList;
+};
+
+export const _restartSubscriptionsContracts = () => {
+  contractSubscriptionList.forEach((contract) => {
+    logger.info('Resubscribing to contracts events and logs for contract => ', contract.contractAddress);
+    contract.eventEmitterEvents = contract.contractInstance.events
+    .allEvents({
+      address: contract.contractAddress,
+    })
+    .on('data', (eventBody: IEthContractEventBody) => {
+      // tslint:disable-next-line:max-line-length
+      logger.info(`new event from contract ${contract.contractInfo.alias} =>> ${eventBody.id} (${eventBody.event}) `);
+      contractSubscriptionList.forEach((obj) => {
+        if (obj.contractAddress.toUpperCase() === contract.contractAddress.toUpperCase()) {
+          obj.subscriptions.forEach((sub: any) => {
+            logger.info(`new event from contract ${contract.contractInfo.alias} sent to the socket with uuid =>> ${sub.socketId}  `);
+            sub.consumerInstance.notify({ kind: 'event', body: eventBody, matchedAddress: contract.contractAddress });
+            sub.consumerInstance.notify({ kind: CONSUMER_EVENT_KINDS.SmartContractEvent, body: eventBody, matchedAddress: contract.contractAddress });
+          });
+        }
+      });
+
+    });
+    contract.eventEmitterLogs.subscribe();
+  });
 };
 
 export const _processEvent = async (

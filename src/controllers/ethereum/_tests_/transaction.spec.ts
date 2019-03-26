@@ -711,4 +711,50 @@ describe('transactionController', () => {
     });
   });
 
+  describe('_restartSubscriptionsTransactions', () => {
+
+    let _createTransactionEventEmitterMined: any;
+    let _createTransactionEventEmitterPending: any;
+
+    beforeEach(() => {
+
+      jest.clearAllMocks();
+
+      _createTransactionEventEmitterMined = jest
+        .spyOn((transactionController as any), '_createTransactionEventEmitterMined')
+        .mockImplementation(() => false);
+
+      _createTransactionEventEmitterPending = jest
+        .spyOn((transactionController as any), '_createTransactionEventEmitterPending')
+        .mockImplementation(() => false);
+    });
+
+    it('should call _restartSubscriptionsTransactions correctly', async () => {
+
+      transactionController.transactionEventEmitter.mined.isSubscribed = true;
+
+      transactionController.transactionEventEmitter.pending.isSubscribed = true;
+
+      await transactionController._restartSubscriptionsTransactions(web3);
+
+      expect(_createTransactionEventEmitterMined).toHaveBeenCalledWith(web3);
+      expect(_createTransactionEventEmitterPending).toHaveBeenCalledWith(web3);
+
+    });
+
+    it('should call _restartSubscriptionsTransactions correctly 2', async () => {
+
+      transactionController.transactionEventEmitter.mined.isSubscribed = false;
+
+      transactionController.transactionEventEmitter.pending.isSubscribed = false;
+
+      await transactionController._restartSubscriptionsTransactions(web3);
+
+      expect(_createTransactionEventEmitterMined).not.toHaveBeenCalled();
+      expect(_createTransactionEventEmitterPending).not.toHaveBeenCalled();
+
+    });
+
+  });
+
 });

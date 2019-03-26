@@ -1,3 +1,7 @@
+## [8.0.3] - 2019-03-21
+### Fixed
+- Now the broker would try to reconnect to the DLT in case the connection has been lost.
+
 ## [8.0.2] - 2019-03-11
 ### Fixed
 - Mined and pending transaction should be received in the same socket for the same address.
