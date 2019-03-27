@@ -1,6 +1,6 @@
 ## [9.0.0] - 2019-03-22
 ### Changed
-- Changed the model for the response of events with kind: tx, transaction, transfer and smart-contract-event.
+- Changed the model for the response of events with kind: transaction, transfer, smart-contract-transaction and smart-contract-event.
 
 ## [8.0.3] - 2019-03-21
 ### Fixed
