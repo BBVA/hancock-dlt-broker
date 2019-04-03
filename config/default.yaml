@@ -23,6 +23,7 @@ app:
       collections:
         contractAbis: sc_abi
         contractInstances: sc_instance
+        providers: providers
   consumers:
     cryptvault:
       api:

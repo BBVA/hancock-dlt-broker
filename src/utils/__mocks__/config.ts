@@ -22,6 +22,7 @@ const mock = {
       collections: {
         contractAbis: 'mockDatabaseCollectionContractAbis',
         contractInstances: 'mockDatabaseCollectionContractInstances',
+        providers: 'mockDatabaseCollectionProviders',
       },
       database: 'mockDatabase',
     },

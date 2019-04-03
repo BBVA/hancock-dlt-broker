@@ -6,16 +6,12 @@ import {error, onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
 import * as transactionController from '../transaction';
 
-jest.mock('url');
-jest.mock('fs');
-jest.mock('path');
 jest.mock('../../../utils/config');
 jest.mock('../../../domain/consumers/consumerFactory');
 jest.mock('../../../domain/consumers/consumer');
 jest.mock('../../../utils/ethereum');
 jest.mock('../../../utils/logger');
 jest.mock('../../../utils/error');
-jest.mock('../../../utils/schema');
 
 describe('transactionController', () => {
 
