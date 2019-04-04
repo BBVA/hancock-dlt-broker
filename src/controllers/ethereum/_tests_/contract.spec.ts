@@ -1,16 +1,12 @@
 import 'jest';
-import * as url from 'url';
-import { __consumerInstance__ } from '../../../domain/consumers/__mocks__/consumer';
-import { findOne } from '../../../domain/ethereum';
-import { IEthContractEventBody } from '../../../models/ethereum';
+import {__consumerInstance__} from '../../../domain/consumers/__mocks__/consumer';
+import {findOne} from '../../../domain/ethereum';
+import {IEthContractEventBody} from '../../../models/ethereum';
 import {onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
 import * as contractController from '../contract';
 import * as transactionController from '../transaction';
 
-jest.mock('url');
-jest.mock('fs');
-jest.mock('path');
 jest.mock('../../../utils/config');
 jest.mock('../../../domain/consumers/consumerFactory');
 jest.mock('../../../domain/consumers/consumer');
@@ -22,11 +18,8 @@ jest.mock('../../../utils/schema');
 describe('contractController', () => {
 
   let socket: any;
-  let req: any;
-  let example: any;
   let web3: any;
   let newBlock: any;
-  let blockBody: any;
   const uuid: string = 'uuid';
 
   beforeEach(async () => {
@@ -43,27 +36,9 @@ describe('contractController', () => {
       terminate: jest.fn(),
     };
 
-    req = {};
-
-    example = {
-      body: {},
-      consumer: 'Consumer',
-      kind: 'watch-contracts',
-    };
-
     web3 = await Ethereum.getWeb3();
     newBlock = {
       hash: '0xf22152edb76673b5f6909e5693f786128760a3761c8a3ccd6b63a3ca45bd053c',
-    };
-
-    blockBody = {
-      transactions: [
-        {
-          from: 'from',
-          hash: 'hash',
-          to: 'to',
-        },
-      ],
     };
 
     web3.eth.subscribe = jest.fn().mockImplementation(() => {
@@ -447,8 +422,8 @@ describe('contractController', () => {
     const subscribe4 = jest.fn();
     const on1 = jest.fn();
     const on2 = jest.fn();
-    const allEventsMethod = jest.fn().mockReturnValueOnce({ on: on1 });
-    const allEventsMethod2 = jest.fn().mockReturnValueOnce({ on: on2 });
+    const allEventsMethod = jest.fn().mockReturnValueOnce({on: on1});
+    const allEventsMethod2 = jest.fn().mockReturnValueOnce({on: on2});
 
     beforeEach(() => {
 
@@ -493,7 +468,7 @@ describe('contractController', () => {
 
     it('should call _restartSubscriptionsContracts correctly', async () => {
 
-      contractController._restartSubscriptionsContracts();
+      contractController.restartSubscriptionsContracts();
 
       expect(subscribe1).not.toHaveBeenCalled();
       expect(subscribe3).not.toHaveBeenCalled();
