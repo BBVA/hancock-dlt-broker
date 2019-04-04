@@ -231,7 +231,7 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
   }
 
   // Deprecated
-  if (subscription.eventKind !== CONSUMER_EVENT_KINDS.Transfer || !isSmartContractRelated ) {
+  if (subscription.eventKind !== CONSUMER_EVENT_KINDS.Transfer || !isSmartContractRelated) {
     subscription.consumer.notify({
       kind: 'tx',
       body: txBody,
@@ -278,7 +278,7 @@ export const _isSmartContractTransaction = async (socket: WebSocket,
 
 export const _processOnError = (err: HancockError, terminate: boolean) => {
   transactionSubscriptionList.forEach(async (obj) => {
-    onError(obj.socket, err, false, obj.consumer);
+    onError(obj.socket, err, terminate, obj.consumer);
   });
 };
 
@@ -311,22 +311,14 @@ export const unsubscribeTransactionsController = (
   if (transactionEventEmitter.mined.isSubscribed &&
     (newList.length === 0 || !newList.some((subscription) => subscription.status === MESSAGE_STATUS.Mined))) {
     transactionEventEmitter.mined.event.unsubscribe((err: any, success: boolean) => {
-      if (success) {
-        logger.info('Successfully unsubscribed!');
-      } else {
-        logger.debug('Unsubscription failed: ', err);
-      }
+      _logUnsubscribe(success, err);
     });
     transactionEventEmitter.mined.isSubscribed = false;
   }
   if (transactionEventEmitter.pending.isSubscribed &&
     (newList.length === 0 || !newList.some((subscription) => subscription.status === MESSAGE_STATUS.Pending))) {
     transactionEventEmitter.pending.event.unsubscribe((err: any, success: boolean) => {
-      if (success) {
-        logger.info('Successfully unsubscribed!');
-      } else {
-        logger.debug('Unsubscription failed: ', err);
-      }
+      _logUnsubscribe(success, err);
     });
     transactionEventEmitter.pending.isSubscribed = false;
   }
@@ -334,11 +326,7 @@ export const unsubscribeTransactionsController = (
   transactionSubscriptionList = newList;
 };
 
-export const _cleantransactionSubscriptionList = () => {
-  transactionSubscriptionList = [];
-};
-
-export const _restartSubscriptionsTransactions = (web3I: any) => {
+export const restartSubscriptionsTransactions = (web3I: any) => {
   if (transactionEventEmitter.mined.isSubscribed) {
     logger.info('Resubscribing to mined transaction');
     _createTransactionEventEmitterMined(web3I);
@@ -348,3 +336,11 @@ export const _restartSubscriptionsTransactions = (web3I: any) => {
     _createTransactionEventEmitterPending(web3I);
   }
 };
+
+function _logUnsubscribe(success: boolean, err: any) {
+  if (success) {
+    logger.info('Successfully unsubscribed!');
+  } else {
+    logger.debug('Unsubscription failed: ', err);
+  }
+}

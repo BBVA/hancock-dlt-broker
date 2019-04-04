@@ -468,7 +468,7 @@ describe('contractController', () => {
 
     it('should call _restartSubscriptionsContracts correctly', async () => {
 
-      contractController._restartSubscriptionsContracts();
+      contractController.restartSubscriptionsContracts();
 
       expect(subscribe1).not.toHaveBeenCalled();
       expect(subscribe3).not.toHaveBeenCalled();

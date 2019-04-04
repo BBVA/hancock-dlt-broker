@@ -1,19 +1,14 @@
 import * as jwt from 'jsonwebtoken';
 import * as request from 'request-promise-native';
-import { v4 as uuidv4 } from 'uuid';
-import { encryptedData, ISymmetricEncData, symmetricKey } from '../../models/crypto';
-import { ISocketEvent } from '../../models/models';
+import {v4 as uuidv4} from 'uuid';
+import {encryptedData, ISymmetricEncData, symmetricKey} from '../../models/crypto';
+import {dltAddress, ISocketEvent} from '../../models/models';
 import config from '../../utils/config';
-import { CryptoUtils } from '../../utils/crypto';
-import { error } from '../../utils/error';
+import {CryptoUtils} from '../../utils/crypto';
+import {error} from '../../utils/error';
 import logger from '../../utils/logger';
-import { dltAddress } from './../../models/models';
-import { Consumer } from './consumer';
-import {
-  hancockEncryptError,
-  hancockGetConsumerTokenError,
-  hancockGetWalletError,
-} from './models/error';
+import {Consumer} from './consumer';
+import {hancockEncryptError, hancockGetConsumerTokenError, hancockGetWalletError} from './models/error';
 
 export interface ICryptoVaultResult {
   status_code: number;
@@ -127,7 +122,7 @@ export class CryptvaultConsumer extends Consumer {
 
         logger.info('Notify response: ' + JSON.stringify(eventResponse));
 
-        super.notify({ kind: event.kind, body: eventResponse, matchedAddress: event.matchedAddress });
+        super.notify({kind: event.kind, body: eventResponse, matchedAddress: event.matchedAddress});
         return Promise.resolve(true);
 
       } catch (err) {
@@ -150,11 +145,11 @@ export class CryptvaultConsumer extends Consumer {
 
       return jwt.sign(
         {
-         iss: config.consumers.cryptvault.credentials.key,
-         txid: requestId,
+          iss: config.consumers.cryptvault.credentials.key,
+          txid: requestId,
         },
         config.consumers.cryptvault.credentials.secret,
-        { expiresIn: config.consumers.cryptvault.credentials.expires_in },
+        {expiresIn: config.consumers.cryptvault.credentials.expires_in},
       );
 
     } catch (err) {
@@ -169,13 +164,13 @@ export class CryptvaultConsumer extends Consumer {
     let direction: ICryptoVaultEventTxDirection;
     if (event.kind === 'tx') {
       direction = (event.body.from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
-      ? ICryptoVaultEventTxDirection.OUT
-      : ICryptoVaultEventTxDirection.IN;
+        ? ICryptoVaultEventTxDirection.OUT
+        : ICryptoVaultEventTxDirection.IN;
     } else {
       const from: string = event.body.returnValues._from || event.body.returnValues.from;
       direction = (from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
-      ? ICryptoVaultEventTxDirection.OUT
-      : ICryptoVaultEventTxDirection.IN;
+        ? ICryptoVaultEventTxDirection.OUT
+        : ICryptoVaultEventTxDirection.IN;
     }
     return direction;
   }

@@ -3,8 +3,8 @@ import {IConsumer} from '../../domain/consumers/consumer';
 import {getConsumer} from '../../domain/consumers/consumerFactory';
 import {CONSUMERS} from '../../domain/consumers/types';
 import * as domain from '../../domain/ethereum';
-import {hancockContractNotFoundError, hancockEventError, hancockLogsError, hancockSubscribeToContractError,} from '../../models/error';
-import {IEthContractEventBody, IEthContractLogBody, IEthereumContractModel,} from '../../models/ethereum';
+import {hancockContractNotFoundError, hancockEventError, hancockLogsError, hancockSubscribeToContractError} from '../../models/error';
+import {IEthContractEventBody, IEthContractLogBody, IEthereumContractModel} from '../../models/ethereum';
 import {CONSUMER_EVENT_KINDS} from '../../models/models';
 import {error, onError} from '../../utils/error';
 import logger from '../../utils/logger';
@@ -50,23 +50,29 @@ export const subscribeContractsController = async (
   });
 };
 
+function _removeAndUnsubscribe(obj: any, uuid: string, subscriptions: any[], newSubscriptionList: any[]) {
+
+  obj.subscriptions.forEach((sub: any) => {
+    if (sub.socketId !== uuid) {
+      subscriptions.push(sub);
+    }
+  });
+  if (subscriptions.length !== 0) {
+    obj.subscriptions = subscriptions;
+    newSubscriptionList.push(obj);
+  } else {
+    obj.eventEmitterEvents.unsubscribe();
+    obj.eventEmitterLogs.unsubscribe();
+  }
+
+}
+
 // tslint:disable-next-line:variable-name
 export const _closeConnectionSocket = async (uuid: string) => {
   const newSubscriptionList: any[] = [];
   contractSubscriptionList.forEach((obj) => {
-    const newList: any[] = [];
-    obj.subscriptions.forEach((sub: any) => {
-      if (sub.socketId !== uuid) {
-        newList.push(sub);
-      }
-    });
-    if (newList.length !== 0) {
-      obj.subscriptions = newList;
-      newSubscriptionList.push(obj);
-    } else {
-      obj.eventEmitterEvents.unsubscribe();
-      obj.eventEmitterLogs.unsubscribe();
-    }
+    const subscriptions: any[] = [];
+    _removeAndUnsubscribe(obj, uuid, subscriptions, newSubscriptionList);
   });
   contractSubscriptionList = newSubscriptionList;
 };
@@ -160,24 +166,13 @@ export const unsubscribeContractsController = (
   const newSubscriptionList: any[] = [];
 
   contractSubscriptionList.forEach((obj) => {
-    const newList: any[] = [];
+    const subscriptions: any[] = [];
     contracts.forEach((address) => {
       // tslint:disable-next-line:no-var-keyword
       let checked = false;
       if (obj.contractAddress.toUpperCase() === address.toUpperCase()) {
         checked = true;
-        obj.subscriptions.forEach((sub: any) => {
-          if (sub.socketId !== uuid) {
-            newList.push(sub);
-          }
-        });
-        if (newList.length !== 0) {
-          obj.subscriptions = newList;
-          newSubscriptionList.push(obj);
-        } else {
-          obj.eventEmitterEvents.unsubscribe();
-          obj.eventEmitterLogs.unsubscribe();
-        }
+        _removeAndUnsubscribe(obj, uuid, subscriptions, newSubscriptionList);
       }
       if (!checked) {
         newSubscriptionList.push(obj);
@@ -188,7 +183,7 @@ export const unsubscribeContractsController = (
   contractSubscriptionList = newSubscriptionList;
 };
 
-export const _restartSubscriptionsContracts = () => {
+export const restartSubscriptionsContracts = () => {
   contractSubscriptionList.forEach((contract) => {
     logger.info('Resubscribing to contracts events and logs for contract => ', contract.contractAddress);
     contract.eventEmitterEvents = contract.contractInstance.events

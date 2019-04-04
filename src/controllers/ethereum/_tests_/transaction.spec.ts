@@ -312,7 +312,8 @@ describe('transactionController', () => {
       status = MESSAGE_STATUS.Mined;
 
       jest.clearAllMocks();
-      transactionController._cleantransactionSubscriptionList();
+      // @ts-ignore
+      transactionController.transactionSubscriptionList = [];
 
       _notifyConsumer = jest
         .spyOn((transactionController as any), '_notifyConsumer')
@@ -466,7 +467,8 @@ describe('transactionController', () => {
     beforeEach(() => {
 
       jest.clearAllMocks();
-      transactionController._cleantransactionSubscriptionList();
+      // @ts-ignore
+      transactionController.transactionSubscriptionList = [];
 
       transactionController.transactionEventEmitter.pending.event = {
         unsubscribe: jest.fn().mockImplementationOnce((callback) => callback(undefined, true)),
@@ -731,7 +733,7 @@ describe('transactionController', () => {
 
       transactionController.transactionEventEmitter.pending.isSubscribed = true;
 
-      await transactionController._restartSubscriptionsTransactions(web3);
+      await transactionController.restartSubscriptionsTransactions(web3);
 
       expect(_createTransactionEventEmitterMined).toHaveBeenCalledWith(web3);
       expect(_createTransactionEventEmitterPending).toHaveBeenCalledWith(web3);
@@ -744,7 +746,7 @@ describe('transactionController', () => {
 
       transactionController.transactionEventEmitter.pending.isSubscribed = false;
 
-      await transactionController._restartSubscriptionsTransactions(web3);
+      await transactionController.restartSubscriptionsTransactions(web3);
 
       expect(_createTransactionEventEmitterMined).not.toHaveBeenCalled();
       expect(_createTransactionEventEmitterPending).not.toHaveBeenCalled();
