@@ -10,6 +10,7 @@ jest.mock('../../../utils/config');
 jest.mock('../../../domain/consumers/consumerFactory');
 jest.mock('../../../domain/consumers/consumer');
 jest.mock('../../../utils/ethereum');
+jest.mock('../../../utils/ethereum/utils');
 jest.mock('../../../utils/logger');
 jest.mock('../../../utils/error');
 
@@ -612,7 +613,6 @@ describe('transactionController', () => {
     let matchedAddress: string;
     let subscription: any;
     let _isSmartContractTransaction: any;
-    let _generateHancockSLbody: any;
     const hslResponseMocked = {mock: 'mockedObject'};
 
     beforeEach(() => {
@@ -622,9 +622,6 @@ describe('transactionController', () => {
 
       _isSmartContractTransaction = jest
         .spyOn((transactionController as any), '_isSmartContractTransaction').mockResolvedValue(false);
-
-      _generateHancockSLbody = jest
-        .spyOn((transactionController as any), '_generateHancockSLbody').mockReturnValue(hslResponseMocked);
 
       subscription = {
         socket: 'socket',
@@ -726,42 +723,6 @@ describe('transactionController', () => {
 
       expect(_createTransactionEventEmitterMined).not.toHaveBeenCalled();
       expect(_createTransactionEventEmitterPending).not.toHaveBeenCalled();
-
-    });
-
-  });
-
-  describe('_generateHancockSLbody', () => {
-
-    const timestamp = 100;
-
-    it('should call _restartSubscriptionsTransactions correctly', async () => {
-
-      transactionController.transactionEventEmitter.mined.isSubscribed = true;
-
-      transactionController.transactionEventEmitter.pending.isSubscribed = true;
-
-      const reponse = transactionController._generateHancockSLbody(blockBody.transactions[0], timestamp);
-
-      expect(reponse).toEqual({
-        blockHash: blockBody.transactions[0].blockHash,
-        blockNumber: blockBody.transactions[0].blockNumber,
-        transactionId: blockBody.transactions[0].hash,
-        from: blockBody.transactions[0].from,
-        to: blockBody.transactions[0].to,
-        value: {
-          amount: blockBody.transactions[0].value,
-          decimals: 18,
-          currency: CURRENCY.Ethereum,
-        },
-        data: blockBody.transactions[0].input,
-        fee: {
-          amount: (blockBody.transactions[0].gas * Number(blockBody.transactions[0].gasPrice)).toString(),
-          decimals: 18,
-          currency: CURRENCY.Ethereum,
-        },
-        timestamp,
-      });
 
     });
 

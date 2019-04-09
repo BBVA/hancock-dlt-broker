@@ -12,8 +12,9 @@ import {
   hancockTransactionError,
 } from '../../models/error';
 import {IEthBlockHeader, IEthTransactionBody} from '../../models/ethereum';
-import {CONSUMER_EVENT_KINDS, CURRENCY, IHancockSocketTransactionBody, ISocketMessageStatus, MESSAGE_STATUS} from '../../models/models';
+import {CONSUMER_EVENT_KINDS, ISocketMessageStatus, MESSAGE_STATUS} from '../../models/models';
 import {error, onError} from '../../utils/error';
+import { generateHancockTransactionSLbody } from '../../utils/ethereum/utils';
 import logger from '../../utils/logger';
 
 export const transactionEventEmitter: any = {
@@ -206,7 +207,7 @@ export const _reactToTx = async (
 
 export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any, timestamp: number = 0) => {
   const isSmartContractRelated = await _isSmartContractTransaction(subscription.socket, subscription.consumer, web3I, txBody);
-  const hsl = _generateHancockSLbody(txBody, timestamp);
+  const hsl = generateHancockTransactionSLbody(txBody, timestamp);
 
   if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransaction && isSmartContractRelated) {
     subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractTransaction, body: hsl, raw: txBody, matchedAddress});
@@ -215,29 +216,6 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transaction) {
     subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transaction, body: hsl, raw: txBody, matchedAddress});
   }
-};
-
-export const _generateHancockSLbody = (txBody: IEthTransactionBody, timestamp: number) => {
-  const hsl: IHancockSocketTransactionBody = {
-    blockHash: txBody.blockHash,
-    blockNumber: txBody.blockNumber,
-    transactionId: txBody.hash,
-    from: txBody.from,
-    to: txBody.to,
-    value: {
-      amount: txBody.value,
-      decimals: 18,
-      currency: CURRENCY.Ethereum,
-    },
-    data: txBody.input,
-    fee: {
-      amount: (txBody.gas * Number(txBody.gasPrice)).toString(),
-      decimals: 18,
-      currency: CURRENCY.Ethereum,
-    },
-    timestamp,
-  };
-  return hsl;
 };
 
 export const _isSmartContractTransaction = async (socket: WebSocket,

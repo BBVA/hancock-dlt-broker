@@ -5,8 +5,9 @@ import {CONSUMERS} from '../../domain/consumers/types';
 import * as domain from '../../domain/ethereum';
 import {hancockContractNotFoundError, hancockEventError, hancockSubscribeToContractError} from '../../models/error';
 import {IEthContractEventBody, IEthereumContractModel} from '../../models/ethereum';
-import {CONSUMER_EVENT_KINDS, CURRENCY, IHancockSocketContractEventBody} from '../../models/models';
+import {CONSUMER_EVENT_KINDS} from '../../models/models';
 import { error, onError } from '../../utils/error';
+import { generateHancockContractSLbody } from '../../utils/ethereum/utils';
 import logger from '../../utils/logger';
 import {_getBlock} from './transaction';
 
@@ -202,26 +203,8 @@ export const _processEvent = async (
   logger.info(`new event from contract ${eventBody.address} sent to the socket with uuid =>> ${sub.socketId}  `);
   sub.consumerInstance.notify({
     kind: CONSUMER_EVENT_KINDS.SmartContractEvent,
-    body: _generateBody(eventBody, (transaction.gas * Number(transaction.gasPrice)).toString(), blockHeader.timestamp),
+    body: generateHancockContractSLbody(eventBody, (transaction.gas * Number(transaction.gasPrice)).toString(), blockHeader.timestamp),
     raw: eventBody,
     matchedAddress: eventBody.address,
   });
-};
-
-export const _generateBody = (eventBody: IEthContractEventBody, fee: string, timestamp: number) => {
-  const body: IHancockSocketContractEventBody = {
-    blockNumber: eventBody.blockNumber,
-    blockHash: eventBody.blockHash,
-    transactionId: eventBody.transactionHash,
-    smartContractAddress: eventBody.address,
-    eventName: eventBody.event,
-    returnValues: eventBody.returnValues,
-    fee: {
-      amount: fee,
-      decimals: 18,
-      currency: CURRENCY.Ethereum,
-    },
-    timestamp,
-  };
-  return body;
 };
