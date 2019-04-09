@@ -1,3 +1,4 @@
+import {PROTOCOLS} from '../types';
 import {ISocketEventBody} from './models';
 
 export interface IEthereumContractModel {
@@ -7,12 +8,18 @@ export interface IEthereumContractModel {
   abi: any[];
 }
 
+export interface IJwtModel {
+  key: string;
+  secret: string;
+  expires_in: string;
+}
+
 export interface IEthereumProviderModel {
   providerName: string;
-  protocol: string;
+  protocol: PROTOCOLS;
   singEndPoint: string;
-  jwt: string;
-  RecoverPkEndPoint: string;
+  jwt: IJwtModel;
+  recoverPkEndPoint: string;
 }
 
 export type ethAddress = string;

@@ -116,7 +116,7 @@ describe('dbEthereum', async () => {
 
       expect(getCollMock).toHaveBeenCalledWith(providersCollectionName);
 
-      expect(coll.findOne).toHaveBeenCalledWith({alias: mockedAlias});
+      expect(coll.findOne).toHaveBeenCalledWith({providerName: mockedAlias});
 
     });
 

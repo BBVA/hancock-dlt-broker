@@ -1,7 +1,6 @@
 import * as WebSocket from 'ws';
 import {IConsumer} from '../../domain/consumers/consumer';
 import {getConsumer} from '../../domain/consumers/consumerFactory';
-import {CONSUMERS} from '../../domain/consumers/types';
 import * as domain from '../../domain/ethereum';
 import {hancockContractNotFoundError, hancockEventError, hancockSubscribeToContractError} from '../../models/error';
 import {IEthContractEventBody, IEthereumContractModel} from '../../models/ethereum';
@@ -15,9 +14,9 @@ export let contractSubscriptionList: any[] = [];
 
 // tslint:disable-next-line:variable-name
 export const subscribeContractsController = async (
-  socket: WebSocket, uuid: string, contracts: string[], web3I: any, consumer: CONSUMERS = CONSUMERS.Default) => {
+  socket: WebSocket, uuid: string, contracts: string[], web3I: any, consumer: string) => {
 
-  const consumerInstance: IConsumer = getConsumer(socket, consumer);
+  const consumerInstance: IConsumer = await getConsumer(socket, consumer);
 
   contracts.forEach(async (contractAddressOrAlias: string) => {
 

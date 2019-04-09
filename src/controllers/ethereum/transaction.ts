@@ -1,7 +1,6 @@
 import * as WebSocket from 'ws';
 import {IConsumer} from '../../domain/consumers/consumer';
 import {getConsumer} from '../../domain/consumers/consumerFactory';
-import {CONSUMERS} from '../../domain/consumers/types';
 import {
   HancockError,
   hancockGetBlockError,
@@ -14,7 +13,7 @@ import {
 import {IEthBlockHeader, IEthTransactionBody} from '../../models/ethereum';
 import {CONSUMER_EVENT_KINDS, ISocketMessageStatus, MESSAGE_STATUS} from '../../models/models';
 import {error, onError} from '../../utils/error';
-import { generateHancockTransactionSLbody } from '../../utils/ethereum/utils';
+import {generateHancockTransactionSLbody} from '../../utils/ethereum/utils';
 import logger from '../../utils/logger';
 
 export const transactionEventEmitter: any = {
@@ -29,16 +28,17 @@ export const transactionEventEmitter: any = {
 };
 export let transactionSubscriptionList: any[] = [];
 
-export const subscribeTransactionsController = (
+export const subscribeTransactionsController = async (
   socket: WebSocket,
   uuid: string,
   status: ISocketMessageStatus = MESSAGE_STATUS.Mined,
   addresses: string[],
   web3I: any,
   eventKind: CONSUMER_EVENT_KINDS,
-  consumer: CONSUMERS = CONSUMERS.Default) => {
+  consumer: string) => {
 
-  const consumerInstance: IConsumer = getConsumer(socket, consumer);
+  const consumerInstance: IConsumer = await getConsumer(socket, consumer);
+
   try {
 
     addresses.forEach((address: string) => {
@@ -189,16 +189,13 @@ export const _reactToTx = async (
     if (obj.status === status) {
 
       if (txBody.from && txBody.from.toUpperCase() === obj.address.toUpperCase()) {
-        logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
-        logger.info(`Transaction ${txBody.hash} match from field with address ${txBody.from}`);
 
         _notifyConsumer(txBody.from, txBody, obj, web3I, timestamp);
 
       } else if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
-        logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
-        logger.info(`Transaction ${txBody.hash} match to field with address ${txBody.to}`);
 
         _notifyConsumer(txBody.to, txBody, obj, web3I, timestamp);
+
       }
 
     }
@@ -206,6 +203,10 @@ export const _reactToTx = async (
 };
 
 export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any, timestamp: number = 0) => {
+
+  logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
+  logger.info(`Transaction ${txBody.hash} match from field with address ${matchedAddress}`);
+
   const isSmartContractRelated = await _isSmartContractTransaction(subscription.socket, subscription.consumer, web3I, txBody);
   const hsl = generateHancockTransactionSLbody(txBody, timestamp);
 
