@@ -36,7 +36,6 @@ export const subscribeTransactionsController = async (
   eventKind: CONSUMER_EVENT_KINDS,
   consumer: string) => {
 
-  logger.info(`transactionSubscriptionList:`);
   const consumerInstance: IConsumer = await getConsumer(socket, consumer);
 
   try {
@@ -209,33 +208,33 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
 
   const isSmartContractRelated = await _isSmartContractTransaction(subscription.socket, subscription.consumer, web3I, txBody);
 
-  logger.info(`Transaction0 ${subscription.eventKind}`);
-  logger.info(`Transaction0 ${isSmartContractRelated}`);
   if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransaction && isSmartContractRelated) {
-    logger.info(`Transaction1`);
+
     subscription.consumer.notify({
       kind: CONSUMER_EVENT_KINDS.SmartContractTransaction,
       body: txBody,
       matchedAddress,
       timestamp,
     });
+
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transfer && !isSmartContractRelated) {
-    logger.info(`Transaction2`);
+
     subscription.consumer.notify({
       kind: CONSUMER_EVENT_KINDS.Transfer,
       body: txBody,
       matchedAddress,
       timestamp,
     });
+
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transaction) {
-    logger.info(`Transaction3 ${subscription}`);
-    logger.info(`Transaction3 ${subscription.consumer}`);
+
     subscription.consumer.notify({
       kind: CONSUMER_EVENT_KINDS.Transaction,
       body: txBody,
       matchedAddress,
       timestamp,
     });
+
   }
 
   // Deprecated
