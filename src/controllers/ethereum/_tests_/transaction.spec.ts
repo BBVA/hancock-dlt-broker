@@ -6,16 +6,12 @@ import {error, onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
 import * as transactionController from '../transaction';
 
-jest.mock('url');
-jest.mock('fs');
-jest.mock('path');
 jest.mock('../../../utils/config');
 jest.mock('../../../domain/consumers/consumerFactory');
 jest.mock('../../../domain/consumers/consumer');
 jest.mock('../../../utils/ethereum');
 jest.mock('../../../utils/logger');
 jest.mock('../../../utils/error');
-jest.mock('../../../utils/schema');
 
 describe('transactionController', () => {
 
@@ -320,7 +316,8 @@ describe('transactionController', () => {
       status = MESSAGE_STATUS.Mined;
 
       jest.clearAllMocks();
-      transactionController._cleantransactionSubscriptionList();
+      // @ts-ignore
+      transactionController.transactionSubscriptionList = [];
 
       _notifyConsumer = jest
         .spyOn((transactionController as any), '_notifyConsumer')
@@ -474,7 +471,8 @@ describe('transactionController', () => {
     beforeEach(() => {
 
       jest.clearAllMocks();
-      transactionController._cleantransactionSubscriptionList();
+      // @ts-ignore
+      transactionController.transactionSubscriptionList = [];
 
       transactionController.transactionEventEmitter.pending.event = {
         unsubscribe: jest.fn().mockImplementationOnce((callback) => callback(undefined, true)),
@@ -711,7 +709,7 @@ describe('transactionController', () => {
 
       transactionController.transactionEventEmitter.pending.isSubscribed = true;
 
-      await transactionController._restartSubscriptionsTransactions(web3);
+      await transactionController.restartSubscriptionsTransactions(web3);
 
       expect(_createTransactionEventEmitterMined).toHaveBeenCalledWith(web3);
       expect(_createTransactionEventEmitterPending).toHaveBeenCalledWith(web3);
@@ -724,7 +722,7 @@ describe('transactionController', () => {
 
       transactionController.transactionEventEmitter.pending.isSubscribed = false;
 
-      await transactionController._restartSubscriptionsTransactions(web3);
+      await transactionController.restartSubscriptionsTransactions(web3);
 
       expect(_createTransactionEventEmitterMined).not.toHaveBeenCalled();
       expect(_createTransactionEventEmitterPending).not.toHaveBeenCalled();

@@ -1,5 +1,5 @@
-import { _restartSubscriptionsContracts } from '../../controllers/ethereum/contract';
-import { _restartSubscriptionsTransactions } from '../../controllers/ethereum/transaction';
+import {restartSubscriptionsContracts} from '../../controllers/ethereum/contract';
+import {restartSubscriptionsTransactions} from '../../controllers/ethereum/transaction';
 import config from '../config';
 import logger from '../logger';
 
@@ -28,8 +28,8 @@ export function getProvider(restartSubscriptions: boolean = true) {
   if (restartSubscriptions) {
     provider.on('connect', () => {
       web3Instance.setProvider(provider);
-      _restartSubscriptionsContracts(web3Instance);
-      _restartSubscriptionsTransactions(web3Instance);
+      restartSubscriptionsContracts(web3Instance);
+      restartSubscriptionsTransactions(web3Instance);
     });
   }
 

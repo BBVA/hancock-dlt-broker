@@ -1,4 +1,4 @@
-import { CONSUMERS } from './../domain/consumers/types';
+import {CONSUMERS} from '../domain/consumers/types';
 
 export type dltAddress = string;
 
@@ -9,6 +9,7 @@ export interface IRawTransaction {
 }
 
 export type ISocketMessageKind = SOCKET_EVENT_KINDS;
+
 export enum SOCKET_EVENT_KINDS {
   WatchTransfer = 'watch-transfers',
   WatchTransaction = 'watch-transactions',
@@ -24,11 +25,14 @@ export enum SOCKET_EVENT_KINDS {
 }
 
 export type ISocketMessageStatus = MESSAGE_STATUS;
+
 export enum MESSAGE_STATUS {
   Mined = 'mined',
   Pending = 'pending',
 }
+
 export type ISocketMessageBody = any;
+
 export interface ISocketMessage {
   kind: ISocketMessageKind;
   body: ISocketMessageBody;
@@ -38,6 +42,7 @@ export interface ISocketMessage {
 
 export type ISocketEventKind = 'tx' | 'log' | 'event' | 'error';
 export type ISocketEventBody = any;
+
 export interface ISocketEvent {
   kind: ISocketEventKind;
   body: ISocketEventBody;
