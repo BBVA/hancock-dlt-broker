@@ -28,7 +28,7 @@ export function getProvider(restartSubscriptions: boolean = true) {
   if (restartSubscriptions) {
     provider.on('connect', () => {
       web3Instance.setProvider(provider);
-      restartSubscriptionsContracts();
+      restartSubscriptionsContracts(web3Instance);
       restartSubscriptionsTransactions(web3Instance);
     });
   }

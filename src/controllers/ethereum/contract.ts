@@ -3,10 +3,11 @@ import {IConsumer} from '../../domain/consumers/consumer';
 import {getConsumer} from '../../domain/consumers/consumerFactory';
 import {CONSUMERS} from '../../domain/consumers/types';
 import * as domain from '../../domain/ethereum';
-import {hancockContractNotFoundError, hancockEventError, hancockLogsError, hancockSubscribeToContractError} from '../../models/error';
-import {IEthContractEventBody, IEthContractLogBody, IEthereumContractModel} from '../../models/ethereum';
+import {hancockContractNotFoundError, hancockEventError, hancockSubscribeToContractError} from '../../models/error';
+import {IEthContractEventBody, IEthereumContractModel} from '../../models/ethereum';
 import {CONSUMER_EVENT_KINDS} from '../../models/models';
-import {error, onError} from '../../utils/error';
+import { error, onError } from '../../utils/error';
+import { generateHancockContractSLbody } from '../../utils/ethereum/utils';
 import logger from '../../utils/logger';
 import {_getBlock} from './transaction';
 
@@ -62,7 +63,6 @@ function _removeAndUnsubscribe(obj: any, uuid: string, subscriptions: any[], new
     newSubscriptionList.push(obj);
   } else {
     obj.eventEmitterEvents.unsubscribe();
-    obj.eventEmitterLogs.unsubscribe();
   }
 
 }
@@ -118,23 +118,6 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
         });
 
       }),
-    eventEmitterLogs: web3I.eth
-      .subscribe('logs', {
-        address: ethContractModel.address,
-      })
-      .on('error', (err: Error) => onError(socket, error(hancockLogsError, err), false, consumerInstance))
-      .on('data', (logBody: IEthContractLogBody) => {
-
-        logger.info(`new log from contract ${ethContractModel.alias} =>> ${logBody.id}`);
-
-        contractSubscriptionList.forEach((obj) => {
-          if (obj.contractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
-            obj.subscriptions.forEach((sub: any) => {
-              sub.consumerInstance.notify({kind: 'log', body: logBody, matchedAddress: ethContractModel.address});
-            });
-          }
-        });
-      }),
     subscriptions: [{
       socketId: uuid,
       socket,
@@ -183,28 +166,24 @@ export const unsubscribeContractsController = (
   contractSubscriptionList = newSubscriptionList;
 };
 
-export const restartSubscriptionsContracts = () => {
+export const restartSubscriptionsContracts = (web3Instance: any) => {
   contractSubscriptionList.forEach((contract) => {
     logger.info('Resubscribing to contracts events and logs for contract => ', contract.contractAddress);
     contract.eventEmitterEvents = contract.contractInstance.events
-      .allEvents({
-        address: contract.contractAddress,
-      })
-      .on('data', (eventBody: IEthContractEventBody) => {
-        // tslint:disable-next-line:max-line-length
-        logger.info(`new event from contract ${contract.contractInfo.alias} =>> ${eventBody.id} (${eventBody.event}) `);
-        contractSubscriptionList.forEach((obj) => {
-          if (obj.contractAddress.toUpperCase() === contract.contractAddress.toUpperCase()) {
-            obj.subscriptions.forEach((sub: any) => {
-              logger.info(`new event from contract ${contract.contractInfo.alias} sent to the socket with uuid =>> ${sub.socketId}  `);
-              sub.consumerInstance.notify({kind: 'event', body: eventBody, matchedAddress: contract.contractAddress});
-              sub.consumerInstance.notify({kind: CONSUMER_EVENT_KINDS.SmartContractEvent, body: eventBody, matchedAddress: contract.contractAddress});
-            });
-          }
-        });
-
+    .allEvents({
+      address: contract.contractAddress,
+    })
+    .on('data', (eventBody: IEthContractEventBody) => {
+      // tslint:disable-next-line:max-line-length
+      logger.info(`new event from contract ${contract.contractInfo.alias} =>> ${eventBody.id} (${eventBody.event}) `);
+      contractSubscriptionList.forEach((obj) => {
+        if (obj.contractAddress.toUpperCase() === contract.contractInfo.address.toUpperCase()) {
+          obj.subscriptions.forEach((sub: any) => {
+            _processEvent(sub, web3Instance, eventBody);
+          });
+        }
       });
-    contract.eventEmitterLogs.subscribe();
+    });
   });
 };
 
@@ -223,19 +202,9 @@ export const _processEvent = async (
   });
   logger.info(`new event from contract ${eventBody.address} sent to the socket with uuid =>> ${sub.socketId}  `);
   sub.consumerInstance.notify({
-    kind: 'event',
-    body: eventBody,
-    matchedAddress: eventBody.address,
-    gas: transaction.gas,
-    gasPrice: transaction.gasPrice,
-    timestamp: blockHeader.timestamp,
-  });
-  sub.consumerInstance.notify({
     kind: CONSUMER_EVENT_KINDS.SmartContractEvent,
-    body: eventBody,
+    body: generateHancockContractSLbody(eventBody, (transaction.gas * Number(transaction.gasPrice)).toString(), blockHeader.timestamp),
+    raw: eventBody,
     matchedAddress: eventBody.address,
-    gas: transaction.gas,
-    gasPrice: transaction.gasPrice,
-    timestamp: blockHeader.timestamp,
   });
 };

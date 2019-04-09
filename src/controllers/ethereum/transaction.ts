@@ -14,6 +14,7 @@ import {
 import {IEthBlockHeader, IEthTransactionBody} from '../../models/ethereum';
 import {CONSUMER_EVENT_KINDS, ISocketMessageStatus, MESSAGE_STATUS} from '../../models/models';
 import {error, onError} from '../../utils/error';
+import { generateHancockTransactionSLbody } from '../../utils/ethereum/utils';
 import logger from '../../utils/logger';
 
 export const transactionEventEmitter: any = {
@@ -206,38 +207,14 @@ export const _reactToTx = async (
 
 export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any, timestamp: number = 0) => {
   const isSmartContractRelated = await _isSmartContractTransaction(subscription.socket, subscription.consumer, web3I, txBody);
+  const hsl = generateHancockTransactionSLbody(txBody, timestamp);
 
   if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransaction && isSmartContractRelated) {
-    subscription.consumer.notify({
-      kind: CONSUMER_EVENT_KINDS.SmartContractTransaction,
-      body: txBody,
-      matchedAddress,
-      timestamp,
-    });
+    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractTransaction, body: hsl, raw: txBody, matchedAddress});
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transfer && !isSmartContractRelated) {
-    subscription.consumer.notify({
-      kind: CONSUMER_EVENT_KINDS.Transfer,
-      body: txBody,
-      matchedAddress,
-      timestamp,
-    });
+    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transfer, body: hsl, raw: txBody, matchedAddress});
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transaction) {
-    subscription.consumer.notify({
-      kind: CONSUMER_EVENT_KINDS.Transaction,
-      body: txBody,
-      matchedAddress,
-      timestamp,
-    });
-  }
-
-  // Deprecated
-  if (subscription.eventKind !== CONSUMER_EVENT_KINDS.Transfer || !isSmartContractRelated) {
-    subscription.consumer.notify({
-      kind: 'tx',
-      body: txBody,
-      matchedAddress,
-      timestamp,
-    });
+    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transaction, body: hsl, raw: txBody, matchedAddress});
   }
 };
 
