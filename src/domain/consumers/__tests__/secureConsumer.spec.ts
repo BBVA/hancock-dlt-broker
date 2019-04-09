@@ -36,6 +36,10 @@ describe('secureConsumer', () => {
         from: '0x1',
         to: '0x0',
       },
+      raw: {
+        from: '0x1',
+        to: '0x0',
+      },
       kind: 'tx',
       matchedAddress: '0x0',
     };

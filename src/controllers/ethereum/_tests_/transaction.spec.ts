@@ -1,7 +1,7 @@
 import 'jest';
 import {__consumerInstance__} from '../../../domain/consumers/__mocks__/consumer';
 import {hancockGetCodeError, hancockSubscribeToTransferError, hancockTransactionError} from '../../../models/error';
-import {CONSUMER_EVENT_KINDS, ISocketMessageStatus, MESSAGE_STATUS} from '../../../models/models';
+import {CONSUMER_EVENT_KINDS, CURRENCY, ISocketMessageStatus, MESSAGE_STATUS} from '../../../models/models';
 import {error, onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
 import * as transactionController from '../transaction';
@@ -10,6 +10,7 @@ jest.mock('../../../utils/config');
 jest.mock('../../../domain/consumers/consumerFactory');
 jest.mock('../../../domain/consumers/consumer');
 jest.mock('../../../utils/ethereum');
+jest.mock('../../../utils/ethereum/utils');
 jest.mock('../../../utils/logger');
 jest.mock('../../../utils/error');
 
@@ -55,6 +56,10 @@ describe('transactionController', () => {
           to: 'to',
           gas: 21000,
           gasPrice: 100000000,
+          value: 1000,
+          input: '0x174837292',
+          blockNumber: 1,
+          blockHash: 'blockHash',
         },
       ],
       timestamp: 12342345234,
@@ -609,6 +614,7 @@ describe('transactionController', () => {
     let matchedAddress: string;
     let subscription: any;
     let _isSmartContractTransaction: any;
+    const hslResponseMocked = {mock: 'mockedObject'};
 
     beforeEach(() => {
       matchedAddress = 'address';
@@ -639,15 +645,9 @@ describe('transactionController', () => {
       expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: CONSUMER_EVENT_KINDS.SmartContractTransaction,
-        body: blockBody.transactions[0],
+        body: hslResponseMocked,
         matchedAddress,
-        timestamp: blockBody.timestamp,
-      });
-      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
-        kind: 'tx',
-        body: blockBody.transactions[0],
-        matchedAddress,
-        timestamp: blockBody.timestamp,
+        raw: blockBody.transactions[0],
       });
 
     });
@@ -660,15 +660,9 @@ describe('transactionController', () => {
       expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: CONSUMER_EVENT_KINDS.Transfer,
-        body: blockBody.transactions[0],
+        body: hslResponseMocked,
         matchedAddress,
-        timestamp: blockBody.timestamp,
-      });
-      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
-        kind: 'tx',
-        body: blockBody.transactions[0],
-        matchedAddress,
-        timestamp: blockBody.timestamp,
+        raw: blockBody.transactions[0],
       });
 
     });
@@ -681,30 +675,9 @@ describe('transactionController', () => {
       expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: CONSUMER_EVENT_KINDS.Transaction,
-        body: blockBody.transactions[0],
+        body: hslResponseMocked,
         matchedAddress,
-        timestamp: blockBody.timestamp,
-      });
-      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(2, {
-        kind: 'tx',
-        body: blockBody.transactions[0],
-        matchedAddress,
-        timestamp: blockBody.timestamp,
-      });
-
-    });
-
-    it('should call _notifyConsumer and it notify to consumer that there is a obsolete new transaction', async () => {
-      subscription.eventKind = 'tx';
-
-      await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3, blockBody.timestamp);
-
-      expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
-      expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
-        kind: 'tx',
-        body: blockBody.transactions[0],
-        matchedAddress,
-        timestamp: blockBody.timestamp,
+        raw: blockBody.transactions[0],
       });
 
     });

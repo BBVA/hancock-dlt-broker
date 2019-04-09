@@ -55,7 +55,7 @@ export class SecureConsumer extends Consumer {
       case 'tx':
         return await this.cypherAndSendTransfer(event);
       case 'event':
-        switch (event.body.event) {
+        switch (event.raw.event) {
           case 'Transfer':
             return this.cypherEventAndSend(event);
         }
@@ -66,9 +66,9 @@ export class SecureConsumer extends Consumer {
   }
 
   private async cypherEventAndSend(event: ISocketEvent): Promise<boolean> {
-    event.matchedAddress = event.body.returnValues._from || event.body.returnValues.from;
+    event.matchedAddress = event.raw.returnValues._from || event.raw.returnValues.from;
     await this.cypherAndSendTransfer(event);
-    event.matchedAddress = event.body.returnValues._to || event.body.returnValues.to;
+    event.matchedAddress = event.raw.returnValues._to || event.raw.returnValues.to;
     await this.cypherAndSendTransfer(event);
     return Promise.resolve(true);
   }
@@ -112,7 +112,7 @@ export class SecureConsumer extends Consumer {
         const aad: string = 'notifyTransaction';
         const txPayload: any = {
           item_id: walletResponse.data.item_id,
-          raw_tx: event.body,
+          raw_tx: event.raw,
         };
 
         const cypheredTx: ISecureCypheredTransaction = {
@@ -169,11 +169,11 @@ export class SecureConsumer extends Consumer {
   private getTxDirection(event: ISocketEvent): ISecureEventTxDirection {
     let direction: ISecureEventTxDirection;
     if (event.kind === 'tx') {
-      direction = (event.body.from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
+      direction = (event.raw.from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
         ? ISecureEventTxDirection.OUT
         : ISecureEventTxDirection.IN;
     } else {
-      const from: string = event.body.returnValues._from || event.body.returnValues.from;
+      const from: string = event.raw.returnValues._from || event.raw.returnValues.from;
       direction = (from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
         ? ISecureEventTxDirection.OUT
         : ISecureEventTxDirection.IN;

@@ -1,3 +1,11 @@
+## [9.1.0] - 2019-04-09
+### Changed
+- Changed the configuration of providers in a mongo collection.
+
+## [9.0.0] - 2019-03-22
+### Changed
+- Changed the model for the response of events with kind: transaction, transfer, smart-contract-transaction and smart-contract-event.
+
 ## [8.0.3] - 2019-03-21
 ### Fixed
 - Now the broker would try to reconnect to the DLT in case the connection has been lost.

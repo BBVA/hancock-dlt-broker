@@ -33,7 +33,7 @@ export interface IEthContractEventBody extends ISocketEventBody {
   address: ethContractAddress;
   blockHash: ethBlockHash;
   blockNumber: number;
-  event: undefined;
+  event: string;
   id: 'log_5daf9707';
   logIndex: number;
   raw: {
@@ -65,13 +65,13 @@ export interface IEthTransactionBody extends ISocketEventBody {
   blockNumber: number;
   from: ethAddress;
   gas: number;
-  gasPrice: '100000000000';
+  gasPrice: string;
   hash: ethTxHash;
   input: string;
   nonce: number;
   to: ethContractAddress;
   transactionIndex: number;
-  value: '0';
+  value: string;
 }
 
 export interface IEthBlockHeader {
