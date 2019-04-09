@@ -13,7 +13,6 @@ jest.mock('../../../domain/consumers/consumer');
 jest.mock('../../../utils/ethereum');
 jest.mock('../../../utils/logger');
 jest.mock('../../../utils/error');
-jest.mock('../../../utils/schema');
 
 describe('contractController', () => {
 
@@ -109,7 +108,7 @@ describe('contractController', () => {
 
       (findOne as any) = jest.fn().mockImplementationOnce(() => contract);
 
-      await contractController.subscribeContractsController(socket, uuid, ['from'], web3);
+      await contractController.subscribeContractsController(socket, uuid, ['from'], web3, 'consumer');
 
       expect(_socketSubscriptionState).toHaveBeenCalledWith(contractController.contractSubscriptionList, contract.address, uuid);
       expect(_addNewContract).toHaveBeenCalledWith(contract, web3Contract, web3, uuid, socket, __consumerInstance__);
@@ -131,7 +130,7 @@ describe('contractController', () => {
 
       (findOne as any) = jest.fn().mockImplementationOnce(() => contract);
 
-      await contractController.subscribeContractsController(socket, uuid, ['from'], web3);
+      await contractController.subscribeContractsController(socket, uuid, ['from'], web3, 'consumer');
 
       expect(_socketSubscriptionState).toHaveBeenCalledWith(contractController.contractSubscriptionList, web3Contract.address, uuid);
       expect(_addNewSubscriptionToContract).toHaveBeenCalledWith(contract, uuid, socket, __consumerInstance__);
@@ -142,7 +141,7 @@ describe('contractController', () => {
 
       (findOne as any) = jest.fn().mockImplementationOnce(() => false);
 
-      await contractController.subscribeContractsController(socket, uuid, ['from'], web3);
+      await contractController.subscribeContractsController(socket, uuid, ['from'], web3, 'consumer');
 
       expect(onError).toHaveBeenCalled();
 
@@ -154,7 +153,7 @@ describe('contractController', () => {
         throw new Error('Error!');
       });
 
-      await contractController.subscribeContractsController(socket, uuid, ['from'], web3);
+      await contractController.subscribeContractsController(socket, uuid, ['from'], web3, 'consumer');
 
       expect(onError).toHaveBeenCalled();
 

@@ -40,16 +40,8 @@ export const _aggregateCollections = (coll: Collection, query?: any): Aggregatio
 };
 
 export async function getProviderByAlias(alias: string): Promise<IEthereumProviderModel | null> {
-
   const coll = await _getCollection(providersInstancesCollection);
-
-  const provider = coll
-    .findOne({
-      alias,
-    });
-
-  return provider;
-
+  return await coll.findOne({providerName: alias});
 }
 
 export async function getSmartContractByAddressOrAlias(addressOrAlias: string): Promise<IEthereumContractModel | null> {

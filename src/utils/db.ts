@@ -1,5 +1,5 @@
 import * as mongodb from 'mongodb';
-import { Db } from 'mongodb';
+import {Db} from 'mongodb';
 import config from './config';
 import logger from './logger';
 
@@ -19,7 +19,6 @@ export const connect = async (): Promise<Db> => {
     credentials = `${config.db.user}:${config.db.pass}@`;
   }
 
-  // Connection URL
   // tslint:disable-next-line:max-line-length
   const url: string = `${config.db.protocol}://${credentials}${config.db.hosts}/${config.db.database}?${config.db.params}`;
 

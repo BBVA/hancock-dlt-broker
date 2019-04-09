@@ -1,6 +1,5 @@
 import 'jest';
 import * as ethereum from '../';
-import config from '../../config';
 // tslint:disable-next-line:no-var-requires
 const web3Lib = require('web3');
 

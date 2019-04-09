@@ -40,21 +40,34 @@ try {
       collection.drop(),
       collection.createIndex({'name': 1}),
       collection.insert({
-        "alias": "fake-provider-local",
-        "endpoint": "http://hancock_sign_provider:3000/ethereum/sign-tx",
-        "className": "Signer"
+        "providerName": "SingleProvider",
+        "protocol": "single",
+        "singEndPoint": "https://kong-cryptvault-develop.kickstartteam.es/v1/wallets/:address/sign",
+        "jwt": "",
+        "recoverPkEndPoint": ""
       }),
       collection.insert({
-        "alias": "fake-provider-develop",
-        "endpoint": "http://hancock_sign_provider:3000/ethereum/sign-tx",
-        "className": "Signer"
+        "providerName": "SecureProvider",
+        "protocol": "secure",
+        "singEndPoint": "http://hancock_sign_provider:3000/ethereum/sign-tx",
+        "jwt": {
+          "key": "OiYdLKOblAicxiasy2tJolbc3oBYkiyg",
+          "secret": "umFfDtKwdv9k6uhu7EEA2Hwoe3aWaoTT",
+          "expires_in": "1555674519"
+        },
+        "recoverPkEndPoint": "https://kong-cryptvault-develop.kickstartteam.es:443/v1/wallets/:address"
       }),
       collection.insert({
-        "alias": "fake-provider-demo",
-        "endpoint": "http://hancock_sign_provider:3000/ethereum/sign-tx",
-        "className": "Signer"
+        "providerName": "Cryptvault",
+        "protocol": "secure",
+        "singEndPoint": "http://hancock_sign_provider:3000/ethereum/sign-tx",
+        "jwt": {
+          "key": "OiYdLKOblAicxiasy2tJolbc3oBYkiyg",
+          "secret": "umFfDtKwdv9k6uhu7EEA2Hwoe3aWaoTT",
+          "expires_in": "1555674519"
+        },
+        "recoverPkEndPoint": "https://kong-cryptvault-develop.kickstartteam.es:443/v1/wallets/:address"
       }),
-      collection.insert({"alias": "cryptvault", "className": "CryptvaultSigner"}),
     ];
 
     printjson(res);

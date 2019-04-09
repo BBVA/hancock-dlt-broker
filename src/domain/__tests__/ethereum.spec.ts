@@ -1,15 +1,13 @@
 import 'jest';
 import * as db from '../../db/ethereum';
-import { hancockDbError } from '../../models/error';
-import { IEthereumContractModel } from '../../models/ethereum';
+import {hancockDbError} from '../../models/error';
+import {IEthereumContractModel} from '../../models/ethereum';
 import * as ethereumDomain from '../ethereum';
 
 jest.mock('../../db/ethereum');
 jest.mock('../../utils/error');
 
 describe('ethereumDomain', async () => {
-
-  const collMock = ((db as any).__collection__);
 
   beforeEach(() => {
 
@@ -26,7 +24,7 @@ describe('ethereumDomain', async () => {
 
       const dbMock = (db.getSmartContractByAddressOrAlias as jest.Mock).mockResolvedValue(contractModelResponse);
 
-      const result: IEthereumContractModel = await ethereumDomain.findOne(addressOrAlias);
+      const result: IEthereumContractModel | null = await ethereumDomain.findOne(addressOrAlias);
 
       expect(dbMock).toHaveBeenCalledWith(addressOrAlias);
       expect(result).toEqual(contractModelResponse);
@@ -36,9 +34,6 @@ describe('ethereumDomain', async () => {
     it('should call db.getSmartContractByAddressOrAlias and throw error', async () => {
 
       const addressOrAlias: string = 'mockedAddressOrAlias';
-      const contractModelResponse: IEthereumContractModel = {} as any;
-
-      const dbMock = (db.getSmartContractByAddressOrAlias as jest.Mock).mockRejectedValueOnce(hancockDbError);
 
       try {
 

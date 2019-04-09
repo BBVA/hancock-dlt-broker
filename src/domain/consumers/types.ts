@@ -1,4 +1,4 @@
 export enum CONSUMERS {
-  Default = 'Consumer',
-  Cryptvault = 'Cryptvault',
+  Default = 'Single',
+  Secure = 'Secure',
 }

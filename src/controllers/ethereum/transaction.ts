@@ -1,7 +1,6 @@
 import * as WebSocket from 'ws';
 import {IConsumer} from '../../domain/consumers/consumer';
 import {getConsumer} from '../../domain/consumers/consumerFactory';
-import {CONSUMERS} from '../../domain/consumers/types';
 import {
   HancockError,
   hancockGetBlockError,
@@ -28,16 +27,18 @@ export const transactionEventEmitter: any = {
 };
 export let transactionSubscriptionList: any[] = [];
 
-export const subscribeTransactionsController = (
+export const subscribeTransactionsController = async (
   socket: WebSocket,
   uuid: string,
   status: ISocketMessageStatus = MESSAGE_STATUS.Mined,
   addresses: string[],
   web3I: any,
   eventKind: CONSUMER_EVENT_KINDS,
-  consumer: CONSUMERS = CONSUMERS.Default) => {
+  consumer: string) => {
 
-  const consumerInstance: IConsumer = getConsumer(socket, consumer);
+  logger.info(`transactionSubscriptionList:`);
+  const consumerInstance: IConsumer = await getConsumer(socket, consumer);
+
   try {
 
     addresses.forEach((address: string) => {
@@ -188,16 +189,13 @@ export const _reactToTx = async (
     if (obj.status === status) {
 
       if (txBody.from && txBody.from.toUpperCase() === obj.address.toUpperCase()) {
-        logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
-        logger.info(`Transaction ${txBody.hash} match from field with address ${txBody.from}`);
 
         _notifyConsumer(txBody.from, txBody, obj, web3I, timestamp);
 
       } else if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
-        logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
-        logger.info(`Transaction ${txBody.hash} match to field with address ${txBody.to}`);
 
         _notifyConsumer(txBody.to, txBody, obj, web3I, timestamp);
+
       }
 
     }
@@ -205,9 +203,16 @@ export const _reactToTx = async (
 };
 
 export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any, timestamp: number = 0) => {
+
+  logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
+  logger.info(`Transaction ${txBody.hash} match from field with address ${matchedAddress}`);
+
   const isSmartContractRelated = await _isSmartContractTransaction(subscription.socket, subscription.consumer, web3I, txBody);
 
+  logger.info(`Transaction0 ${subscription.eventKind}`);
+  logger.info(`Transaction0 ${isSmartContractRelated}`);
   if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransaction && isSmartContractRelated) {
+    logger.info(`Transaction1`);
     subscription.consumer.notify({
       kind: CONSUMER_EVENT_KINDS.SmartContractTransaction,
       body: txBody,
@@ -215,6 +220,7 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
       timestamp,
     });
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transfer && !isSmartContractRelated) {
+    logger.info(`Transaction2`);
     subscription.consumer.notify({
       kind: CONSUMER_EVENT_KINDS.Transfer,
       body: txBody,
@@ -222,6 +228,8 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
       timestamp,
     });
   } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transaction) {
+    logger.info(`Transaction3 ${subscription}`);
+    logger.info(`Transaction3 ${subscription.consumer}`);
     subscription.consumer.notify({
       kind: CONSUMER_EVENT_KINDS.Transaction,
       body: txBody,

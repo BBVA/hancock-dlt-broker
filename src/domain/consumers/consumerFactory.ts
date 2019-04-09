@@ -1,19 +1,24 @@
 import * as WebSocket from 'ws';
+import * as db from '../../db/ethereum';
+import {IEthereumProviderModel} from '../../models/ethereum';
+import {PROTOCOLS} from '../../types';
 import logger from '../../utils/logger';
-import { Consumer, IConsumer } from './consumer';
-import { CryptvaultConsumer } from './cryptvaultConsumer';
-import { CONSUMERS } from './types';
+import {Consumer, IConsumer} from './consumer';
+import {SecureConsumer} from './secureConsumer';
 
-export function getConsumer(ws: WebSocket, consumer: CONSUMERS = CONSUMERS.Default): IConsumer {
+export async function getConsumer(ws: WebSocket, consumer: string): Promise<IConsumer> {
 
-  logger.info(`Consumer: ${JSON.stringify(consumer)}`);
+  // @ts-ignore
+  const providerData: IEthereumProviderModel = await db.getProviderByAlias(consumer);
 
-  switch (consumer) {
-    case CONSUMERS.Cryptvault:
-      return new CryptvaultConsumer(ws);
-    case CONSUMERS.Default:
-    default:
-      return new Consumer(ws);
+  if (providerData && providerData.protocol === PROTOCOLS.SECURE) {
+
+    logger.debug(`Secure provider: ${consumer}`);
+    return new SecureConsumer(ws, providerData);
+
   }
+
+  logger.debug(`Default provider: ${consumer}`);
+  return new Consumer(ws);
 
 }

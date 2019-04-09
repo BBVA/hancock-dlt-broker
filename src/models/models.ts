@@ -1,5 +1,3 @@
-import {CONSUMERS} from '../domain/consumers/types';
-
 export type dltAddress = string;
 
 export interface IRawTransaction {
@@ -37,7 +35,7 @@ export interface ISocketMessage {
   kind: ISocketMessageKind;
   body: ISocketMessageBody;
   status?: ISocketMessageStatus;
-  consumer?: CONSUMERS;
+  consumer?: string;
 }
 
 export type ISocketEventKind = 'tx' | 'log' | 'event' | 'error';

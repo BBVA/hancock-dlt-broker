@@ -1,6 +1,6 @@
 import 'jest';
 import * as mongodb from 'mongodb';
-import { Db } from 'mongodb';
+import {Db} from 'mongodb';
 import config from '../config';
 import * as utilsDb from '../db';
 
@@ -62,7 +62,7 @@ describe('utilsDb', () => {
 
       try {
 
-        const result: Db = await utilsDb.connect();
+        await utilsDb.connect();
 
       } catch (e) {
 

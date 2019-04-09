@@ -109,7 +109,7 @@ describe('transactionController', () => {
 
     it('should call _subscribeTransactionsController correctly and call createTransactionEventEmitterMined', async () => {
 
-      await transactionController.subscribeTransactionsController(socket, uuid, status, ['from'], web3, CONSUMER_EVENT_KINDS.Transaction);
+      await transactionController.subscribeTransactionsController(socket, uuid, status, ['from'], web3, CONSUMER_EVENT_KINDS.Transaction, 'consumer');
 
       expect(createTransactionEventEmitterMined).toHaveBeenCalledWith(web3);
       expect(createTransactionEventEmitterPending).not.toHaveBeenCalled();
@@ -118,7 +118,8 @@ describe('transactionController', () => {
 
     it('should call _subscribeTransactionsController correctly and call createTransactionEventEmitterPending', async () => {
 
-      await transactionController.subscribeTransactionsController(socket, uuid, MESSAGE_STATUS.Pending, ['from'], web3, CONSUMER_EVENT_KINDS.Transaction);
+      await transactionController.subscribeTransactionsController(socket, uuid, MESSAGE_STATUS.Pending, ['from'],
+        web3, CONSUMER_EVENT_KINDS.Transaction, 'consumer');
 
       expect(createTransactionEventEmitterPending).toHaveBeenCalledWith(web3);
       expect(createTransactionEventEmitterMined).not.toHaveBeenCalled();
@@ -133,7 +134,7 @@ describe('transactionController', () => {
           throw new Error('Error!');
         });
 
-      await transactionController.subscribeTransactionsController(socket, uuid, status, ['from'], web3, CONSUMER_EVENT_KINDS.Transaction);
+      await transactionController.subscribeTransactionsController(socket, uuid, status, ['from'], web3, CONSUMER_EVENT_KINDS.Transaction, 'consumer');
 
       expect(onError).toHaveBeenCalledWith(socket, error(hancockSubscribeToTransferError, new Error('Error!')), false, __consumerInstance__);
 
