@@ -1,4 +1,4 @@
-FROM node:8.9.3
+FROM node:8.16
 
 # Update system dependencies
 RUN apt-get update && \
