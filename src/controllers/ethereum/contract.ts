@@ -6,7 +6,7 @@ import {hancockContractNotFoundError, hancockEventError, hancockSubscribeToContr
 import {IEthContractEventBody, IEthereumContractModel} from '../../models/ethereum';
 import {CONSUMER_EVENT_KINDS} from '../../models/models';
 import { error, onError } from '../../utils/error';
-import { generateHancockContractSLbody } from '../../utils/ethereum/utils';
+import { generateHancockContractHSLbody } from '../../utils/ethereum/utils';
 import logger from '../../utils/logger';
 import {_getBlock} from './transaction';
 
@@ -80,7 +80,7 @@ export const _socketSubscriptionState = (list: any[], address: string, uuid: str
   // tslint:disable-next-line:no-var-keyword
   let response: number = 0;
   list.forEach((obj) => {
-    if (obj.contractAddress.toUpperCase() === address.toUpperCase()) {
+    if (obj.newContractAddress.toUpperCase() === address.toUpperCase()) {
       response = 1;
       obj.subscriptions.forEach((sub: any) => {
         if (sub.socketId === uuid) {
@@ -109,7 +109,7 @@ export const _addNewContract = (ethContractModel: IEthereumContractModel, web3Co
         // tslint:disable-next-line:max-line-length
         logger.info(`new event from contract ${ethContractModel.alias} =>> ${eventBody.id} (${eventBody.event}) `);
         contractSubscriptionList.forEach((obj) => {
-          if (obj.contractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
+          if (obj.newContractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
             obj.subscriptions.forEach((sub: any) => {
               _processEvent(sub, web3I, eventBody);
             });
@@ -130,7 +130,7 @@ export const _addNewSubscriptionToContract = (ethContractModel: IEthereumContrac
                                               uuid: string, socket: WebSocket, consumerInstance: IConsumer) => {
 
   contractSubscriptionList.forEach((obj) => {
-    if (obj.contractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
+    if (obj.newContractAddress.toUpperCase() === ethContractModel.address.toUpperCase()) {
       obj.subscriptions.push({
         socketId: uuid,
         socket,
@@ -152,7 +152,7 @@ export const unsubscribeContractsController = (
     contracts.forEach((address) => {
       // tslint:disable-next-line:no-var-keyword
       let checked = false;
-      if (obj.contractAddress.toUpperCase() === address.toUpperCase()) {
+      if (obj.newContractAddress.toUpperCase() === address.toUpperCase()) {
         checked = true;
         _removeAndUnsubscribe(obj, uuid, subscriptions, newSubscriptionList);
       }
@@ -167,16 +167,16 @@ export const unsubscribeContractsController = (
 
 export const restartSubscriptionsContracts = (web3Instance: any) => {
   contractSubscriptionList.forEach((contract) => {
-    logger.info('Resubscribing to contracts events and logs for contract => ', contract.contractAddress);
+    logger.info('Resubscribing to contracts events and logs for contract => ', contract.newContractAddress);
     contract.eventEmitterEvents = contract.contractInstance.events
     .allEvents({
-      address: contract.contractAddress,
+      address: contract.newContractAddress,
     })
     .on('data', (eventBody: IEthContractEventBody) => {
       // tslint:disable-next-line:max-line-length
       logger.info(`new event from contract ${contract.contractInfo.alias} =>> ${eventBody.id} (${eventBody.event}) `);
       contractSubscriptionList.forEach((obj) => {
-        if (obj.contractAddress.toUpperCase() === contract.contractInfo.address.toUpperCase()) {
+        if (obj.newContractAddress.toUpperCase() === contract.contractInfo.address.toUpperCase()) {
           obj.subscriptions.forEach((sub: any) => {
             _processEvent(sub, web3Instance, eventBody);
           });
@@ -202,7 +202,7 @@ export const _processEvent = async (
   logger.info(`new event from contract ${eventBody.address} sent to the socket with uuid =>> ${sub.socketId}  `);
   sub.consumerInstance.notify({
     kind: CONSUMER_EVENT_KINDS.SmartContractEvent,
-    body: generateHancockContractSLbody(eventBody, (transaction.gas * Number(transaction.gasPrice)).toString(), blockHeader.timestamp),
+    body: generateHancockContractHSLbody(eventBody, (transaction.gas * Number(transaction.gasPrice)).toString(), blockHeader.timestamp),
     raw: eventBody,
     matchedAddress: eventBody.address,
   });

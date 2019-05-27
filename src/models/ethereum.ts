@@ -47,19 +47,6 @@ export interface IEthContractEventBody extends ISocketEventBody {
   type: 'mined';
 }
 
-export interface IEthContractLogBody extends ISocketEventBody {
-  address: ethContractAddress;
-  blockHash: ethBlockHash;
-  blockNumber: number;
-  data: ethData;
-  id: 'log_5daf9707';
-  logIndex: number;
-  topics: ethTopic[];
-  transactionHash: ethTxHash;
-  transactionIndex: number;
-  type: 'mined';
-}
-
 export interface IEthTransactionBody extends ISocketEventBody {
   blockHash: ethBlockHash;
   blockNumber: number;

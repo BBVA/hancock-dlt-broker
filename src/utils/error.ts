@@ -1,7 +1,8 @@
 import * as WebSocket from 'ws';
-import { IConsumer } from '../domain/consumers/consumer';
-import { HancockError } from '../models/error';
-import { logger } from './logger';
+import {IConsumer} from '../domain/consumers/consumer';
+import {HancockError} from '../models/error';
+import {CONSUMER_EVENT_KINDS} from '../models/models';
+import {logger} from './logger';
 
 export function error(hancockError: HancockError, originalError?: HancockError | Error): HancockError {
 
@@ -29,11 +30,11 @@ export function onError(socket: WebSocket, err: HancockError, terminate: boolean
   try {
 
     if (consumer) {
-      consumer.notify({ kind: 'error', body: err });
+      consumer.notify({ kind: CONSUMER_EVENT_KINDS.Error, body: err });
     } else {
 
       if (socket.readyState === socket.OPEN) {
-        socket.send(JSON.stringify({ kind: 'error', body: err }));
+        socket.send(JSON.stringify({ kind: CONSUMER_EVENT_KINDS.Error, body: err }));
       }
     }
 

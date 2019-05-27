@@ -9,11 +9,13 @@
         "watch-transfers",
         "watch-transactions",
         "watch-contracts-transactions",
+        "watch-contracts-deployments",
         "watch-contracts-events",
         "watch-contracts",
         "unwatch-transfers",
         "unwatch-transactions",
         "unwatch-contracts-transactions",
+        "unwatch-contracts-deployments",
         "unwatch-contracts-events",
         "unwatch-contracts"
       ]

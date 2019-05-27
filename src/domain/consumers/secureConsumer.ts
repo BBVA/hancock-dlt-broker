@@ -4,7 +4,7 @@ import {v4 as uuidv4} from 'uuid';
 import * as WebSocket from 'ws';
 import {encryptedData, ISymmetricEncData, symmetricKey} from '../../models/crypto';
 import {IEthereumProviderModel} from '../../models/ethereum';
-import {dltAddress, ISocketEvent} from '../../models/models';
+import {CONSUMER_EVENT_KINDS, dltAddress, ISocketEvent} from '../../models/models';
 import {CryptoUtils} from '../../utils/crypto';
 import {error} from '../../utils/error';
 import logger from '../../utils/logger';
@@ -52,9 +52,11 @@ export class SecureConsumer extends Consumer {
   public async notify(event: ISocketEvent): Promise<boolean> {
     logger.info('SecureConsumer: notify');
     switch (event.kind) {
-      case 'tx':
+      case CONSUMER_EVENT_KINDS.Transaction:
+      case CONSUMER_EVENT_KINDS.Transfer:
+      case CONSUMER_EVENT_KINDS.SmartContractTransaction:
         return await this.cypherAndSendTransfer(event);
-      case 'event':
+      case CONSUMER_EVENT_KINDS.SmartContractEvent:
         switch (event.raw.event) {
           case 'Transfer':
             return this.cypherEventAndSend(event);
@@ -168,7 +170,9 @@ export class SecureConsumer extends Consumer {
 
   private getTxDirection(event: ISocketEvent): ISecureEventTxDirection {
     let direction: ISecureEventTxDirection;
-    if (event.kind === 'tx') {
+    if (event.kind === CONSUMER_EVENT_KINDS.Transaction ||
+      event.kind === CONSUMER_EVENT_KINDS.Transfer ||
+      event.kind === CONSUMER_EVENT_KINDS.SmartContractTransaction) {
       direction = (event.raw.from.toUpperCase() === (event.matchedAddress as dltAddress).toUpperCase())
         ? ISecureEventTxDirection.OUT
         : ISecureEventTxDirection.IN;

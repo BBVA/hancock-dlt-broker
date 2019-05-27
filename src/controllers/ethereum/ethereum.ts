@@ -77,6 +77,11 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
             subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, CONSUMER_EVENT_KINDS.SmartContractTransaction, provider);
           }
           break;
+        case SOCKET_EVENT_KINDS.WatchSmartContractDeployment:
+          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+            subscribeTransactionsController(socket, uuid, dataObj.status, dataObj.body, web3I, CONSUMER_EVENT_KINDS.SmartContractDeployment, provider);
+          }
+          break;
         case SOCKET_EVENT_KINDS.WatchSmartContractEvent:
         case SOCKET_EVENT_KINDS.ObsoleteWatchSmartContractEvent:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
@@ -96,6 +101,11 @@ export async function SocketSubscribeController(socket: WebSocket, req: http.Inc
         case SOCKET_EVENT_KINDS.UnwatchSmartContractTransaction:
           if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
             unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, CONSUMER_EVENT_KINDS.SmartContractTransaction);
+          }
+          break;
+        case SOCKET_EVENT_KINDS.UnwatchSmartContractDeployment:
+          if (validateSchema(dataObj, receiveMessageSchema, socket, consumerInstance)) {
+            unsubscribeTransactionsController(uuid, dataObj.status, dataObj.body, CONSUMER_EVENT_KINDS.SmartContractDeployment);
           }
           break;
         case SOCKET_EVENT_KINDS.UnwatchSmartContractEvent:

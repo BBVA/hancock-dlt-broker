@@ -1,5 +1,5 @@
 import { IEthContractEventBody, IEthTransactionBody } from '../../models/ethereum';
-import { CURRENCY, IHancockSocketContractEventBody, IHancockSocketTransactionBody } from '../../models/models';
+import {CURRENCY, IHancockSocketContractEventBody, IHancockSocketTransactionBody} from '../../models/models';
 
 export function getScQueryByAddressOrAlias(addressOrAlias: string): {} {
 
@@ -10,7 +10,7 @@ export function getScQueryByAddressOrAlias(addressOrAlias: string): {} {
 
 }
 
-export const generateHancockTransactionSLbody = (txBody: IEthTransactionBody, timestamp: number) => {
+export const generateHancockTransactionHSLbody = (txBody: IEthTransactionBody, timestamp: number): IHancockSocketTransactionBody => {
   const hsl: IHancockSocketTransactionBody = {
     blockHash: txBody.blockHash,
     blockNumber: txBody.blockNumber,
@@ -28,17 +28,17 @@ export const generateHancockTransactionSLbody = (txBody: IEthTransactionBody, ti
       decimals: 18,
       currency: CURRENCY.Ethereum,
     },
+    newContractAddress: txBody.contractAddress,
     timestamp,
   };
   return hsl;
 };
 
-export const generateHancockContractSLbody = (eventBody: IEthContractEventBody, fee: string, timestamp: number) => {
+export const generateHancockContractHSLbody = (eventBody: IEthContractEventBody, fee: string, timestamp: number): IHancockSocketContractEventBody => {
   const body: IHancockSocketContractEventBody = {
     blockNumber: eventBody.blockNumber,
     blockHash: eventBody.blockHash,
     transactionId: eventBody.transactionHash,
-    smartContractAddress: eventBody.address,
     eventName: eventBody.event,
     returnValues: eventBody.returnValues,
     fee: {
