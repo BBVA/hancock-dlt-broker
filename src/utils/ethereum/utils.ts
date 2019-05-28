@@ -10,7 +10,7 @@ export function getScQueryByAddressOrAlias(addressOrAlias: string): {} {
 
 }
 
-export const generateHancockTransactionHSLbody = (txBody: IEthTransactionBody, timestamp: number): IHancockSocketTransactionBody => {
+export const generateHancockTransactionHSLBody = (txBody: IEthTransactionBody, timestamp: number): IHancockSocketTransactionBody => {
   const hsl: IHancockSocketTransactionBody = {
     blockHash: txBody.blockHash,
     blockNumber: txBody.blockNumber,
@@ -34,11 +34,12 @@ export const generateHancockTransactionHSLbody = (txBody: IEthTransactionBody, t
   return hsl;
 };
 
-export const generateHancockContractHSLbody = (eventBody: IEthContractEventBody, fee: string, timestamp: number): IHancockSocketContractEventBody => {
+export const generateHancockContractHSLBody = (eventBody: IEthContractEventBody, fee: string, timestamp: number): IHancockSocketContractEventBody => {
   const body: IHancockSocketContractEventBody = {
     blockNumber: eventBody.blockNumber,
     blockHash: eventBody.blockHash,
     transactionId: eventBody.transactionHash,
+    smartContractAddress: eventBody.address,
     eventName: eventBody.event,
     returnValues: eventBody.returnValues,
     fee: {

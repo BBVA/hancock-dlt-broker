@@ -1,7 +1,7 @@
 import 'jest';
 import {__consumerInstance__} from '../../../domain/consumers/__mocks__/consumer';
 import {hancockGetCodeError, hancockSubscribeToTransferError, hancockTransactionError} from '../../../models/error';
-import {CONSUMER_EVENT_KINDS, CURRENCY, ISocketMessageStatus, MESSAGE_STATUS} from '../../../models/models';
+import {CONSUMER_EVENT_KINDS, ISocketMessageStatus, MESSAGE_STATUS} from '../../../models/models';
 import {error, onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
 import * as transactionController from '../transaction';
@@ -400,7 +400,7 @@ describe('transactionController', () => {
     it('should call _isSmartContractTransaction correctly and return true', async () => {
 
       blockBody.transactions[0].to = null;
-      const response = await transactionController._isSmartContractTransaction(socket, example.consumer, web3, blockBody.transactions[0]);
+      const response = await transactionController._isSmartContractTransaction(web3, blockBody.transactions[0]);
 
       expect(response).toBe(true);
 
@@ -409,7 +409,7 @@ describe('transactionController', () => {
     it('should call _isSmartContractTransaction correctly and return true 2', async () => {
 
       web3.eth.getCode = jest.fn().mockImplementationOnce(() => '0x');
-      const response = await transactionController._isSmartContractTransaction(socket, example.consumer, web3, blockBody.transactions[0]);
+      const response = await transactionController._isSmartContractTransaction(web3, blockBody.transactions[0]);
 
       expect(response).toBe(false);
 
@@ -418,7 +418,7 @@ describe('transactionController', () => {
     it('should call _isSmartContractTransaction correctly and return false', async () => {
 
       web3.eth.getCode = jest.fn().mockImplementationOnce(() => '0x1234');
-      const response = await transactionController._isSmartContractTransaction(socket, example.consumer, web3, blockBody.transactions[0]);
+      const response = await transactionController._isSmartContractTransaction(web3, blockBody.transactions[0]);
 
       expect(response).toBe(true);
 
@@ -426,13 +426,17 @@ describe('transactionController', () => {
 
     it('should call _isSmartContractTransaction with error', async () => {
 
+      const mockedError = 'Error!';
       web3.eth.getCode = jest.fn().mockImplementationOnce(() => {
-        throw new Error('Error!');
+        throw new Error(mockedError);
       });
-      await transactionController._isSmartContractTransaction(socket, example.consumer, web3, blockBody.transactions[0]);
 
-      expect(onError).toHaveBeenCalledWith(socket, error(hancockGetCodeError, new Error('Error!')), false, example.consumer);
+      try {
+        await transactionController._isSmartContractTransaction(web3, blockBody.transactions[0]);
 
+      } catch (e) {
+        expect(e).toBeInstanceOf(Error);
+      }
     });
 
   });
@@ -642,7 +646,7 @@ describe('transactionController', () => {
 
       await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3, blockBody.timestamp);
 
-      expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
+      expect(_isSmartContractTransaction).toHaveBeenCalledWith(web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: CONSUMER_EVENT_KINDS.SmartContractTransaction,
         body: hslResponseMocked,
@@ -657,7 +661,7 @@ describe('transactionController', () => {
 
       await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3, blockBody.timestamp);
 
-      expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
+      expect(_isSmartContractTransaction).toHaveBeenCalledWith(web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: CONSUMER_EVENT_KINDS.Transfer,
         body: hslResponseMocked,
@@ -672,7 +676,7 @@ describe('transactionController', () => {
 
       await transactionController._notifyConsumer(matchedAddress, blockBody.transactions[0], subscription, web3, blockBody.timestamp);
 
-      expect(_isSmartContractTransaction).toHaveBeenCalledWith(subscription.socket, subscription.consumer, web3, blockBody.transactions[0]);
+      expect(_isSmartContractTransaction).toHaveBeenCalledWith(web3, blockBody.transactions[0]);
       expect(subscription.consumer.notify).toHaveBeenNthCalledWith(1, {
         kind: CONSUMER_EVENT_KINDS.Transaction,
         body: hslResponseMocked,

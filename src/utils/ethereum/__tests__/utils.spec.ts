@@ -51,7 +51,7 @@ describe('utilsUtils', () => {
         timestamp: 12342345234,
       };
 
-      const reponse = utilsUtils.generateHancockTransactionHSLbody(blockBody.transactions[0], timestamp);
+      const reponse = utilsUtils.generateHancockTransactionHSLBody(blockBody.transactions[0], timestamp);
 
       expect(reponse).toEqual({
         blockHash: blockBody.transactions[0].blockHash,

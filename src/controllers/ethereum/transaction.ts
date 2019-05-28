@@ -13,7 +13,7 @@ import {
 import {IEthBlockHeader, IEthTransactionBody} from '../../models/ethereum';
 import {CONSUMER_EVENT_KINDS, IHancockSocketTransactionBody, ISocketMessageStatus, MESSAGE_STATUS} from '../../models/models';
 import {error, onError} from '../../utils/error';
-import {generateHancockTransactionHSLbody} from '../../utils/ethereum/utils';
+import {generateHancockTransactionHSLBody} from '../../utils/ethereum/utils';
 import logger from '../../utils/logger';
 
 export const transactionEventEmitter: any = {
@@ -204,7 +204,7 @@ export const _reactToTx = async (
 
 export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any, timestamp: number = 0) => {
 
-  const hsl: IHancockSocketTransactionBody = generateHancockTransactionHSLbody(txBody, timestamp);
+  const hsl: IHancockSocketTransactionBody = generateHancockTransactionHSLBody(txBody, timestamp);
 
   logger.debug(`Transaction ${txBody.hash} raw:  ${JSON.stringify(txBody, undefined, 2)}`);
   logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(hsl, undefined, 2)}`);
