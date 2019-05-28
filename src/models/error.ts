@@ -54,3 +54,4 @@ export const hancockGetCodeError = new HancockError('50010', 500, 'Error getting
 export const hancockGetBlockError = new HancockError('50011', 500, 'Error getting the info of the block.');
 export const hancockTransactionError = new HancockError('50012', 500, 'Error getting the info of the transaction.');
 export const hancockPendingTransactionsSubscriptionError = new HancockError('50013', 500, 'Error subscribing to pending transactions.');
+export const hancockDeployContractError = new HancockError('50014', 500, 'Error getting new address of the deployed contract.');
