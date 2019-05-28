@@ -3,7 +3,7 @@ import * as jwt from 'jsonwebtoken';
 import * as request from 'request-promise-native';
 import {v4 as uuidv4} from 'uuid';
 import {IEthereumProviderModel, IJwtModel} from '../../../models/ethereum';
-import {ISocketEvent} from '../../../models/models';
+import {CONSUMER_EVENT_KINDS, ISocketEvent} from '../../../models/models';
 import {PROTOCOLS} from '../../../types';
 import config from '../../../utils/config';
 import {Consumer} from '../consumer';
@@ -40,7 +40,7 @@ describe('secureConsumer', () => {
         from: '0x1',
         to: '0x0',
       },
-      kind: 'tx',
+      kind: CONSUMER_EVENT_KINDS.Transaction,
       matchedAddress: '0x0',
     };
     jwtData = {
@@ -187,7 +187,6 @@ describe('secureConsumer', () => {
   });
 
   it('should call getTxDirection method successfully and return 0', () => {
-
     const response = (testConsumer as any).getTxDirection(event);
     expect(response).toEqual(ISecureEventTxDirection.IN);
   });

@@ -1,21 +1,17 @@
 export type dltAddress = string;
 
-export interface IRawTransaction {
-  from: dltAddress;
-  to: dltAddress;
-  value: string;
-}
-
 export type ISocketMessageKind = SOCKET_EVENT_KINDS;
 
 export enum SOCKET_EVENT_KINDS {
   WatchTransfer = 'watch-transfers',
   WatchTransaction = 'watch-transactions',
   WatchSmartContractTransaction = 'watch-contracts-transactions',
+  WatchSmartContractDeployment = 'watch-contracts-deployments',
   WatchSmartContractEvent = 'watch-contracts-events',
   UnwatchTransfer = 'unwatch-transfers',
   UnwatchTransaction = 'unwatch-transactions',
   UnwatchSmartContractTransaction = 'unwatch-contracts-transactions',
+  UnwatchSmartContractDeployment = 'unwatch-contracts-deployments',
   UnwatchSmartContractEvent = 'unwatch-contracts-events',
   // Deprecated
   ObsoleteWatchSmartContractEvent = 'watch-contracts',
@@ -38,21 +34,22 @@ export interface ISocketMessage {
   consumer?: string;
 }
 
-export type ISocketEventKind = 'tx' | 'log' | 'event' | 'error';
 export type ISocketEventBody = any;
 
 export interface ISocketEvent {
-  kind: ISocketEventKind;
+  kind: CONSUMER_EVENT_KINDS;
   body: ISocketEventBody;
-  matchedAddress?: dltAddress;
   raw?: ISocketEventBody;
+  matchedAddress?: dltAddress;
 }
 
 export enum CONSUMER_EVENT_KINDS {
   Transfer = 'transfer',
   Transaction = 'transaction',
   SmartContractTransaction = 'contract-transaction',
+  SmartContractDeployment = 'contract-deployment',
   SmartContractEvent = 'contract-event',
+  Error = 'error',
 }
 
 export interface IHancockSocketTransactionBody extends ISocketEventBody {
@@ -64,6 +61,7 @@ export interface IHancockSocketTransactionBody extends ISocketEventBody {
   value: IHancockSocketCurrency;
   data: string;
   fee: IHancockSocketCurrency;
+  newContractAddress?: string;
   timestamp: number;
 }
 
@@ -81,7 +79,6 @@ export interface IHancockSocketContractEventBody extends ISocketEventBody {
   blockNumber: number;
   blockHash: string;
   transactionId: string;
-  smartContractAddress: string;
   eventName: string;
   returnValues: string[];
   fee: IHancockSocketCurrency;

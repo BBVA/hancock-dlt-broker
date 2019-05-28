@@ -6,7 +6,7 @@ import {hancockContractNotFoundError, hancockEventError, hancockSubscribeToContr
 import {IEthContractEventBody, IEthereumContractModel} from '../../models/ethereum';
 import {CONSUMER_EVENT_KINDS} from '../../models/models';
 import { error, onError } from '../../utils/error';
-import { generateHancockContractSLbody } from '../../utils/ethereum/utils';
+import { generateHancockContractHSLBody } from '../../utils/ethereum/utils';
 import logger from '../../utils/logger';
 import {_getBlock} from './transaction';
 
@@ -202,7 +202,7 @@ export const _processEvent = async (
   logger.info(`new event from contract ${eventBody.address} sent to the socket with uuid =>> ${sub.socketId}  `);
   sub.consumerInstance.notify({
     kind: CONSUMER_EVENT_KINDS.SmartContractEvent,
-    body: generateHancockContractSLbody(eventBody, (transaction.gas * Number(transaction.gasPrice)).toString(), blockHeader.timestamp),
+    body: generateHancockContractHSLBody(eventBody, (transaction.gas * Number(transaction.gasPrice)).toString(), blockHeader.timestamp),
     raw: eventBody,
     matchedAddress: eventBody.address,
   });
