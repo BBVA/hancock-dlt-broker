@@ -2,6 +2,7 @@ import * as WebSocket from 'ws';
 import {IConsumer} from '../../domain/consumers/consumer';
 import {getConsumer} from '../../domain/consumers/consumerFactory';
 import {
+  hancockDeployContractError,
   HancockError,
   hancockGetBlockError,
   hancockGetCodeError,
@@ -160,6 +161,39 @@ export const _getBlock = async (
   }
 };
 
+export const _getTransactionReceipt = async (
+  web3I: any,
+  transactionHash: string,
+  currentAttempt: number = 1,
+  maxAttempts: number = 3,
+) => {
+  let receipt;
+  try {
+    receipt = await web3I.eth.getTransactionReceipt(transactionHash);
+
+    if (receipt && receipt.contractAddress) {
+      return receipt;
+    } else {
+      logger.debug('The transaction %s is mined but its receipt is not ready yet', transactionHash);
+      logger.debug('Attempt %s failed for transaction receipt %s', currentAttempt, transactionHash);
+      currentAttempt++;
+      if (currentAttempt <= maxAttempts) {
+        logger.debug('Waiting for transaction receipt %s...', transactionHash);
+        return await new Promise(async (resolve, reject) => {
+          setTimeout(async () => {
+            logger.debug('Trying attempt %s for transaction receipt %s...', currentAttempt, transactionHash);
+            resolve(await _getTransactionReceipt(web3I, transactionHash, currentAttempt));
+          }, 3000);
+        });
+      } else {
+        throw new Error(`Impossible recover transaction receipt for 'hash::${transactionHash}'`);
+      }
+    }
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
 export const _reactToNewBlock = async (
   web3I: any,
   blockMined: IEthBlockHeader,
@@ -220,10 +254,12 @@ export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransa
 
   try {
     if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractDeployment && _isSmartContractDeployTransaction(txBody)) {
-      const receipt: any = await web3I.eth.getTransactionReceipt(txBody.hash);
-      if (receipt && receipt.contractAddress) {
+      try {
+        const receipt: any = await _getTransactionReceipt(web3I, txBody.hash);
         hsl.newContractAddress = receipt.contractAddress;
         subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractDeployment, body: hsl, raw: txBody, matchedAddress});
+      } catch (err) {
+        onError(subscription.socket, error(hancockDeployContractError, err), false, subscription.consumer);
       }
     } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransaction && isSmartContractRelated) {
       subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractTransaction, body: hsl, raw: txBody, matchedAddress});
