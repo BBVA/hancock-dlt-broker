@@ -6,17 +6,18 @@
     "kind": {
       "type": "string",
       "enum": [
-        "tx",
-        "log",
-        "event",
-        "error",         
+        "error",
         "transfer",
         "transaction",
         "contract-event",
-        "contract-transaction"
+        "contract-transaction",
+        "contract-deployment"
       ]
     },
     "body": {
+      "type": "object"
+    },
+    "raw": {
       "type": "object"
     },
     "matchedAddress": {
