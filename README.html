@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
+    <title>Hancock DLT Broker</title>
+    <link type="text/css" rel="stylesheet" href="assets/css/github-markdown.css">
+    <link type="text/css" rel="stylesheet" href="assets/css/pilcrow.css">
+    <link type="text/css" rel="stylesheet" href="assets/css/hljs-github.min.css"/>
+  </head>
+  <body>
+    <article class="markdown-body"><h1 id="hancock-dlt-broker"><a class="header-link" href="#hancock-dlt-broker"></a>Hancock DLT Broker</h1>
+<p>Microservice belonging to Hancock&#39;s ecosystem which creates a subscription to the blockchain 
+watching for events related with some addresses or smart contracts</p>
+<h2 id="overview"><a class="header-link" href="#overview"></a>Overview</h2>
+<p>Hancock is a research product conceived within BBVA New digital business - R&amp;D that provides convenient services to integrate with different DLT networks. We provide simplicity, adaptability and efficiently to develop in any DLT. Hancock can be divided into three main components:</p>
+<ul class="list">
+<li><p><a href="https://github.com/BBVA/hancock-dlt-adapter">DLT Adapter</a> - Keep it simple
+Interface to abstract interaction with different DLT networks.</p>
+</li>
+<li><p><a href="https://github.com/BBVA/hancock-wallet-hub">Wallet Hub</a> - Enroute Interactions
+Enable connect their signer wallets, or wallet service providers, to the wallet hub, that will then route any ready-to-sign transaction.</p>
+</li>
+<li><p><a href="https://github.com/BBVA/hancock-dlt-broker">DLT Broker</a> - Real time notifications
+Provides a websocket connection that propagates any DLT event the user is subscribed. Thus, provides an interface to easily and efficiently subscribe to blockchain asynchronous events to avoid constant request of status.</p>
+</li>
+<li><p>SDKs - Provides a simplified consumption, minimizing the risk for errors and improving product quality</p>
+<ul class="list">
+<li><a href="https://github.com/BBVA/hancock-sdk-nodejs">Node.js</a></li>
+<li><a href="https://github.com/BBVA/hancock-sdk-java-android">Java / Android</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="motivation"><a class="header-link" href="#motivation"></a>Motivation</h2>
+<p>Because blockchain is an event-based system, data writing is asynchronous. To facilitate the management of these events to third parties, a service that allows standardized subscription through a client-server socket is required, thus serving the changes detected in the ledger by means of said socket.</p>
+<h2 id="proposed-change"><a class="header-link" href="#proposed-change"></a>Proposed Change</h2>
+<p>The service will connect to the blockchain when a client connects to the websocket exposed by the service.</p>
+<p>The blockchain will be specified in the request by query-param. The fields allowed for the filter are a sender address and/or a contract address. If a sender address is specified, all pending transaction events related to the sender will be captured. If a contract address is specified, all the events programmed in it will be captured. It is mandatory specify at least one filter.</p>
+<p>When an event is triggered in the blockchain that meets the requirements of the filter, the service will capture and launch it to the connected client that started the connection through websocket.</p>
+<h3 id="current-blockchains-supported"><a class="header-link" href="#current-blockchains-supported"></a>Current blockchains supported</h3>
+<ul class="list">
+<li>Ethereum</li>
+</ul>
+<h3 id="building-the-service"><a class="header-link" href="#building-the-service"></a>Building the service</h3>
+<p>Clone the project:</p>
+<pre class="hljs"><code>  <span class="hljs-comment"># Clone the project </span>
+  git <span class="hljs-built_in">clone</span> https://github.com/BBVA/hancock-dlt-broker.git
+  <span class="hljs-built_in">cd</span> kst-hancock-ms-dlt-broker</code></pre><p>With node and npm or yarn:</p>
+<pre class="hljs"><code>  <span class="hljs-comment"># With npm</span>
+  npm install
+  npm run build:ts
+  npm run serve:prod
+
+  <span class="hljs-comment"># With yarn</span>
+  yarn install
+  yarn run build:ts
+  yarn run serve:prod</code></pre><p>With <a href="https://www.docker.com/">docker</a>:</p>
+<pre class="hljs"><code>  <span class="hljs-comment"># Build the docker image</span>
+  docker build -t hancock_dlt_broker .
+
+  <span class="hljs-comment"># Run the docker container</span>
+  docker run <span class="hljs-_">-d</span> -it --name -p 80:80 hancock_dlt_broker_container hancock_dlt_broker</code></pre><h3 id="setting-up-the-service"><a class="header-link" href="#setting-up-the-service"></a>Setting up the service</h3>
+<p>Once we have built the service, we need to configure a few things before launching it. You can find all environment vars 
+available to configure the service in <code>config/custom-environment-variables.yaml</code>.</p>
+<p>An example of configuration of the most important vars:</p>
+<ul class="list">
+<li><p>Ethereum rpc node:</p>
+<pre class="hljs"><code><span class="hljs-built_in">export</span> HANCOCK_BLOCKCHAIN_ETHEREUM_PROTOCOL=<span class="hljs-string">"http"</span>
+<span class="hljs-built_in">export</span> HANCOCK_BLOCKCHAIN_ETHEREUM_HOST=<span class="hljs-string">"52.80.128.77"</span>
+<span class="hljs-built_in">export</span> HANCOCK_BLOCKCHAIN_ETHEREUM_PORT=<span class="hljs-string">"34774"</span></code></pre></li>
+<li><p>Mongo ddbb host:</p>
+<pre class="hljs"><code><span class="hljs-built_in">export</span> HANCOCK_DB_HOSTS=<span class="hljs-string">"localhost:27017"</span>
+<span class="hljs-built_in">export</span> HANCOCK_DB_DATABASE=<span class="hljs-string">"hancock"</span>
+<span class="hljs-built_in">export</span> HANCOCK_DB_ETHEREUM_DATABASE=<span class="hljs-string">"hancock_eth"</span></code></pre></li>
+</ul>
+<h3 id="using-the-service"><a class="header-link" href="#using-the-service"></a>Using the service</h3>
+<p>The hancock broker service is accessible by an standard web socket interface. You can test it in a browser console, as follows:</p>
+<pre class="hljs"><code><span class="hljs-keyword">let</span> address = <span class="hljs-string">"0xd2Bb4b9C30DE543C2a247E818391F37A98E62D3F"</span>;
+<span class="hljs-keyword">let</span> sender = <span class="hljs-string">"0xF0fF42D561124786be9902206a758cDeE6f3D271"</span>;
+
+ws = <span class="hljs-keyword">new</span> WebSocket(<span class="hljs-string">`ws://localhost:3009/ethereum/subscribe?address=<span class="hljs-subst">${address}</span>&amp;sender=<span class="hljs-subst">${sender}</span>`</span>)</code></pre><h3 id="async-api-docs"><a class="header-link" href="#async-api-docs"></a>Async API Docs</h3>
+<p>Documentation about the async API can be found in this <a href="https://BBVA.github.io/hancock-dlt-broker/api.html">link</a></p>
+<h3 id="contribution-guidelines"><a class="header-link" href="#contribution-guidelines"></a>Contribution guidelines</h3>
+<p>If you are thinking about contributing to the project, you should know that:</p>
+<ul class="list">
+<li><p>The code has been written following the <a href="https://8thlight.com/blog/uncle-bob/2012/08/13/the-clean-architecture.html">clean architecture principles</a>, as well as <a href="https://es.wikipedia.org/wiki/SOLID">SOLID design principles</a>.</p>
+</li>
+<li><p>The project is built in <a href="https://www.typescriptlang.org/">typescript</a> v2.9.2 using the <a href="https://github.com/palantir/tslint/blob/master/src/configs/recommended.ts">recommended guidelines</a>. Also there is a linter rules configured to follow this guidelines, so you can search for a plugin for your favourite IDE to be warned about this linter errors.</p>
+</li>
+</ul>
+    </article>
+  </body>
+</html>
