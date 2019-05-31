@@ -1,5 +1,5 @@
 import 'jest';
-import { AggregationCursor, Collection } from 'mongodb';
+import {AggregationCursor, Collection} from 'mongodb';
 import * as db from '../../utils/db';
 import * as utils from '../../utils/ethereum/utils';
 import * as ethereumDb from '../ethereum';
@@ -70,7 +70,8 @@ describe('dbEthereum', async () => {
     let coll: any;
     let cursor: any;
     let getScQuery: jest.Mock;
-    const collName: string = 'mockDatabaseCollectionContractInstances';
+    const contractsCollectionName: string = 'mockDatabaseCollectionContractInstances';
+    const providersCollectionName: string = 'mockDatabaseCollectionProviders';
 
     beforeAll(() => {
 
@@ -100,10 +101,22 @@ describe('dbEthereum', async () => {
 
       await ethereumDb.getSmartContractByAddressOrAlias(mockedAddressOrAlias);
 
-      expect(getCollMock).toHaveBeenCalledWith(collName);
+      expect(getCollMock).toHaveBeenCalledWith(contractsCollectionName);
       expect(getScQuery).toHaveBeenCalledWith(mockedAddressOrAlias);
       expect(aggregateCollMock).toHaveBeenCalledWith(coll, mockedQuery);
       expect(cursor.next).toHaveBeenCalled();
+
+    });
+
+    it('::getProviderByAlias should call getCollection and call dbClient.findOne with params', async () => {
+
+      const mockedAlias: string = 'mockAlias';
+
+      await ethereumDb.getProviderByAlias(mockedAlias);
+
+      expect(getCollMock).toHaveBeenCalledWith(providersCollectionName);
+
+      expect(coll.findOne).toHaveBeenCalledWith({providerName: mockedAlias});
 
     });
 

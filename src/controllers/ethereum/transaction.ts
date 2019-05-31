@@ -1,8 +1,8 @@
 import * as WebSocket from 'ws';
 import {IConsumer} from '../../domain/consumers/consumer';
 import {getConsumer} from '../../domain/consumers/consumerFactory';
-import {CONSUMERS} from '../../domain/consumers/types';
 import {
+  hancockDeployContractError,
   HancockError,
   hancockGetBlockError,
   hancockGetCodeError,
@@ -12,8 +12,9 @@ import {
   hancockTransactionError,
 } from '../../models/error';
 import {IEthBlockHeader, IEthTransactionBody} from '../../models/ethereum';
-import {CONSUMER_EVENT_KINDS, ISocketMessageStatus, MESSAGE_STATUS} from '../../models/models';
+import {CONSUMER_EVENT_KINDS, IHancockSocketTransactionBody, ISocketMessageStatus, MESSAGE_STATUS} from '../../models/models';
 import {error, onError} from '../../utils/error';
+import {generateHancockTransactionHSLBody} from '../../utils/ethereum/utils';
 import logger from '../../utils/logger';
 
 export const transactionEventEmitter: any = {
@@ -28,16 +29,17 @@ export const transactionEventEmitter: any = {
 };
 export let transactionSubscriptionList: any[] = [];
 
-export const subscribeTransactionsController = (
+export const subscribeTransactionsController = async (
   socket: WebSocket,
   uuid: string,
   status: ISocketMessageStatus = MESSAGE_STATUS.Mined,
   addresses: string[],
   web3I: any,
   eventKind: CONSUMER_EVENT_KINDS,
-  consumer: CONSUMERS = CONSUMERS.Default) => {
+  consumer: string) => {
 
-  const consumerInstance: IConsumer = getConsumer(socket, consumer);
+  const consumerInstance: IConsumer = await getConsumer(socket, consumer);
+
   try {
 
     addresses.forEach((address: string) => {
@@ -128,30 +130,63 @@ export const _reactToNewPendingTransaction = async (
 
 export const _getBlock = async (
   web3I: any,
-  blockMined: IEthBlockHeader,
+  blockHash: string,
   currentAttempt: number = 1,
   maxAttempts: number = 3,
 ) => {
   let blockBody;
   try {
-    blockBody = await web3I.eth.getBlock(blockMined.hash, true);
+    blockBody = await web3I.eth.getBlock(blockHash, true);
 
     if (blockBody && blockBody.transactions) {
       return blockBody;
     } else {
-      logger.debug(`The block ${blockMined.hash} is mined but it is not ready yet`);
-      logger.debug('Attempt %s failed for block %s', currentAttempt, blockMined.hash);
+      logger.debug(`The block ${blockHash} is mined but it is not ready yet`);
+      logger.debug('Attempt %s failed for block %s', currentAttempt, blockHash);
       currentAttempt++;
       if (currentAttempt <= maxAttempts) {
-        logger.debug(`Waiting for block ${blockMined.hash}...`);
+        logger.debug(`Waiting for block ${blockHash}...`);
         return await new Promise(async (resolve, reject) => {
           setTimeout(async () => {
-            logger.debug('Trying attempt %s for block %s...', currentAttempt, blockMined.hash);
-            resolve(await _getBlock(web3I, blockMined, currentAttempt));
+            logger.debug('Trying attempt %s for block %s...', currentAttempt, blockHash);
+            resolve(await _getBlock(web3I, blockHash, currentAttempt));
           }, 3000);
         });
       } else {
         throw new Error(hancockGetBlockError.message);
+      }
+    }
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
+export const _getTransactionReceipt = async (
+  web3I: any,
+  transactionHash: string,
+  currentAttempt: number = 1,
+  maxAttempts: number = 3,
+) => {
+  let receipt;
+  try {
+    receipt = await web3I.eth.getTransactionReceipt(transactionHash);
+
+    if (receipt && receipt.contractAddress) {
+      return receipt;
+    } else {
+      logger.debug('The transaction %s is mined but its receipt is not ready yet', transactionHash);
+      logger.debug('Attempt %s failed for transaction receipt %s', currentAttempt, transactionHash);
+      currentAttempt++;
+      if (currentAttempt <= maxAttempts) {
+        logger.debug('Waiting for transaction receipt %s...', transactionHash);
+        return await new Promise(async (resolve, reject) => {
+          setTimeout(async () => {
+            logger.debug('Trying attempt %s for transaction receipt %s...', currentAttempt, transactionHash);
+            resolve(await _getTransactionReceipt(web3I, transactionHash, currentAttempt));
+          }, 3000);
+        });
+      } else {
+        throw new Error(`Impossible recover transaction receipt for 'hash::${transactionHash}'`);
       }
     }
   } catch (err) {
@@ -164,21 +199,23 @@ export const _reactToNewBlock = async (
   blockMined: IEthBlockHeader,
 ) => {
   try {
-    const blockBody = await _getBlock(web3I, blockMined);
+    const blockBody = await _getBlock(web3I, blockMined.hash);
     logger.debug(`Block ${blockMined.hash} recovered, transactionsRoot: ${JSON.stringify(blockBody.transactionsRoot)}`);
 
     return await Promise.all(blockBody.transactions.map((txBody: IEthTransactionBody) =>
-      _reactToTx(web3I, txBody),
+      _reactToTx(web3I, txBody, MESSAGE_STATUS.Mined, blockMined.timestamp),
     ));
 
   } catch (err) {
     _processOnError(err, false);
   }
 };
+
 export const _reactToTx = async (
   web3I: any,
   txBody: IEthTransactionBody,
   status: ISocketMessageStatus = MESSAGE_STATUS.Mined,
+  timestamp: number = 0,
 ) => {
 
   transactionSubscriptionList.forEach(async (obj) => {
@@ -186,75 +223,85 @@ export const _reactToTx = async (
     if (obj.status === status) {
 
       if (txBody.from && txBody.from.toUpperCase() === obj.address.toUpperCase()) {
-        logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
-        logger.info(`Transaction ${txBody.hash} match from field with address ${txBody.from}`);
 
-        _notifyConsumer(txBody.from, txBody, obj, web3I);
+        _notifyConsumer(txBody.from, txBody, obj, web3I, timestamp);
 
       } else if (txBody.to && txBody.to.toUpperCase() === obj.address.toUpperCase()) {
-        logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(txBody, undefined, 2)}`);
-        logger.info(`Transaction ${txBody.hash} match to field with address ${txBody.to}`);
 
-        _notifyConsumer(txBody.to, txBody, obj, web3I);
+        _notifyConsumer(txBody.to, txBody, obj, web3I, timestamp);
+
       }
 
     }
   });
 };
 
-export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any) => {
-  const isSmartContractRelated = await _isSmartContractTransaction(subscription.socket, subscription.consumer, web3I, txBody);
+export const _notifyConsumer = async (matchedAddress: string, txBody: IEthTransactionBody, subscription: any, web3I: any, timestamp: number = 0) => {
 
-  if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransaction && isSmartContractRelated) {
-    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractTransaction, body: txBody, matchedAddress});
-  } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transfer && !isSmartContractRelated) {
-    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transfer, body: txBody, matchedAddress});
-  } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transaction) {
-    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transaction, body: txBody, matchedAddress});
+  const hsl: IHancockSocketTransactionBody = generateHancockTransactionHSLBody(txBody, timestamp);
+
+  logger.debug(`Transaction ${txBody.hash} raw:  ${JSON.stringify(txBody, undefined, 2)}`);
+  logger.debug(`Transaction ${txBody.hash} body:  ${JSON.stringify(hsl, undefined, 2)}`);
+  logger.info(`Transaction ${txBody.hash} match from field with address ${matchedAddress}`);
+
+  let isSmartContractRelated;
+  try {
+    isSmartContractRelated = await _isSmartContractTransaction(web3I, txBody);
+  } catch (error) {
+    onError(subscription.socket, error(hancockGetCodeError, error), false, subscription.consumer);
+    return;
   }
 
-  // Deprecated
-  subscription.consumer.notify({kind: 'tx', body: txBody, matchedAddress});
+  try {
+    if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractDeployment && _isSmartContractDeployTransaction(txBody)) {
+      try {
+        const receipt: any = await _getTransactionReceipt(web3I, txBody.hash);
+        hsl.newContractAddress = receipt.contractAddress;
+        subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractDeployment, body: hsl, raw: txBody, matchedAddress});
+      } catch (err) {
+        onError(subscription.socket, error(hancockDeployContractError, err), false, subscription.consumer);
+      }
+    } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.SmartContractTransaction && isSmartContractRelated) {
+      subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.SmartContractTransaction, body: hsl, raw: txBody, matchedAddress});
+    } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transfer && !isSmartContractRelated) {
+      subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transfer, body: hsl, raw: txBody, matchedAddress});
+    } else if (subscription.eventKind === CONSUMER_EVENT_KINDS.Transaction) {
+      subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Transaction, body: hsl, raw: txBody, matchedAddress});
+    }
+  } catch (e) {
+    subscription.consumer.notify({kind: CONSUMER_EVENT_KINDS.Error, body: error});
+  }
 };
 
-export const _isSmartContractTransaction = async (socket: WebSocket,
-                                                  consumerInstance: IConsumer,
-                                                  web3I: any,
-                                                  txBody: IEthTransactionBody): Promise<boolean> => {
+export const _isSmartContractDeployTransaction = (txBody: IEthTransactionBody): boolean => {
+  return txBody.to === null;
+};
 
-  if (txBody.to === null) {
+export const _isSmartContractTransaction = async (web3I: any, txBody: IEthTransactionBody): Promise<boolean> => {
 
+  if (_isSmartContractDeployTransaction(txBody)) {
     return true;
 
   } else {
-
     let code: string;
 
     try {
-
       code = await web3I.eth.getCode(txBody.to);
 
       if (code !== '0x0' && code !== '0x') {
-
         return true;
-
       }
 
     } catch (err) {
-
-      onError(socket, error(hancockGetCodeError, err), false, consumerInstance);
-
+      throw new Error(err);
     }
-
   }
-
   return false;
-
 };
 
 export const _processOnError = (err: HancockError, terminate: boolean) => {
   transactionSubscriptionList.forEach(async (obj) => {
-    onError(obj.socket, err, false, obj.consumer);
+    onError(obj.socket, err, terminate, obj.consumer);
   });
 };
 
@@ -287,22 +334,14 @@ export const unsubscribeTransactionsController = (
   if (transactionEventEmitter.mined.isSubscribed &&
     (newList.length === 0 || !newList.some((subscription) => subscription.status === MESSAGE_STATUS.Mined))) {
     transactionEventEmitter.mined.event.unsubscribe((err: any, success: boolean) => {
-      if (success) {
-        logger.info('Successfully unsubscribed!');
-      } else {
-        logger.debug('Unsubscription failed: ', err);
-      }
+      _logUnsubscribe(success, err);
     });
     transactionEventEmitter.mined.isSubscribed = false;
   }
   if (transactionEventEmitter.pending.isSubscribed &&
     (newList.length === 0 || !newList.some((subscription) => subscription.status === MESSAGE_STATUS.Pending))) {
     transactionEventEmitter.pending.event.unsubscribe((err: any, success: boolean) => {
-      if (success) {
-        logger.info('Successfully unsubscribed!');
-      } else {
-        logger.debug('Unsubscription failed: ', err);
-      }
+      _logUnsubscribe(success, err);
     });
     transactionEventEmitter.pending.isSubscribed = false;
   }
@@ -310,6 +349,21 @@ export const unsubscribeTransactionsController = (
   transactionSubscriptionList = newList;
 };
 
-export const _cleantransactionSubscriptionList = () => {
-  transactionSubscriptionList = [];
+export const restartSubscriptionsTransactions = (web3I: any) => {
+  if (transactionEventEmitter.mined.isSubscribed) {
+    logger.info('Resubscribing to mined transaction');
+    _createTransactionEventEmitterMined(web3I);
+  }
+  if (transactionEventEmitter.pending.isSubscribed) {
+    logger.info('Resubscribing to pending transaction');
+    _createTransactionEventEmitterPending(web3I);
+  }
 };
+
+function _logUnsubscribe(success: boolean, err: any) {
+  if (success) {
+    logger.info('Successfully unsubscribed!');
+  } else {
+    logger.debug('Unsubscription failed: ', err);
+  }
+}

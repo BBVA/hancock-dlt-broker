@@ -1,6 +1,6 @@
 {
   "name": "hancock-dlt-broker",
-  "version": "8.0.2",
+  "version": "9.2.0",
   "description": "Hancock DLT Broker",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,8 @@
     "raml2html": "raml2html raml/api.raml > documentation/api.html",
     "md2html": "generate-md --layout github --input ./README.md --output ./documentation",
     "asyncApi2html": "api2html -o ./documentation/api.html --raw -c raml/logo.png -l http raml/asyncapi.yaml",
-    "docs": "npm run clean:docs && npm run md2html && npm run asyncApi2html"
+    "docs": "npm run clean:docs && npm run md2html && npm run asyncApi2html",
+    "deploy:gh": "push-dir --dir=documentation --branch=gh-pages --cleanup --remote github"
   },
   "repository": {
     "type": "git",
@@ -44,13 +45,14 @@
     "@types/request-promise-native": "1.0.15",
     "@types/uuid": "3.4.4",
     "@types/ws": "4.0.0",
-    "api2html": "0.2.1",
+    "api2html": "^0.2.1",
     "concurrently": "3.5.1",
     "jest": "23.6.0",
     "jest-junit": "5.2.0",
     "markdown-styles": "3.1.10",
     "mkdirp": "0.5.1",
     "nodemon": "1.14.12",
+    "push-dir": "^0.4.1",
     "raml2html": "6.4.2",
     "raml2html-markdown-theme": "1.0.2",
     "rimraf": "2.6.2",

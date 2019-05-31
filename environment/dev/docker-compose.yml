@@ -42,7 +42,3 @@ services:
 volumes:
   hancock_dlt_mongodb_data:
 
-# networks:
-#   default:
-#     external:
-#       name: dev_eth_local_net

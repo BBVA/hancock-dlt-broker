@@ -9,8 +9,8 @@ app:
     base: ''
   blockchain:
     ethereum:
-      protocol: ws
-      url: ganache:8545
+      protocol: wss
+      url: rinkeby.infura.io/ws/v3/7886ecbc3d01466396ac6df33adf5839
   db:
     protocol: mongodb
     hosts: mongo:27017
@@ -23,6 +23,7 @@ app:
       collections:
         contractAbis: sc_abi
         contractInstances: sc_instance
+        providers: providers
   consumers:
     cryptvault:
       api:

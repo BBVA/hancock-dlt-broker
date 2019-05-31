@@ -40,17 +40,20 @@ events:
     - $ref: '#/components/send/watch-transfers'
     - $ref: '#/components/send/watch-transactions'
     - $ref: '#/components/send/watch-contracts-transactions'
+    - $ref: '#/components/send/watch-contracts-deployments'
     - $ref: '#/components/send/watch-contracts-events'
     - $ref: '#/components/send/unwatch-transfers'
     - $ref: '#/components/send/unwatch-transactions'
     - $ref: '#/components/send/unwatch-contracts-transactions'
+    - $ref: '#/components/send/unwatch-contracts-deployments'
     - $ref: '#/components/send/unwatch-contracts-events'
   receive:
-    - $ref: '#/components/receive/transaction'     
-    - $ref: '#/components/receive/tx'
-    - $ref: '#/components/receive/event'
+    - $ref: '#/components/receive/transfer'
+    - $ref: '#/components/receive/transaction'
+    - $ref: '#/components/receive/contract-transaction'
+    - $ref: '#/components/receive/contract-deployment'
+    - $ref: '#/components/receive/contract-event'
     - $ref: '#/components/receive/error'
-    - $ref: '#/components/receive/logs'         
 
 components:
   send:
@@ -73,6 +76,12 @@ components:
       summary: Add an address or an alias of a smart contract to events watch list
       description: Each time that the contract identified by the given address or alias participate on a transaction,
         a transaction event will be dispatched back through this channel
+      payload:
+        type: object
+        $ref: '#/components/schemas/sendMessage'
+    watch-contracts-deployments:
+      summary: Add addresses to transactions watch-list to subscribe to new contract deployments
+      description: Each time that a new contract is deployed, a transaction event will be dispatched back through this channel
       payload:
         type: object
         $ref: '#/components/schemas/sendMessage'
@@ -100,7 +109,13 @@ components:
       description: Stops all transactions contracts alerts of the address. 
       payload:
         type: object
-        $ref: '#/components/schemas/sendMessageUnwatch'        
+        $ref: '#/components/schemas/sendMessageUnwatch'
+    unwatch-contracts-deployments:
+      summary: Delete an address from transactions watch-list
+      description: Stops all deployments contracts alerts of the address.
+      payload:
+        type: object
+        $ref: '#/components/schemas/sendMessageUnwatch'
     unwatch-contracts-events:
       summary: Delete an address or an alias of a smart contract to events watch list
       description: Stops all contracts alerts of the address. 
@@ -110,35 +125,37 @@ components:
   receive:
     description: Different kinds of events taked in from the blockchain dlt.
     transaction:
-      summary: New transaction mined or pending
-      description: Event dispatched every time a watched address is related with a transaction. There are 4 kind of transactions.
-         "transfer" (New transfer mined)
-         "transaction" (New transaction or transfer mined)
-         "contract-transaction" (New transaction of a smartcontract mined)
-         "contract-event" (Event dispatched every time a watched contract fires an event)
+      summary: New generic transaction mined or pending
+      description: Event dispatched every time a watched address is related with a transaction.
       payload:
         type: object
-        $ref: '#/components/schemas/receiveTransferMessage'      
-    tx:
-      summary: \@Deprecated New transaction or transfer mined
+        $ref: '#/components/schemas/receiveTransactionMessage'
+    transfer:
+      summary: New transfer mined or pending
       description: Event dispatched every time a watched address is related with a transaction of kind "transfer"
       payload:
         type: object
-        $ref: '#/components/schemas/receiveTxMessage'
-    logs:
-      summary: \@Deprecated New logs in a Smart Contract
-      description: Event dispatched with logs of operation, every time a watched contract fires an event
+        $ref: '#/components/schemas/receiveTransactionMessage'
+    contract-transaction:
+      summary: New transaction over a smart contract
+      description: Event dispatched when a new transaction of a smartcontract is mined
       payload:
         type: object
-        $ref: '#/components/schemas/receiveLogMessage'
-    event:
-      summary: \@Deprecated New event in a Smart Contract
+        $ref: '#/components/schemas/receiveTransactionMessage'
+    contract-deployment:
+      summary: New smart contract deployment
+      description: Event dispatched when a new smartcontract is deployed
+      payload:
+        type: object
+        $ref: '#/components/schemas/receiveTransactionMessage'
+    contract-event:
+      summary: New event in a Smart Contract
       description: Event dispatched every time a watched contract fires an event
       payload:
         type: object
-        $ref: '#/components/schemas/receiveEventMessage'
+        $ref: '#/components/schemas/receiveContractEventMessage'
     error:
-      summary: \@Deprecated New error
+      summary: New error
       description: Event dispatched every time there is an error in the broker service
       payload:
         type: object
@@ -155,7 +172,9 @@ components:
           enum:
             - watch-transfers
             - watch-transactions
-            - watch-contracts
+            - watch-contracts-transactions
+            - watch-contracts-deployments
+            - watch-contracts-events
         body:
           description: Array of addresses to be watched
           type: array
@@ -191,7 +210,9 @@ components:
           enum:
             - unwatch-transfers
             - unwatch-transactions
-            - unwatch-contracts
+            - unwatch-contracts-transactions
+            - unwatch-contracts-deployments
+            - unwatch-contracts-events
         body:
           description: Array of addresses to be unwatched
           type: array
@@ -206,7 +227,7 @@ components:
         body:
           - "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
           - "0xd452cb5c4ba4c71ef7c14db0d930dc35c4c97ac7"            
-    receiveTxMessage:
+    receiveTransactionMessage:
       type: object
       description: Events transaction received from the broker each time there is a match between the
         origin or destination address in blockchain and one address added to the watch list
@@ -215,47 +236,58 @@ components:
           description: The kind of the received event
           type: string
           enum:
-            - tx
-            - log
-            - event
+            - transaction
+            - transfer
+            - contract-transaction
+            - contract-deployment
             - error
         body:
-          description: A payload with the transactions fields
+          description: A payload with the transactions fields in HSL (Hancock Specific Language)
           type: object
           properties:
-            nonce:
-              description: "Nonce assigned to transaction"
-              type: number
-            from:
-              description: "Address of the sender in the DLT"
-              type: string
-            gas:
-              description: "Gas value of transaction"
-              type: number
-            to:
-              description: "Address of the receiver in the DLT"
-              type: string
-            gasPrice:
-              description: "Gas estimated"
-              type: string
-            value:
-              description: "Value to be transferred"
-              type: string
-            data:
-              description: "Information about the transaction"
-              type: string  
             blockHash:
-              description: "Hash of the block where this transaction was in"
+              description: Hash of the block where this transaction was in
               type: string
             blockNumber:
-              description: "Block number in wich registered the transaction"
-              type: number             
-            transactionIndex:
-              description: "Transactions index position in the block"
-              type: string   
-            hash:
-              description: "Hash of the transaction"
-              type: string                                              
+              description: Block number in wich registered the transaction
+              type: number
+            transactionId:
+              description: Hash of the transaction
+              type: string
+            from:
+              description: Address of the sender in the DLT
+              type: string
+            to:
+              description: Address of the receiver in the DLT
+              type: string
+            value:
+              description: Value to be transferred
+              type: string
+            data:
+              description: Information about the transaction
+              type: string
+            fee:
+              description: Fee of transaction
+              type: object
+              properties:
+                amount:
+                  description: Amount of fee. Integer representation
+                  type: string;
+                decimals:
+                  description: Amount decimals
+                  type: number;
+                currency:
+                  description: Currency of the fee
+                  type: string;
+                  enum:
+                    - Ethereum
+            newContractAddress:
+              description: (Optional) Address of the deployed contract
+              type: string
+            timestamp:
+              description: Transaction timestamp
+        raw:
+          description: Raw transaction received from DLT
         matchedAddress:
           description: The address which originated the event
           type: string
@@ -264,22 +296,22 @@ components:
         - body
         - matchedAddress
       example: 
-        kind: tx
+        kind: transaction
         body:
-          address: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
-          from: "0x6c0a14F7561898B9ddc0C57652A53B2C6665443E"
-          to: "0xDe8E772f0350E992Ddef81bF8f51D94A8ea9216d"
-          gas: 21000
-          gasPrice: "1000000000"
-          nonce: 1604
-          value: "1"
           blockHash: "0x6c47653f66ac9b733f3b8bf09ed3d300520b4d9c78711ba90162744f5906b1f8"
           blockNumber: 2812312
-          hash: "0xa5b879f2c75c26dafb0235c78b6da1672ac5590300001e6f5b62e0fa66c85f77"
-          transactionHash: "0xde8e772f0350e992ddef81bf8f51d94a8ea9216d"
-          type: 'mined'
+          transactionId: "0xde8e772f0350e992ddef81bf8f51d94a8ea9216d"
+          from: "0x6c0a14F7561898B9ddc0C57652A53B2C6665443E"
+          to: "0xDe8E772f0350E992Ddef81bF8f51D94A8ea9216d"
+          value: "1"
+          data: ""
+          newContractAddress: null
+          fee:
+            amount: "1000000000000000000"
+            decimals: 18
+            currency: "Ethereum"
         matchedAddress: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
-    receiveEventMessage:
+    receiveContractEventMessage:
       type: object
       description: Event of any kind received from the broker every time a watched contract fires an event
       properties:
@@ -287,47 +319,47 @@ components:
           description: The kind of the received event
           type: string
           enum:
-            - tx
-            - log
-            - event
-            - error
+            - contract-event
         body:
-          description: A payload with the transactions fields
+          description: A payload with the transactions fields in HSL (Hancock Specific Language)
           type: object
           properties:
-            address:
-              description: "Address from which this event originated"
-              type: string
-            data:
-              description: "Information about the transaction"
-              type: string  
             blockHash:
-              description: "Hash of the block where this transaction was in"
+              description: Hash of the block where this transaction was in
               type: string
             blockNumber:
-              description: "Block number in wich registered the transaction"
-              type: number             
-            transactionIndex:
-              description: "Transactions index position in the block"
-              type: number   
-            transactionHash:
-              description: "Hash of the transaction"
-              type: string         
-            logIndex:
-              description: "Log index position in the block. null when its pending log."
-              type: number           
-            type:
-              description: "Kind of status event"
-              type: string           
-            raw:
+              description: Block number in wich registered the transaction
+              type: number
+            transactionId:
+              description: Hash of the transaction
+              type: string
+            eventName:
+              description: Name of the event which has triggered
+              type: string
+            returnValues:
+              description: Returned values in the event
+              type: array
+              items:
+                type: string
+            fee:
+              description: Fee of transaction
               type: object
               properties:
-                data:
-                  description: Contains one or more 32 Bytes non-indexed arguments of the log
-                  type: string
-                topics:       
-                  description: Array of 0 to 4 32 Bytes DATA of indexed log arguments
-                  type: array                                      
+                amount:
+                  description: Amount of fee. Integer representation
+                  type: string;
+                decimals:
+                  description: Amount decimals
+                  type: number;
+                currency:
+                  description: Currency of the fee
+                  type: string;
+                  enum:
+                    - Ethereum
+            timestamp:
+              description: Transaction timestamp
+            raw:
+              description: Raw transaction received from DLT
         matchedAddress:
           description: The address which originated the event
           type: string
@@ -338,83 +370,16 @@ components:
       example: 
         kind: event
         body:
-          address: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
           blockHash: "0x6c47653f66ac9b733f3b8bf09ed3d300520b4d9c78711ba90162744f5906b1f8"
           blockNumber: 2812312
-          hash: "0xa5b879f2c75c26dafb0235c78b6da1672ac5590300001e6f5b62e0fa66c85f77"
-          transactionHash: "0xde8e772f0350e992ddef81bf8f51d94a8ea9216d"
-          transactionIndex: 22
-          transactionIndex: 34
-          raw: {data:,topics:[]}
-          type: 'mined'
-        matchedAddress: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"        
-    receiveLogMessage:
-      type: object
-      description: Specific log from the broker every time a watched contract fires an event
-      properties:
-        kind:
-          description: The kind of the received event
-          type: string
-          enum:
-            - tx
-            - log
-            - event
-            - error
-        body:
-          description: A payload with the transactions fields
-          type: object
-          properties:
-            address:
-              description: "Address from which this event originated"
-              type: string
-            data:
-              description: "Information about the transaction"
-              type: string  
-            blockHash:
-              description: "Hash of the block where this transaction was in"
-              type: string
-            blockNumber:
-              description: "Block number in wich registered the transaction"
-              type: number             
-            transactionIndex:
-              description: "Transactions index position in the block"
-              type: number   
-            transactionHash:
-              description: "Hash of the transaction"
-              type: string         
-            logIndex:
-              description: "Log index position in the block. null when its pending log."
-              type: number           
-            type:
-              description: "Kind of status event"
-              type: string           
-            data:
-              description: Contains one or more 32 Bytes non-indexed arguments of the log
-              type: string
-            topics:       
-              description: Array of 0 to 4 32 Bytes DATA of indexed log arguments
-              type: array                                      
-        matchedAddress:
-          description: The address which originated the event
-          type: string
-      required:
-        - kind
-        - body
-        - matchedAddress
-      example: 
-        kind: event
-        body:
-          address: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
-          blockHash: "0x6c47653f66ac9b733f3b8bf09ed3d300520b4d9c78711ba90162744f5906b1f8"
-          blockNumber: 2812312
-          hash: "0xa5b879f2c75c26dafb0235c78b6da1672ac5590300001e6f5b62e0fa66c85f77"
-          transactionHash: "0xde8e772f0350e992ddef81bf8f51d94a8ea9216d"
-          transactionIndex: 22
-          transactionIndex: 34
-          data: ""
-          topics: []
-          type: 'mined'
-        matchedAddress: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"       
+          transactionId: "0xde8e772f0350e992ddef81bf8f51d94a8ea9216d"
+          eventName: "someEvent"
+          returnValues: ['value1', 'value2']
+          fee:
+            amount: "1000000000000000000"
+            decimals: 18
+            currency: "Ethereum"
+        matchedAddress: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
     genericError:
       $schema: 'http://json-schema.org/schema'
       description: Generic Response Schema
@@ -440,77 +405,4 @@ components:
         internalError: "HKAD5000X"
         message: "Call Error"
         extendedMessage: "Error: Description"    
-    receiveTransferMessage:
-      type: object
-      description: Events transaction received from the broker each time there is a match between the
-        origin or destination address in blockchain and one address added to the watch list
-      properties:
-        kind:
-          description: The kind of the received event
-          type: string
-          enum:
-            - transfer
-            - transaction
-            - contract-transaction
-            - contract-event
-        body:
-          description: A payload with the transactions fields
-          type: object
-          properties:
-            nonce:
-              description: "Nonce assigned to transaction"
-              type: number
-            from:
-              description: "Address of the sender in the DLT"
-              type: string
-            gas:
-              description: "Gas value of transaction"
-              type: number
-            to:
-              description: "Address of the receiver in the DLT"
-              type: string
-            gasPrice:
-              description: "Gas estimated"
-              type: string
-            value:
-              description: "Value to be transferred"
-              type: string
-            data:
-              description: "Information about the transaction"
-              type: string  
-            blockHash:
-              description: "Hash of the block where this transaction was in"
-              type: string
-            blockNumber:
-              description: "Block number in wich registered the transaction"
-              type: number             
-            transactionIndex:
-              description: "Transactions index position in the block"
-              type: string   
-            hash:
-              description: "Hash of the transaction"
-              type: string                                              
-        matchedAddress:
-          description: The address which originated the event
-          type: string
-      required:
-        - kind
-        - body
-        - matchedAddress
-      example: 
-        kind: transfer
-        body:
-          address: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"
-          from: "0x6c0a14F7561898B9ddc0C57652A53B2C6665443E"
-          to: "0xDe8E772f0350E992Ddef81bF8f51D94A8ea9216d"
-          gas: 21000
-          gasPrice: "1000000000"
-          nonce: 1604
-          value: "1"
-          blockHash: "0x6c47653f66ac9b733f3b8bf09ed3d300520b4d9c78711ba90162744f5906b1f8"
-          blockNumber: 2812312
-          hash: "0xa5b879f2c75c26dafb0235c78b6da1672ac5590300001e6f5b62e0fa66c85f77"
-          transactionHash: "0xde8e772f0350e992ddef81bf8f51d94a8ea9216d"
-          type: 'mined'
-        matchedAddress: "0x34C54CB0d5cD1c0f5240324618adAD15ad6646AF"                
 

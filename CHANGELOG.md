@@ -1,3 +1,19 @@
+## [9.2.0] - 2019-05-28
+### Changed
+- Added subscriptions to smart contract deployments.
+
+## [9.1.0] - 2019-04-09
+### Changed
+- Changed the configuration of providers in a mongo collection.
+
+## [9.0.0] - 2019-03-22
+### Changed
+- Changed the model for the response of events with kind: transaction, transfer, smart-contract-transaction and smart-contract-event.
+
+## [8.0.3] - 2019-03-21
+### Fixed
+- Now the broker would try to reconnect to the DLT in case the connection has been lost.
+
 ## [8.0.2] - 2019-03-11
 ### Fixed
 - Mined and pending transaction should be received in the same socket for the same address.

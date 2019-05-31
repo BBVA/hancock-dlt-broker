@@ -1,30 +1,25 @@
 import 'jest';
-import * as url from 'url';
-import { __consumerInstance__ } from '../../../domain/consumers/__mocks__/consumer';
-import { findOne } from '../../../domain/ethereum';
+import {__consumerInstance__} from '../../../domain/consumers/__mocks__/consumer';
+import {findOne} from '../../../domain/ethereum';
+import {IEthContractEventBody} from '../../../models/ethereum';
+import {CONSUMER_EVENT_KINDS, CURRENCY} from '../../../models/models';
 import {onError} from '../../../utils/error';
 import * as Ethereum from '../../../utils/ethereum';
 import * as contractController from '../contract';
+import * as transactionController from '../transaction';
 
-jest.mock('url');
-jest.mock('fs');
-jest.mock('path');
 jest.mock('../../../utils/config');
 jest.mock('../../../domain/consumers/consumerFactory');
 jest.mock('../../../domain/consumers/consumer');
 jest.mock('../../../utils/ethereum');
 jest.mock('../../../utils/logger');
 jest.mock('../../../utils/error');
-jest.mock('../../../utils/schema');
 
 describe('contractController', () => {
 
   let socket: any;
-  let req: any;
-  let example: any;
   let web3: any;
   let newBlock: any;
-  let blockBody: any;
   const uuid: string = 'uuid';
 
   beforeEach(async () => {
@@ -41,27 +36,9 @@ describe('contractController', () => {
       terminate: jest.fn(),
     };
 
-    req = {};
-
-    example = {
-      body: {},
-      consumer: 'Consumer',
-      kind: 'watch-contracts',
-    };
-
     web3 = await Ethereum.getWeb3();
     newBlock = {
       hash: '0xf22152edb76673b5f6909e5693f786128760a3761c8a3ccd6b63a3ca45bd053c',
-    };
-
-    blockBody = {
-      transactions: [
-        {
-          from: 'from',
-          hash: 'hash',
-          to: 'to',
-        },
-      ],
     };
 
     web3.eth.subscribe = jest.fn().mockImplementation(() => {
@@ -132,7 +109,7 @@ describe('contractController', () => {
 
       (findOne as any) = jest.fn().mockImplementationOnce(() => contract);
 
-      await contractController.subscribeContractsController(socket, uuid, ['from'], web3);
+      await contractController.subscribeContractsController(socket, uuid, ['from'], web3, 'consumer');
 
       expect(_socketSubscriptionState).toHaveBeenCalledWith(contractController.contractSubscriptionList, contract.address, uuid);
       expect(_addNewContract).toHaveBeenCalledWith(contract, web3Contract, web3, uuid, socket, __consumerInstance__);
@@ -154,7 +131,7 @@ describe('contractController', () => {
 
       (findOne as any) = jest.fn().mockImplementationOnce(() => contract);
 
-      await contractController.subscribeContractsController(socket, uuid, ['from'], web3);
+      await contractController.subscribeContractsController(socket, uuid, ['from'], web3, 'consumer');
 
       expect(_socketSubscriptionState).toHaveBeenCalledWith(contractController.contractSubscriptionList, web3Contract.address, uuid);
       expect(_addNewSubscriptionToContract).toHaveBeenCalledWith(contract, uuid, socket, __consumerInstance__);
@@ -165,7 +142,7 @@ describe('contractController', () => {
 
       (findOne as any) = jest.fn().mockImplementationOnce(() => false);
 
-      await contractController.subscribeContractsController(socket, uuid, ['from'], web3);
+      await contractController.subscribeContractsController(socket, uuid, ['from'], web3, 'consumer');
 
       expect(onError).toHaveBeenCalled();
 
@@ -177,7 +154,7 @@ describe('contractController', () => {
         throw new Error('Error!');
       });
 
-      await contractController.subscribeContractsController(socket, uuid, ['from'], web3);
+      await contractController.subscribeContractsController(socket, uuid, ['from'], web3, 'consumer');
 
       expect(onError).toHaveBeenCalled();
 
@@ -189,17 +166,12 @@ describe('contractController', () => {
 
     const unsubscribe1 = jest.fn();
     const unsubscribe2 = jest.fn();
-    const unsubscribe3 = jest.fn();
-    const unsubscribe4 = jest.fn();
 
     beforeEach(() => {
 
       contractController.contractSubscriptionList.push({
         eventEmitterEvents: {
           unsubscribe: unsubscribe1,
-        },
-        eventEmitterLogs: {
-          unsubscribe: unsubscribe2,
         },
         subscriptions: [{
           socketId: uuid,
@@ -210,10 +182,7 @@ describe('contractController', () => {
 
       contractController.contractSubscriptionList.push({
         eventEmitterEvents: {
-          unsubscribe: unsubscribe3,
-        },
-        eventEmitterLogs: {
-          unsubscribe: unsubscribe4,
+          unsubscribe: unsubscribe2,
         },
         subscriptions: [{
           socketId: uuid,
@@ -229,9 +198,7 @@ describe('contractController', () => {
 
       expect(contractController.contractSubscriptionList.length).toBe(1);
       expect(unsubscribe1).not.toHaveBeenCalled();
-      expect(unsubscribe2).not.toHaveBeenCalled();
-      expect(unsubscribe3).toHaveBeenCalled();
-      expect(unsubscribe4).toHaveBeenCalled();
+      expect(unsubscribe2).toHaveBeenCalled();
       expect(contractController.contractSubscriptionList[0].subscriptions.length).toBe(1);
 
     });
@@ -371,8 +338,6 @@ describe('contractController', () => {
 
     const unsubscribe1 = jest.fn();
     const unsubscribe2 = jest.fn();
-    const unsubscribe3 = jest.fn();
-    const unsubscribe4 = jest.fn();
 
     beforeEach(() => {
 
@@ -380,9 +345,6 @@ describe('contractController', () => {
         contractAddress: 'address',
         eventEmitterEvents: {
           unsubscribe: unsubscribe1,
-        },
-        eventEmitterLogs: {
-          unsubscribe: unsubscribe2,
         },
         subscriptions: [{
           socketId: uuid,
@@ -394,10 +356,7 @@ describe('contractController', () => {
       contractController.contractSubscriptionList.push({
         contractAddress: 'address2',
         eventEmitterEvents: {
-          unsubscribe: unsubscribe3,
-        },
-        eventEmitterLogs: {
-          unsubscribe: unsubscribe4,
+          unsubscribe: unsubscribe2,
         },
         subscriptions: [{
           socketId: uuid,
@@ -413,9 +372,7 @@ describe('contractController', () => {
 
       expect(contractController.contractSubscriptionList.length).toBe(1);
       expect(unsubscribe1).not.toHaveBeenCalled();
-      expect(unsubscribe2).not.toHaveBeenCalled();
-      expect(unsubscribe3).toHaveBeenCalled();
-      expect(unsubscribe4).toHaveBeenCalled();
+      expect(unsubscribe2).toHaveBeenCalled();
       expect(contractController.contractSubscriptionList[0].subscriptions.length).toBe(2);
 
     });
@@ -429,10 +386,144 @@ describe('contractController', () => {
       expect(contractController.contractSubscriptionList.length).toBe(2);
       expect(unsubscribe1).not.toHaveBeenCalled();
       expect(unsubscribe2).not.toHaveBeenCalled();
-      expect(unsubscribe3).not.toHaveBeenCalled();
-      expect(unsubscribe4).not.toHaveBeenCalled();
       expect(contractController.contractSubscriptionList[0].subscriptions.length).toBe(1);
 
+    });
+
+  });
+
+  describe('_restartSubscriptionsContracts', () => {
+
+    const subscribe1 = jest.fn();
+    const subscribe2 = jest.fn();
+    const on1 = jest.fn();
+    const on2 = jest.fn();
+    const allEventsMethod = jest.fn().mockReturnValueOnce({on: on1});
+    const allEventsMethod2 = jest.fn().mockReturnValueOnce({on: on2});
+
+    beforeEach(() => {
+
+      contractController.contractSubscriptionList.push({
+        contractAddress: 'address',
+        contractInstance: {
+          events: {
+            allEvents: allEventsMethod,
+          },
+        },
+        eventEmitterEvents: {
+          subscribe: subscribe1,
+        },
+        subscriptions: [{
+          socketId: uuid,
+        }, {
+          socketId: 'randomValue',
+        }],
+      });
+
+      contractController.contractSubscriptionList.push({
+        contractAddress: 'address2',
+        contractInstance: {
+          events: {
+            allEvents: allEventsMethod2,
+          },
+        },
+        eventEmitterEvents: {
+          subscribe: subscribe2,
+        },
+        subscriptions: [{
+          socketId: uuid,
+        }],
+      });
+    });
+
+    it('should call _restartSubscriptionsContracts correctly', async () => {
+
+      contractController.restartSubscriptionsContracts({});
+
+      expect(subscribe1).not.toHaveBeenCalled();
+      expect(subscribe2).not.toHaveBeenCalled();
+      expect(allEventsMethod).toHaveBeenCalled();
+      expect(allEventsMethod2).toHaveBeenCalled();
+      expect(on1).toHaveBeenCalled();
+      expect(on2).toHaveBeenCalled();
+    });
+
+  });
+
+  describe('_processEvent', () => {
+
+    const notify = jest.fn();
+    const sub = {
+      consumerInstance: {
+        notify,
+      },
+      socketId: 'uuid',
+    };
+    const web3I = {};
+    const eventBody: IEthContractEventBody = {
+      blockHash: 'blockHash',
+      transactionHash: 'hash',
+      address: 'scAddress',
+      blockNumber: 0,
+      event: 'Transfer',
+      id: 'log_5daf9707',
+      logIndex: 0,
+      raw: {
+        data: 'data',
+        topics: [],
+      },
+      returnValues: [],
+      signature: null,
+      transactionIndex: 0,
+      type: 'mined',
+    };
+    const blockHeader = {
+      timestamp: 100,
+      transactions: [
+        {
+          hash: 'hash',
+          gas: 100,
+          gasPrice: '20',
+        },
+      ],
+    };
+    const generatedBody = {
+      blockNumber: eventBody.blockNumber,
+      blockHash: eventBody.blockHash,
+      transactionId: eventBody.transactionHash,
+      smartContractAddress: eventBody.address,
+      eventName: eventBody.event,
+      returnValues: eventBody.returnValues,
+      fee: {
+        amount: '2000',
+        decimals: 18,
+        currency: CURRENCY.Ethereum,
+      },
+      timestamp: 100,
+    };
+    let _getBlock: any;
+
+    beforeEach(() => {
+
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
+      _getBlock = jest
+        .spyOn((transactionController as any), '_getBlock')
+        .mockImplementation(() => blockHeader);
+
+    });
+
+    it('should call _processEvent', async () => {
+
+      await contractController._processEvent(sub, web3I, eventBody);
+
+      const response = {
+        kind: CONSUMER_EVENT_KINDS.SmartContractEvent,
+        body: generatedBody,
+        raw: eventBody,
+        matchedAddress: eventBody.address,
+      };
+      expect(notify).toHaveBeenNthCalledWith(1, response);
     });
 
   });

@@ -305,7 +305,7 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-api2html@0.2.1:
+api2html@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/api2html/-/api2html-0.2.1.tgz#b39d49bfaa95ce68daebaa74e244be1401eb13a9"
   dependencies:
@@ -5243,6 +5243,12 @@ punycode@^1.4.1:
 punycode@^2.1.0, punycode@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
+
+push-dir@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/push-dir/-/push-dir-0.4.1.tgz#29481eacd9c2106bbb7941db6d37d122a071ecb4"
+  dependencies:
+    minimist "^1.2.0"
 
 q@1.5.0:
   version "1.5.0"
