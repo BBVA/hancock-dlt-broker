@@ -68,7 +68,7 @@
     "jsonschema": "1.2.4",
     "jsonwebtoken": "8.4.0",
     "mongodb": "3.0.2",
-    "node-forge": "0.7.5",
+    "node-forge": "0.10.0",
     "pino": "4.17.6",
     "request": "2.88.0",
     "request-promise-native": "1.0.5",
