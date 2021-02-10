@@ -3,7 +3,7 @@ asyncapi: 1.2.0
 
 info:
   title: Hancock broker API
-  version: "8.0.2"
+  version: "9.2.0"
   description: "The service will connect to the blockchain when a client connects to the websocket exposed by the service. \n \n The blockchain will be specified in the request by query-param. The fields allowed for the filter are a sender address and/or a contract address. If a sender address is specified, all pending transaction events related to the sender will be captured. If a contract address is specified, all the events programmed in it will be captured. It is mandatory specify at least one filter. \n \n When an event is triggered in the blockchain that meets the requirements of the filter, the service will capture and launch it to the connected client that started the connection through websocket.
   	\n \n <strong>Current blockchains supported {dlt}</strong> `ethereum`    "
 
