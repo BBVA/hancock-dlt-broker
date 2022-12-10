@@ -63,7 +63,7 @@
   "dependencies": {
     "@types/socket.io-client": "1.4.35",
     "config": "1.29.2",
-    "express": "4.17.1",
+    "express": "4.17.3",
     "js-yaml": "4.0.0",
     "jsonschema": "1.4.0",
     "jsonwebtoken": "8.5.1",
